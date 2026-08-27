@@ -1,6 +1,6 @@
 # 🏗️ Titan V — Sistema de Gestión de Obra
 
-Titan V es un sistema integral de gestión y control de proyectos de infraestructura,
+Titan V es un sistema de apoyo,
 diseñado para centralizar la información operativa, logística y técnica de una
 constructora en tiempo real: proyectos, materiales, personal y evidencias de campo.
 
