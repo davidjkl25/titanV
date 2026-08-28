@@ -1,6 +1,4 @@
-**/node_modules/
-**/__pycache__/
-*.pyc
+node_modules/
 .env
-dist/
-build/
+__pycache__/
+*.pyc
