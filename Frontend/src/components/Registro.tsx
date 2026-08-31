@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 
 interface RegistroProps {
   onRegistrar?: (datos: {
@@ -9,9 +10,12 @@ interface RegistroProps {
     usuario: string;
     contrasena: string;
   }) => void;
+  onVolver?: () => void;
 }
 
-const Registro: React.FC<RegistroProps> = ({ onRegistrar }) => {
+const API_URL = 'http://localhost:8000';
+
+const Registro: React.FC<RegistroProps> = ({ onRegistrar, onVolver }) => {
 
   const [nombre, setNombre] = useState('');
   const [apellido, setApellido] = useState('');
@@ -19,31 +23,47 @@ const Registro: React.FC<RegistroProps> = ({ onRegistrar }) => {
   const [telefono, setTelefono] = useState('');
   const [usuario, setUsuario] = useState('');
   const [contrasena, setContrasena] = useState('');
+  const [cargando, setCargando] = useState(false);
 
-  const manejarRegistro = (e: React.FormEvent<HTMLFormElement>) => {
+  const manejarRegistro = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    const datos = {
-      nombre,
-      apellido,
-      correo,
-      telefono,
-      usuario,
-      contrasena
-    };
+    if (contrasena.length < 8) {
+      alert('La contraseña debe tener al menos 8 caracteres.');
+      return;
+    }
 
-    alert(
-      `REGISTRO COMPLETADO\n\n` +
-      `Nombre: ${nombre} ${apellido}\n` +
-      `Correo: ${correo}\n` +
-      `Teléfono: ${telefono}\n` +
-      `Usuario: ${usuario}\n` +
-      `Contraseña: ${contrasena}`
-    );
+    try {
+      setCargando(true);
+      const nombreCompleto = `${nombre.trim()} ${apellido.trim()}`.trim();
+      
+      // Guardar usuario en PostgreSQL mediante FastAPI
+      const respuesta = await axios.post(`${API_URL}/auth/registro`, {
+        nombre_completo: nombreCompleto,
+        correo_electronico: correo.trim(),
+        contrasena: contrasena,
+        rol: 3, // Operario por defecto
+      });
 
-    // Envía la información al padre
-    if (onRegistrar) {
-      onRegistrar(datos);
+      alert(
+        `✅ REGISTRO COMPLETADO EN LA BASE DE DATOS\n\n` +
+        `ID de Usuario: #${respuesta.data.id}\n` +
+        `Nombre: ${respuesta.data.nombre_completo}\n` +
+        `Correo: ${respuesta.data.correo_electronico}\n\n` +
+        `¡Ya puedes iniciar sesión con tu cuenta!`
+      );
+
+      if (onRegistrar) {
+        onRegistrar({ nombre, apellido, correo, telefono, usuario, contrasena });
+      } else if (onVolver) {
+        onVolver();
+      }
+    } catch (error: any) {
+      console.error('Error al registrar usuario:', error);
+      const detalle = error.response?.data?.detail || error.message || 'Error al guardar el usuario en la base de datos.';
+      alert(`⚠️ No se pudo registrar el usuario: ${detalle}`);
+    } finally {
+      setCargando(false);
     }
   };
 
@@ -158,10 +178,35 @@ const Registro: React.FC<RegistroProps> = ({ onRegistrar }) => {
 
           <button
             type="submit"
-            style={estilos.boton}
+            disabled={cargando}
+            style={{
+              ...estilos.boton,
+              backgroundColor: cargando ? '#999' : '#ffcc00',
+              cursor: cargando ? 'not-allowed' : 'pointer',
+            }}
           >
-            Crear cuenta
+            {cargando ? 'Guardando en Base de Datos...' : 'Crear cuenta'}
           </button>
+
+          {onVolver && (
+            <button
+              type="button"
+              onClick={onVolver}
+              style={{
+                width: '100%',
+                padding: '10px',
+                marginTop: '10px',
+                backgroundColor: 'transparent',
+                color: '#aaa',
+                border: '1px solid #444',
+                borderRadius: '7px',
+                fontSize: '13px',
+                cursor: 'pointer',
+              }}
+            >
+              ← Volver al inicio de sesión
+            </button>
+          )}
 
         </form>
 

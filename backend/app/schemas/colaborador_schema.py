@@ -30,3 +30,7 @@ class ColaboradorResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# Alias agregado para solucionar el error del router
+ColaboradorCreate = ColaboradorInvitar

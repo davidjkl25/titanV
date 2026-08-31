@@ -31,7 +31,15 @@ def get_tarea(tarea_id: int, incluir_eliminados: bool = False, db: Session = Dep
 
 @router.post("/", response_model=TareaResponse, status_code=status.HTTP_201_CREATED)
 def create_tarea(tarea: TareaCreate, db: Session = Depends(get_db)):
-    return tarea_service.crear_tarea(db, tarea)
+    try:
+        return tarea_service.crear_tarea(db, tarea)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Error al registrar tarea: {str(e)}",
+        )
 
 
 @router.put("/{tarea_id}", response_model=TareaResponse)

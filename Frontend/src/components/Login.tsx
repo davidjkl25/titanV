@@ -10,6 +10,7 @@ export interface LoginProps {
   onCorreoChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onContrasenaChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onEnviar: (e: React.FormEvent) => void;
+  onGoogleLogin?: () => void;
 }
 
 export const Login: React.FC<LoginProps> = ({
@@ -17,7 +18,8 @@ export const Login: React.FC<LoginProps> = ({
   contrasena,
   onCorreoChange,
   onContrasenaChange,
-  onEnviar
+  onEnviar,
+  onGoogleLogin,
 }) => {
 
   const [mostrarRegistro, setMostrarRegistro] = useState(false);
@@ -30,17 +32,7 @@ export const Login: React.FC<LoginProps> = ({
     usuario: string;
     contrasena: string;
   }) => {
-
-    alert(
-      `Registro realizado correctamente\n\n` +
-      `Nombre: ${datos.nombre} ${datos.apellido}\n` +
-      `Correo: ${datos.correo}\n` +
-      `Teléfono: ${datos.telefono}\n` +
-      `Usuario: ${datos.usuario}`
-    );
-
     console.log('Módulo Login - Registro recibido:', datos);
-
     setMostrarRegistro(false);
   };
 
@@ -48,6 +40,7 @@ export const Login: React.FC<LoginProps> = ({
     return (
       <Registro
         onRegistrar={manejarRegistro}
+        onVolver={() => setMostrarRegistro(false)}
       />
     );
   }
@@ -59,13 +52,11 @@ export const Login: React.FC<LoginProps> = ({
       alignItems: 'center',
       minHeight: '100vh',
       backgroundColor: '#121212',
-      position: 'relative', // Obligatorio para contener el video absoluto
-      overflow: 'hidden'    // Evita barras de scroll por el tamaño del video
+      position: 'relative',
+      overflow: 'hidden'
     }}>
 
-      {/* ========================================================= */}
-      {/* VIDEO DE FONDO PARA EL LOGIN                              */}
-      {/* ========================================================= */}
+      {/* VIDEO DE FONDO */}
       <video
         autoPlay
         loop
@@ -88,36 +79,34 @@ export const Login: React.FC<LoginProps> = ({
         Tu navegador no soporta videos de fondo.
       </video>
 
-      {/* Filtro oscuro intermedio para opacar el video y facilitar la lectura */}
       <div style={{
         position: 'absolute',
         top: 0,
         left: 0,
         width: '100%',
         height: '100%',
-        backgroundColor: 'rgba(0, 0, 0, 0.65)', // Ajusta el nivel de oscuridad aquí (0.0 a 1.0)
+        backgroundColor: 'rgba(0, 0, 0, 0.65)',
         zIndex: 2
       }} />
-      {/* ========================================================= */}
 
       {/* TARJETA DEL FORMULARIO DE INICIO DE SESIÓN */}
       <div style={{
-        backgroundColor: 'rgba(30, 30, 30, 0.85)', // Se le dio transparencia al fondo de la tarjeta
-        backdropFilter: 'blur(10px)', // Efecto esmerilado/blur moderno sobre el video de fondo
-        padding: '30px',
-        borderRadius: '12px',
-        boxShadow: '0 8px 24px rgba(0,0,0,0.6), 0 0 15px rgba(255, 204, 0, 0.15)',
-        width: '350px',
+        backgroundColor: 'rgba(30, 30, 30, 0.88)',
+        backdropFilter: 'blur(12px)',
+        padding: '32px',
+        borderRadius: '14px',
+        boxShadow: '0 8px 30px rgba(0,0,0,0.7), 0 0 20px rgba(255, 204, 0, 0.2)',
+        width: '360px',
         textAlign: 'center',
         border: '1px solid #333',
-        position: 'relative', // Obligatorio junto con zIndex
-        zIndex: 3 // Ubica el formulario al frente por encima del video (1) y la capa oscura (2)
+        position: 'relative',
+        zIndex: 3
       }}>
 
         <h2 style={{
           color: '#fff',
           margin: '0 0 5px 0',
-          fontSize: '24px',
+          fontSize: '26px',
           letterSpacing: '1px'
         }}>
           TITAN <span style={{ color: '#ffcc00' }}>V</span>
@@ -126,9 +115,9 @@ export const Login: React.FC<LoginProps> = ({
         <p style={{
           color: '#aaa',
           fontSize: '14px',
-          marginBottom: '25px'
+          marginBottom: '22px'
         }}>
-          Bienvenido de nuevo
+          Bienvenido al Sistema de Gestión de Obra
         </p>
 
         <form onSubmit={onEnviar}>
@@ -161,22 +150,59 @@ export const Login: React.FC<LoginProps> = ({
               cursor: 'pointer',
               marginTop: '10px',
               fontSize: '15px',
-              color: '#000'
+              color: '#000',
+              transition: 'background 0.2s',
             }}
           >
             Iniciar Sesión
           </button>
 
+          {/* Separador */}
+          <div style={{ display: 'flex', alignItems: 'center', margin: '18px 0 14px 0' }}>
+            <div style={{ flex: 1, height: '1px', backgroundColor: 'rgba(255,255,255,0.15)' }} />
+            <span style={{ padding: '0 10px', color: '#888', fontSize: '12px', textTransform: 'uppercase' }}>o</span>
+            <div style={{ flex: 1, height: '1px', backgroundColor: 'rgba(255,255,255,0.15)' }} />
+          </div>
+
+          {/* Botón de Inicio con Google */}
+          {onGoogleLogin && (
+            <button
+              type="button"
+              onClick={onGoogleLogin}
+              style={{
+                width: '100%',
+                padding: '11px',
+                backgroundColor: '#ffffff',
+                color: '#1f2937',
+                border: 'none',
+                borderRadius: '6px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                fontSize: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '10px',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.35)',
+                transition: 'all 0.2s',
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
+                <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
+                <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.16 0 9.97 0 12s.45 3.84 1.25 5.42l4.03-3.15z"/>
+                <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+              </svg>
+              Continuar con Google
+            </button>
+          )}
+
         </form>
 
         <div style={{
-          marginTop: '20px',
+          marginTop: '22px',
           fontSize: '12px'
         }}>
-
-          <a href="#forgot" style={{ color: '#ffcc00', textDecoration: 'none', display: 'block', marginBottom: '8px' }}>
-            ¿Olvidaste tu contraseña?
-          </a>
 
           <span style={{ color: '#888' }}>
             ¿No tienes cuenta?{' '}
