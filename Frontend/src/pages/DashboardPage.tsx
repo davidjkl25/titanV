@@ -1,14 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { fetchConToken } from '../api';
 import { Sidebar } from '../components/Sidebar';
 import { InicioTab } from '../components/InicioTab';
 import { ProyectosTab } from '../components/ProyectosTab';
 import { MaterialesTab } from '../components/MaterialesTab';
 import Usuarios from '../components/Usuarios';
 import Productos from '../components/Productos';
-import PanelNotificaciones from '../components/PanelNotificaciones/PanelNotificaciones';
-import { useAppDispatch } from '../redux/hooks';
-import { fetchClima } from '../redux/climaSlice';
+import TareasTab from '../components/TareasTab';
 
 interface DashboardPageProps {
   onLogout: () => void;
@@ -16,22 +15,29 @@ interface DashboardPageProps {
 
 const DashboardPage = ({ onLogout }: DashboardPageProps) => {
   const navigate = useNavigate();
-  const dispatch = useAppDispatch();
-
   const [tabActual, setTabActual] = useState('inicio');
+  const [tieneProyectos, setTieneProyectos] = useState(false);
+  const [cargandoProyectos, setCargandoProyectos] = useState(true);
+
+  const usuarioId = localStorage.getItem('usuario_id') || '1';
+
+  const verificarProyectos = async () => {
+    try {
+      const respuesta = await fetchConToken(`/proyectos/?usuario_id=${usuarioId}`);
+      const proyectos = respuesta.ok ? await respuesta.json() : [];
+      setTieneProyectos(Array.isArray(proyectos) && proyectos.length > 0);
+    } catch {
+      // Si falla la verificación, no bloqueamos al usuario de más: lo dejamos pasar.
+      setTieneProyectos(true);
+    } finally {
+      setCargandoProyectos(false);
+    }
+  };
 
   useEffect(() => {
-    
-    dispatch(fetchClima());
-
-    
-    const intervalo = setInterval(() => {
-      dispatch(fetchClima());
-    }, 10000);
-
-    
-    return () => clearInterval(intervalo);
-  }, [dispatch]);
+    verificarProyectos();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleLogout = () => {
     onLogout();
@@ -39,37 +45,28 @@ const DashboardPage = ({ onLogout }: DashboardPageProps) => {
     navigate('/');
   };
 
+  const bloqueado = !cargandoProyectos && !tieneProyectos;
+
+  const irA = (tab: string) => {
+    if (bloqueado && tab !== 'inicio' && tab !== 'proyectos') return;
+    setTabActual(tab);
+  };
+
   return (
-    <div
-      style={{
-        display: 'flex',
-        minHeight: '100vh',
-        backgroundColor: '#f4f6f9',
-      }}
-    >
-      <Sidebar
-        activeTab={tabActual}
-        onSelectTab={setTabActual}
-        onLogout={handleLogout}
-      />
+    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f4f6f9' }}>
+      <Sidebar activeTab={tabActual} onSelectTab={irA} onLogout={handleLogout} bloqueado={bloqueado} />
 
       <div className="main-content">
-
-        {}
-        <PanelNotificaciones />
-
         {tabActual === 'inicio' && (
-          <InicioTab onIrA={setTabActual} />
+          <InicioTab onIrA={irA} tieneProyectos={tieneProyectos} cargando={cargandoProyectos} />
         )}
+        {/* Proyectos siempre queda accesible: es la única forma de desbloquear el resto */}
+        {tabActual === 'proyectos' && <ProyectosTab onProyectoCreado={verificarProyectos} />}
 
-        {tabActual === 'proyectos' && <ProyectosTab />}
-
-        {tabActual === 'materiales' && <MaterialesTab />}
-
-        {tabActual === 'usuarios' && <Usuarios />}
-
-        {tabActual === 'productos' && <Productos />}
-
+        {!bloqueado && tabActual === 'materiales' && <MaterialesTab />}
+        {!bloqueado && tabActual === 'usuarios' && <Usuarios />}
+        {!bloqueado && tabActual === 'productos' && <Productos />}
+        {!bloqueado && tabActual === 'tareas' && <TareasTab />}
       </div>
     </div>
   );
