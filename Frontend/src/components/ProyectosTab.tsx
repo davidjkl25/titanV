@@ -1,42 +1,103 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { fetchConToken } from '../api';
 
 interface Proyecto {
   id: number;
-  nombre: string;
-  presupuesto: string;
-  fechaInicio: string;
-  fechaFin: string;
+  nombre_proyecto: string;
+  ubicacion_direccion: string;
+  estado: 'Planificación' | 'En Ejecución' | 'Finalizado';
+  fecha_inicio: string;
+  fecha_fin_estimada: string;
 }
 
-export const ProyectosTab = () => {
+const ESTADOS: Proyecto['estado'][] = ['Planificación', 'En Ejecución', 'Finalizado'];
+
+interface ProyectosTabProps {
+  onProyectoCreado?: () => void;
+}
+
+export const ProyectosTab = ({ onProyectoCreado }: ProyectosTabProps = {}) => {
   const [proyectos, setProyectos] = useState<Proyecto[]>([]);
-  const [nombre, setNombre] = useState('');
-  const [presupuesto, setPresupuesto] = useState('');
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState('');
+
+  const [nombreProyecto, setNombreProyecto] = useState('');
+  const [ubicacion, setUbicacion] = useState('');
+  const [estado, setEstado] = useState<Proyecto['estado']>('Planificación');
   const [fechaInicio, setFechaInicio] = useState('');
   const [fechaFin, setFechaFin] = useState('');
+  const [guardando, setGuardando] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!nombre || !presupuesto || !fechaInicio || !fechaFin) return;
+  const usuarioId = localStorage.getItem('usuario_id') || '1';
 
-    const nuevoProyecto: Proyecto = {
-      id: Date.now(),
-      nombre,
-      presupuesto,
-      fechaInicio,
-      fechaFin,
-    };
-
-    setProyectos([...proyectos, nuevoProyecto]);
-    // Limpiar formulario
-    setNombre('');
-    setPresupuesto('');
-    setFechaInicio('');
-    setFechaFin('');
+  const cargarProyectos = async () => {
+    setCargando(true);
+    setError('');
+    try {
+      const respuesta = await fetchConToken(`/proyectos/?usuario_id=${usuarioId}`);
+      if (!respuesta.ok) throw new Error('No se pudieron cargar los proyectos.');
+      setProyectos(await respuesta.json());
+    } catch (err: any) {
+      setError(err.message || 'No se pudieron cargar los proyectos.');
+    } finally {
+      setCargando(false);
+    }
   };
 
-  const eliminarProyecto = (id: number) => {
-    setProyectos(proyectos.filter((p) => p.id !== id));
+  useEffect(() => {
+    cargarProyectos();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!nombreProyecto || !ubicacion || !fechaInicio || !fechaFin) return;
+
+    setGuardando(true);
+    try {
+      const respuesta = await fetchConToken(`/proyectos/?usuario_id=${usuarioId}`, {
+        method: 'POST',
+        body: JSON.stringify({
+          nombre_proyecto: nombreProyecto,
+          ubicacion_direccion: ubicacion,
+          estado,
+          fecha_inicio: fechaInicio,
+          fecha_fin_estimada: fechaFin,
+        }),
+      });
+
+      if (!respuesta.ok) {
+        const data = await respuesta.json().catch(() => null);
+        throw new Error(data?.detail || 'No se pudo crear el proyecto.');
+      }
+
+      setNombreProyecto('');
+      setUbicacion('');
+      setEstado('Planificación');
+      setFechaInicio('');
+      setFechaFin('');
+      await cargarProyectos();
+      onProyectoCreado?.();
+    } catch (err: any) {
+      alert(err.message || 'No se pudo crear el proyecto.');
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  const eliminarProyecto = async (id: number, nombre: string) => {
+    if (!window.confirm(`¿Eliminar el proyecto "${nombre}"?`)) return;
+    try {
+      const respuesta = await fetchConToken(`/proyectos/${id}`, { method: 'DELETE' });
+      if (!respuesta.ok && respuesta.status !== 204) {
+        const data = await respuesta.json().catch(() => null);
+        throw new Error(data?.detail || 'No se pudo eliminar el proyecto.');
+      }
+      await cargarProyectos();
+      onProyectoCreado?.();
+    } catch (err: any) {
+      alert(err.message || 'No se pudo eliminar el proyecto.');
+    }
   };
 
   return (
@@ -50,11 +111,17 @@ export const ProyectosTab = () => {
           <form onSubmit={handleSubmit}>
             <div className="input-group">
               <label>Nombre de la Obra</label>
-              <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Ej: Edificio Calle 100" required />
+              <input type="text" value={nombreProyecto} onChange={(e) => setNombreProyecto(e.target.value)} placeholder="Ej: Edificio Calle 100" required />
             </div>
             <div className="input-group">
-              <label>Presupuesto Estimado (COP)</label>
-              <input type="number" value={presupuesto} onChange={(e) => setPresupuesto(e.target.value)} placeholder="Ej: 120000000" required />
+              <label>Ubicación</label>
+              <input type="text" value={ubicacion} onChange={(e) => setUbicacion(e.target.value)} placeholder="Ej: Calle 100 #15-30, Bogotá" required />
+            </div>
+            <div className="input-group">
+              <label>Estado</label>
+              <select value={estado} onChange={(e) => setEstado(e.target.value as Proyecto['estado'])}>
+                {ESTADOS.map((e) => <option key={e} value={e}>{e}</option>)}
+              </select>
             </div>
             <div className="date-row">
               <div className="input-group">
@@ -62,32 +129,35 @@ export const ProyectosTab = () => {
                 <input type="date" value={fechaInicio} onChange={(e) => setFechaInicio(e.target.value)} required />
               </div>
               <div className="input-group">
-                <label>Fecha Fin</label>
+                <label>Fin Estimado</label>
                 <input type="date" value={fechaFin} onChange={(e) => setFechaFin(e.target.value)} required />
               </div>
             </div>
-            <button type="submit" className="btn-save">Registrar e Iniciar Obra</button>
+            <button type="submit" className="btn-save" disabled={guardando}>
+              {guardando ? 'Guardando...' : 'Registrar e Iniciar Obra'}
+            </button>
           </form>
         </div>
 
         <div className="card">
-          <div className="card-header"><h3><i className="fas fa-list"></i> Obras en Ejecución (PostgreSQL)</h3></div>
+          <div className="card-header"><h3><i className="fas fa-list"></i> Obras Registradas</h3></div>
           <div className="project-container">
-            {proyectos.length === 0 ? (
+            {error && <div className="empty-msg" style={{ color: '#dc2626' }}>{error}</div>}
+            {cargando && <div className="empty-msg">Cargando proyectos...</div>}
+            {!cargando && !error && proyectos.length === 0 && (
               <div className="empty-msg">No hay proyectos registrados actualmente.</div>
-            ) : (
-              proyectos.map((p) => (
-                <div key={p.id} className="project-item">
-                  <div>
-                    <h4>{p.nombre}</h4>
-                    <span style={{ fontSize: '12px', color: '#666' }}>Presupuesto: ${Number(p.presupuesto).toLocaleString()} COP</span>
-                  </div>
-                  <button onClick={() => eliminarProyecto(p.id)} className="btn-delete">
-                    <i className="fas fa-trash"></i>
-                  </button>
-                </div>
-              ))
             )}
+            {!cargando && proyectos.map((p) => (
+              <div key={p.id} className="project-item">
+                <div>
+                  <h4>{p.nombre_proyecto}</h4>
+                  <span style={{ fontSize: '12px', color: '#666' }}>{p.ubicacion_direccion} — {p.estado}</span>
+                </div>
+                <button onClick={() => eliminarProyecto(p.id, p.nombre_proyecto)} className="btn-delete">
+                  <i className="fas fa-trash"></i>
+                </button>
+              </div>
+            ))}
           </div>
         </div>
       </div>

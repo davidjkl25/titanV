@@ -4,6 +4,7 @@ Reexporta todos los esquemas de Pydantic para mantener compatibilidad con
 """
 
 from app.schemas.usuario_schema import (
+    GoogleAuthRequest,
     TokenResponse,
     UsuarioBase,
     UsuarioCreate,
@@ -12,8 +13,8 @@ from app.schemas.usuario_schema import (
     UsuarioUpdate,
 )
 from app.schemas.colaborador_schema import (
-    ColaboradorBase,
     ColaboradorCreate,
+    ColaboradorInvitar,
     ColaboradorResponse,
     ColaboradorUpdate,
 )
@@ -26,11 +27,6 @@ from app.schemas.proyecto_schema import (
     SubcontratistaCreate,
     SubcontratistaResponse,
     SubcontratistaUpdate,
-)
-from app.schemas.colaborador_schema import (
-    ColaboradorInvitar,
-    ColaboradorResponse,
-    ColaboradorUpdate,
 )
 from app.schemas.material_schema import (
     InventarioResponse,
@@ -57,11 +53,10 @@ from app.schemas.asistencia_schema import (
 )
 
 __all__ = [
-    "UsuarioBase", "UsuarioCreate", "UsuarioUpdate", "UsuarioResponse", "UsuarioLogin", "TokenResponse",
-    "ColaboradorBase", "ColaboradorCreate", "ColaboradorUpdate", "ColaboradorResponse",
+    "UsuarioBase", "UsuarioCreate", "UsuarioUpdate", "UsuarioResponse", "UsuarioLogin", "TokenResponse", "GoogleAuthRequest",
+    "ColaboradorCreate", "ColaboradorInvitar", "ColaboradorUpdate", "ColaboradorResponse",
     "ProyectoBase", "ProyectoCreate", "ProyectoUpdate", "ProyectoResponse",
     "SubcontratistaBase", "SubcontratistaCreate", "SubcontratistaResponse", "SubcontratistaUpdate",
-    "ColaboradorInvitar", "ColaboradorResponse", "ColaboradorUpdate",
     "MaterialBase", "MaterialCreate", "MaterialUpdate", "MaterialResponse",
     "RegistroMovimiento", "KardexResponse", "InventarioResponse",
     "ComentarioCreate", "ComentarioResponse",

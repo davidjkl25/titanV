@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 import bcrypt
+import httpx
 import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -93,3 +94,43 @@ def obtener_usuario_actual(token: str = Depends(oauth2_scheme), db: Session = De
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Usuario inactivo")
 
     return usuario
+
+
+# --- Login con Google ---
+
+def verificar_token_google(access_token: str) -> dict:
+    """Verifica el access_token directamente con Google — nunca confiar en el
+    correo/nombre que el cliente dice que corresponden al token.
+
+    Antes, el endpoint /auth/google recibía correo_electronico y nombre_completo
+    del frontend y los usaba tal cual, sin comprobar nada: cualquiera podía
+    llamar al endpoint directo (sin pasar por Google) diciendo ser cualquier
+    persona, y el backend le daba una sesión válida. Esta función cierra ese
+    hueco pidiéndole la confirmación a Google mismo.
+    """
+    try:
+        respuesta = httpx.get(
+            "https://www.googleapis.com/oauth2/v3/userinfo",
+            headers={"Authorization": f"Bearer {access_token}"},
+            timeout=5.0,
+        )
+    except httpx.RequestError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="No se pudo contactar a Google para verificar la sesión. Intenta de nuevo.",
+        ) from exc
+
+    if respuesta.status_code != 200:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="El token de Google no es válido o expiró. Vuelve a iniciar sesión.",
+        )
+
+    datos = respuesta.json()
+    if datos.get("email_verified") is False:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="La cuenta de Google no tiene el correo verificado.",
+        )
+
+    return datos  # incluye 'email', 'name', 'picture' — confirmados por Google, no por el cliente

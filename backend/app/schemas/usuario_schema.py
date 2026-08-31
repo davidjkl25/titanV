@@ -9,7 +9,7 @@ from app.models import RolUsuario
 class UsuarioBase(BaseModel):
     nombre_completo: str = Field(..., max_length=150, example="David Felipe Galindo")
     correo_electronico: EmailStr
-    rol: RolUsuario
+    rol: RolUsuario = RolUsuario.OPERARIO
     fecha_vencimiento_licencia: Optional[date] = None
     tiene_certificacion_maquinaria: bool = False
 
@@ -55,3 +55,19 @@ class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     expires_in: int
+
+
+class GoogleAuthRequest(BaseModel):
+    """TV-AUTH-03: Datos para autenticación con cuenta de Google.
+
+    'credential' es el access_token que el frontend obtuvo directamente de Google
+    (via @react-oauth/google). El backend lo vuelve a verificar contra los
+    servidores de Google — nunca confía en correo_electronico/nombre_completo
+    tal cual los manda el cliente, porque esos campos se pueden falsificar.
+    """
+
+    credential: str
+    correo_electronico: Optional[EmailStr] = None
+    nombre_completo: Optional[str] = None
+    foto_url: Optional[str] = None
+

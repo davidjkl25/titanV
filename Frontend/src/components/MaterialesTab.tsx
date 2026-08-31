@@ -1,95 +1,126 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { fetchConToken } from '../api';
 
 interface Material {
   id: number;
-  nombre: string;
-  cantidad: string;
-  unidad: string;
-  precio: string;
+  nombre_material: string;
+  unidad_medida: string;
 }
 
 export const MaterialesTab = () => {
   const [materiales, setMateriales] = useState<Material[]>([]);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState('');
+
   const [nombre, setNombre] = useState('');
-  const [cantidad, setCantidad] = useState('');
   const [unidad, setUnidad] = useState('');
-  const [precio, setPrecio] = useState('');
+  const [guardando, setGuardando] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!nombre || !cantidad || !unidad || !precio) return;
-
-    const nuevoMaterial: Material = {
-      id: Date.now(),
-      nombre,
-      cantidad,
-      unidad,
-      precio,
-    };
-
-    setMateriales([...materiales, nuevoMaterial]);
-    setNombre('');
-    setCantidad('');
-    setUnidad('');
-    setPrecio('');
+  const cargarMateriales = async () => {
+    setCargando(true);
+    setError('');
+    try {
+      const respuesta = await fetchConToken('/materiales/');
+      if (!respuesta.ok) throw new Error('No se pudieron cargar los materiales.');
+      setMateriales(await respuesta.json());
+    } catch (err: any) {
+      setError(err.message || 'No se pudieron cargar los materiales.');
+    } finally {
+      setCargando(false);
+    }
   };
 
-  const eliminarMaterial = (id: number) => {
-    setMateriales(materiales.filter((m) => m.id !== id));
+  useEffect(() => {
+    cargarMateriales();
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!nombre || !unidad) return;
+
+    setGuardando(true);
+    try {
+      const respuesta = await fetchConToken('/materiales/', {
+        method: 'POST',
+        body: JSON.stringify({ nombre_material: nombre, unidad_medida: unidad }),
+      });
+      if (!respuesta.ok) {
+        const data = await respuesta.json().catch(() => null);
+        throw new Error(data?.detail || 'No se pudo crear el material.');
+      }
+      setNombre('');
+      setUnidad('');
+      await cargarMateriales();
+    } catch (err: any) {
+      alert(err.message || 'No se pudo crear el material.');
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  const eliminarMaterial = async (id: number, nombreMaterial: string) => {
+    if (!window.confirm(`¿Eliminar "${nombreMaterial}" del catálogo?`)) return;
+    try {
+      const respuesta = await fetchConToken(`/materiales/${id}`, { method: 'DELETE' });
+      if (!respuesta.ok && respuesta.status !== 204) {
+        const data = await respuesta.json().catch(() => null);
+        throw new Error(data?.detail || 'No se pudo eliminar el material.');
+      }
+      await cargarMateriales();
+    } catch (err: any) {
+      alert(err.message || 'No se pudo eliminar el material.');
+    }
   };
 
   return (
     <div className="tab-content active">
       <div className="section-header">
-        <h2><i className="fas fa-boxes-stacked"></i> Control de Stock e Insumos</h2>
+        <h2><i className="fas fa-boxes-stacked"></i> Catálogo de Materiales</h2>
       </div>
-      <div className="card" style={{ marginBottom: '20px' }}>
-        <div className="card-header"><h3><i className="fas fa-plus"></i> Registrar Entrada de Material</h3></div>
-        <form onSubmit={handleSubmit} className="form-horizontal" style={{ padding: '20px' }}>
-          <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Nombre Material" required />
-          <input type="number" value={cantidad} onChange={(e) => setCantidad(e.target.value)} placeholder="Cantidad" required />
-          <input type="text" value={unidad} onChange={(e) => setUnidad(e.target.value)} placeholder="Unidad (Bultos, kg)" required />
-          <input type="number" value={precio} onChange={(e) => setPrecio(e.target.value)} placeholder="Precio Unitario ($)" required />
-          <button type="submit" className="btn-save" style={{ marginTop: 0 }}>Agregar al Stock</button>
-        </form>
-      </div>
+      <div className="grid">
+        <div className="card">
+          <div className="card-header"><h3><i className="fas fa-plus-circle"></i> Nuevo Material</h3></div>
+          <form onSubmit={handleSubmit}>
+            <div className="input-group">
+              <label>Nombre del material</label>
+              <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Ej: Cemento Gris ARGOS" required />
+            </div>
+            <div className="input-group">
+              <label>Unidad de medida</label>
+              <input type="text" value={unidad} onChange={(e) => setUnidad(e.target.value)} placeholder="Ej: Bultos" required />
+            </div>
+            <button type="submit" className="btn-save" disabled={guardando}>
+              {guardando ? 'Guardando...' : 'Agregar al catálogo'}
+            </button>
+          </form>
+        </div>
 
-      <div className="card table-card">
-        <table>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Material</th>
-              <th>Cantidad</th>
-              <th>Unidad</th>
-              <th>Precio U.</th>
-              <th>Acción</th>
-            </tr>
-          </thead>
-          <tbody>
-            {materiales.length === 0 ? (
-              <tr>
-                <td colSpan={6} style={{ textAlign: 'center', color: '#999', padding: '30px' }}>No hay insumos registrados en el stock.</td>
-              </tr>
-            ) : (
-              materiales.map((m, index) => (
-                <tr key={m.id}>
-                  <td>{index + 1}</td>
-                  <td>{m.nombre}</td>
-                  <td>{m.cantidad}</td>
-                  <td>{m.unidad}</td>
-                  <td>${Number(m.precio).toLocaleString()}</td>
-                  <td>
-                    <button onClick={() => eliminarMaterial(m.id)} className="btn-delete" style={{ padding: '5px 10px' }}>
-                      <i className="fas fa-trash"></i>
-                    </button>
-                  </td>
-                </tr>
-              ))
+        <div className="card">
+          <div className="card-header"><h3><i className="fas fa-list"></i> Materiales registrados</h3></div>
+          <div className="project-container">
+            {error && <div className="empty-msg" style={{ color: '#dc2626' }}>{error}</div>}
+            {cargando && <div className="empty-msg">Cargando materiales...</div>}
+            {!cargando && !error && materiales.length === 0 && (
+              <div className="empty-msg">Todavía no hay materiales en el catálogo.</div>
             )}
-          </tbody>
-        </table>
+            {!cargando && materiales.map((m) => (
+              <div key={m.id} className="project-item">
+                <div>
+                  <h4>{m.nombre_material}</h4>
+                  <span style={{ fontSize: '12px', color: '#666' }}>Unidad: {m.unidad_medida}</span>
+                </div>
+                <button onClick={() => eliminarMaterial(m.id, m.nombre_material)} className="btn-delete">
+                  <i className="fas fa-trash"></i>
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
+      <p style={{ fontSize: '12px', color: '#888', marginTop: '14px' }}>
+        Nota: este catálogo guarda los <em>tipos</em> de material (nombre + unidad). El stock disponible
+        por proyecto y el registro de entradas/salidas se maneja aparte, en el módulo de Inventario.
+      </p>
     </div>
   );
 };

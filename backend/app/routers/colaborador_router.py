@@ -7,7 +7,7 @@ from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.core.permissions import verificar_rol_proyecto
 from app.models import RolColaborador, Usuario
-from app.schemas import ColaboradorCreate, ColaboradorResponse, ColaboradorUpdate
+from app.schemas import ColaboradorInvitar, ColaboradorResponse, ColaboradorUpdate
 from app.services import colaborador_service, proyecto_service
 
 router = APIRouter(prefix="/proyectos/{proyecto_id}/colaboradores", tags=["Colaboradores"])
@@ -32,20 +32,19 @@ def get_colaboradores(
 @router.post("/", response_model=ColaboradorResponse, status_code=status.HTTP_201_CREATED)
 def add_colaborador(
     proyecto_id: int,
-    datos: ColaboradorCreate,
+    datos: ColaboradorInvitar,
     current_user: Usuario = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Solo el Arquitecto del proyecto puede agregar colaboradores."""
+    """Solo el Arquitecto del proyecto puede agregar colaboradores. Se invita por
+    correo (la persona debe tener cuenta creada en Titan V de antemano)."""
     _validar_proyecto(db, proyecto_id)
     verificar_rol_proyecto(db, current_user, proyecto_id, RolColaborador.ARQUITECTO)
 
-    if colaborador_service.ya_es_colaborador(db, proyecto_id, datos.usuario_id):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="El usuario ya es colaborador de este proyecto",
-        )
-    return colaborador_service.agregar_colaborador(db, proyecto_id, datos)
+    try:
+        return colaborador_service.invitar_colaborador(db, proyecto_id, datos)
+    except ValueError as error:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error))
 
 
 @router.put("/{colaborador_id}", response_model=ColaboradorResponse)
@@ -60,7 +59,11 @@ def update_colaborador(
     _validar_proyecto(db, proyecto_id)
     verificar_rol_proyecto(db, current_user, proyecto_id, RolColaborador.ARQUITECTO)
 
-    colaborador = colaborador_service.actualizar_colaborador(db, proyecto_id, colaborador_id, datos)
+    try:
+        colaborador = colaborador_service.actualizar_rol(db, proyecto_id, colaborador_id, datos)
+    except ValueError as error:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error))
+
     if not colaborador:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Colaborador no encontrado")
     return colaborador
@@ -77,6 +80,11 @@ def delete_colaborador(
     _validar_proyecto(db, proyecto_id)
     verificar_rol_proyecto(db, current_user, proyecto_id, RolColaborador.ARQUITECTO)
 
-    if not colaborador_service.eliminar_colaborador(db, proyecto_id, colaborador_id):
+    try:
+        eliminado = colaborador_service.eliminar_colaborador(db, proyecto_id, colaborador_id)
+    except ValueError as error:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error))
+
+    if not eliminado:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Colaborador no encontrado")
     return None
