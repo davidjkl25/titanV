@@ -45,11 +45,14 @@ export const Sidebar = ({ activeTab, onSelectTab, onLogout, bloqueado = false }:
         <a style={{ cursor: 'pointer' }} className={claseItem('usuarios')} onClick={() => manejarClick('usuarios')}>
           Gestión de Usuarios {icono('usuarios')}
         </a>
-        <a style={{ cursor: 'pointer' }} className={claseItem('productos')} onClick={() => manejarClick('productos')}>
-          Catálogo / Productos {icono('productos')}
-        </a>
         <a style={{ cursor: 'pointer' }} className={claseItem('tareas')} onClick={() => manejarClick('tareas')}>
           Gestión de Tareas {icono('tareas')}
+        </a>
+        <a style={{ cursor: 'pointer' }} className={claseItem('turnos')} onClick={() => manejarClick('turnos')}>
+          Turnos y Asistencia {icono('turnos')}
+        </a>
+        <a style={{ cursor: 'pointer' }} className={claseItem('evidencias')} onClick={() => manejarClick('evidencias')}>
+          Evidencias {icono('evidencias')}
         </a>
 
         <a onClick={onLogout} style={{ marginTop: '20px', color: '#ff4757', cursor: 'pointer' }}>

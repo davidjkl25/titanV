@@ -6,8 +6,9 @@ import { InicioTab } from '../components/InicioTab';
 import { ProyectosTab } from '../components/ProyectosTab';
 import { MaterialesTab } from '../components/MaterialesTab';
 import Usuarios from '../components/Usuarios';
-import Productos from '../components/Productos';
 import TareasTab from '../components/TareasTab';
+import { TurnosTab } from '../components/TurnosTab';
+import { EvidenciasTab } from '../components/EvidenciasTab';
 
 interface DashboardPageProps {
   onLogout: () => void;
@@ -65,8 +66,9 @@ const DashboardPage = ({ onLogout }: DashboardPageProps) => {
 
         {!bloqueado && tabActual === 'materiales' && <MaterialesTab />}
         {!bloqueado && tabActual === 'usuarios' && <Usuarios />}
-        {!bloqueado && tabActual === 'productos' && <Productos />}
         {!bloqueado && tabActual === 'tareas' && <TareasTab />}
+        {!bloqueado && tabActual === 'turnos' && <TurnosTab />}
+        {!bloqueado && tabActual === 'evidencias' && <EvidenciasTab />}
       </div>
     </div>
   );
