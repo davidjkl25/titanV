@@ -24,10 +24,10 @@ from app.routers.invitacion_router import router as invitacion_router
 # Crear tablas automáticamente si la base de datos está disponible
 try:
     Base.metadata.create_all(bind=engine)
-    print("✅ [Titan V API] Tablas de base de datos conectadas y sincronizadas exitosamente.")
+    print("[Titan V OK] Tablas de base de datos conectadas y sincronizadas exitosamente.")
 except Exception as e:
-    print(f"⚠️ [Titan V API] Advertencia al conectar con la base de datos: {e}")
-    print("👉 Asegúrate de que el servicio de PostgreSQL esté iniciado y revisa la variable DATABASE_URL en tu archivo backend/.env")
+    print(f"[Titan V WARN] Advertencia al conectar con la base de datos: {e}")
+    print("[Titan V WARN] Asegurate de que el servicio de PostgreSQL este iniciado y revisa la variable DATABASE_URL en tu archivo backend/.env")
 
 app = FastAPI(title="Titan V API")
 

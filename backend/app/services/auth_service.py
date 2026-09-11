@@ -1,4 +1,3 @@
-import os
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
@@ -9,15 +8,11 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 
+from app.core.config import ALGORITHM, SECRET_KEY
 from app.core.database import get_db
 from app.models import Usuario
 from app.schemas import UsuarioLogin
 
-# La clave con la que se firman los tokens. En producción DEBE venir de una
-# variable de entorno real — el valor por defecto es solo para que el
-# proyecto no se caiga si alguien olvida configurar el .env en desarrollo.
-SECRET_KEY = os.getenv("JWT_SECRET_KEY", "clave-de-desarrollo-cambiar-en-produccion")
-ALGORITHM = "HS256"
 MINUTOS_EXPIRACION_TOKEN = 60 * 8  # 8 horas
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
