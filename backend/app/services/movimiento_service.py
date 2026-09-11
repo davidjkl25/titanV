@@ -59,10 +59,15 @@ def listar_movimientos(
     material_id: Optional[int] = None,
     skip: int = 0,
     limit: int = 100,
+    proyectos_permitidos: Optional[list] = None,
 ):
     query = db.query(HistorialMovimiento)
     if proyecto_id is not None:
         query = query.filter(HistorialMovimiento.proyecto_id == proyecto_id)
+    elif proyectos_permitidos is not None:
+        if not proyectos_permitidos:
+            return []
+        query = query.filter(HistorialMovimiento.proyecto_id.in_(proyectos_permitidos))
     if material_id is not None:
         query = query.filter(HistorialMovimiento.material_id == material_id)
     return query.order_by(HistorialMovimiento.fecha_movimiento.desc()).offset(skip).limit(limit).all()

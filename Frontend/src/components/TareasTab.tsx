@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { fetchConToken } from '../api';
 import Comentarios from './Comentarios';
 
 export interface Tarea {
@@ -52,10 +53,15 @@ const TareasTab: React.FC = () => {
   const [notificacion, setNotificacion] = useState<{ tipo: 'exito' | 'error'; texto: string } | null>(null);
 
   useEffect(() => {
-    obtenerTareas();
     obtenerProyectos();
     obtenerUsuarios();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (proyectoId) obtenerTareas(Number(proyectoId));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [proyectoId]);
 
   const mostrarNotificacion = (tipo: 'exito' | 'error', texto: string) => {
     setNotificacion({ tipo, texto });
@@ -66,10 +72,14 @@ const TareasTab: React.FC = () => {
 
   const obtenerProyectos = async () => {
     try {
-      const respuesta = await axios.get<Proyecto[]>(`${API_URL}/proyectos/`);
-      setProyectos(respuesta.data);
-      if (respuesta.data.length > 0) {
-        setProyectoId(respuesta.data[0].id);
+      // El backend filtra por la identidad del token: solo proyectos donde el
+      // usuario autenticado es colaborador.
+      const respuesta = await fetchConToken('/proyectos/');
+      if (!respuesta.ok) throw new Error('No se pudieron cargar proyectos.');
+      const data = await respuesta.json();
+      setProyectos(data);
+      if (data.length > 0) {
+        setProyectoId(data[0].id);
       }
     } catch (error) {
       console.warn('No se pudieron cargar proyectos:', error);
@@ -97,11 +107,13 @@ const TareasTab: React.FC = () => {
     return error.response?.data?.detail || error.message || fallback;
   };
 
-  const obtenerTareas = async () => {
+  const obtenerTareas = async (idProyecto?: number) => {
     try {
       setCargando(true);
-      const respuesta = await axios.get<Tarea[]>(`${API_URL}/tareas/`);
-      setTareas(respuesta.data);
+      const query = idProyecto ? `/?proyecto_id=${idProyecto}` : '/';
+      const respuesta = await fetchConToken(`/tareas${query}`);
+      if (!respuesta.ok) throw new Error('No se pudieron cargar las tareas.');
+      setTareas(await respuesta.json());
     } catch (error: any) {
       console.error('Error al cargar las tareas:', error);
       mostrarNotificacion('error', formatearError(error, 'No se pudieron cargar las tareas desde el backend.'));
@@ -475,7 +487,7 @@ const TareasTab: React.FC = () => {
                   ))}
                 </select>
                 <button
-                  onClick={obtenerTareas}
+                  onClick={() => obtenerTareas(Number(proyectoId))}
                   title="Recargar tareas"
                   style={{
                     backgroundColor: '#f1f5f9',

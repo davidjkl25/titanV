@@ -14,6 +14,17 @@ def _adaptar(colaborador: ProyectoColaborador) -> ProyectoColaborador:
     return colaborador
 
 
+def proyectos_de_usuario(db: Session, usuario_id: int) -> List[int]:
+    """Ids de los proyectos donde el usuario participa como colaborador. Un
+    usuario SOLO debe ver y tocar datos de estos proyectos."""
+    filas = (
+        db.query(ProyectoColaborador.proyecto_id)
+        .filter(ProyectoColaborador.usuario_id == usuario_id)
+        .all()
+    )
+    return [fila[0] for fila in filas]
+
+
 def listar_colaboradores(db: Session, proyecto_id: int) -> List[ProyectoColaborador]:
     colaboradores = (
         db.query(ProyectoColaborador).filter(ProyectoColaborador.proyecto_id == proyecto_id).all()

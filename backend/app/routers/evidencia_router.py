@@ -1,12 +1,13 @@
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.core.deps import get_current_user
 from app.models import Usuario
 from app.schemas import EvidenciaResponse
-from app.services import auth_service, reporte_service, tarea_service
+from app.services import colaborador_service, reporte_service, tarea_service
 
 router = APIRouter(prefix="/tareas/{tarea_id}/evidencias", tags=["Evidencias"])
 
@@ -16,22 +17,44 @@ def _validar_tarea(db: Session, tarea_id: int):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tarea no encontrada")
 
 
-@router.get("/", response_model=List[EvidenciaResponse])
-def get_evidencias(tarea_id: int, incluir_eliminadas: bool = False, db: Session = Depends(get_db)):
+def _validar_acceso(db: Session, tarea_id: int, usuario: Usuario):
     _validar_tarea(db, tarea_id)
+    tarea = tarea_service.obtener_tarea(db, tarea_id)
+    if colaborador_service.obtener_rol_de_usuario(db, tarea.proyecto_id, usuario.id_usuario) is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No eres colaborador del proyecto de esta tarea",
+        )
+
+
+@router.get("/", response_model=List[EvidenciaResponse])
+def get_evidencias(
+    tarea_id: int,
+    incluir_eliminadas: bool = False,
+    current_user: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    _validar_acceso(db, tarea_id, current_user)
     return reporte_service.listar_evidencias(db, tarea_id, incluir_eliminadas)
 
 
 @router.post("/", response_model=EvidenciaResponse, status_code=status.HTTP_201_CREATED)
 async def subir_evidencia(
     tarea_id: int,
-    usuario_id: int,
+    usuario_id: int = Query(
+        ..., description="ID del usuario que sube la evidencia (se valida contra el token)"
+    ),
     archivo: UploadFile = File(...),
     descripcion: Optional[str] = Form(None),
     db: Session = Depends(get_db),
-    usuario_actual: Usuario = Depends(auth_service.obtener_usuario_actual),
+    current_user: Usuario = Depends(get_current_user),
 ):
-    _validar_tarea(db, tarea_id)
+    _validar_acceso(db, tarea_id, current_user)
+    if usuario_id != current_user.id_usuario:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Solo puedes subir evidencias a tu propio nombre.",
+        )
     try:
         return await reporte_service.subir_evidencia(db, tarea_id, usuario_id, archivo, descripcion)
     except ValueError as error:
@@ -43,8 +66,9 @@ def delete_evidencia(
     tarea_id: int,
     evidencia_id: int,
     db: Session = Depends(get_db),
-    usuario_actual: Usuario = Depends(auth_service.obtener_usuario_actual),
+    current_user: Usuario = Depends(get_current_user),
 ):
+    _validar_acceso(db, tarea_id, current_user)
     if not reporte_service.eliminar_evidencia(db, evidencia_id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Evidencia no encontrada")
     return None
