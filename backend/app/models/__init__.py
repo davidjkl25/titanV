@@ -11,6 +11,7 @@ from app.models.material_model import HistorialMovimiento, InventarioObra, Mater
 from app.models.tarea_model import Comentario, EstadoTarea, Tarea
 from app.models.asistencia_model import TurnoRelevo
 from app.models.reporte_model import ActaCampo, EvidenciaMultimedia
+from app.models.invitacion_model import EnlaceInvitacion
 
 __all__ = [
     "Usuario",
@@ -31,4 +32,5 @@ __all__ = [
     "TurnoRelevo",
     "EvidenciaMultimedia",
     "ActaCampo",
+    "EnlaceInvitacion",
 ]

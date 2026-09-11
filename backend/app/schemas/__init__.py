@@ -48,6 +48,11 @@ from app.schemas.asistencia_schema import (
     TurnoUpdate,
 )
 from app.schemas.reporte_schema import EvidenciaResponse
+from app.schemas.invitacion_schema import (
+    AceptarInvitacionResponse,
+    EnlaceInvitacionCreate,
+    EnlaceInvitacionResponse,
+)
 
 __all__ = [
     "UsuarioBase", "UsuarioCreate", "UsuarioUpdate", "UsuarioResponse", "UsuarioLogin", "TokenResponse", "GoogleAuthRequest",
@@ -59,4 +64,5 @@ __all__ = [
     "TareaBase", "TareaCreate", "TareaUpdate", "TareaResponse",
     "TurnoBase", "TurnoCreate", "TurnoUpdate", "TurnoResponse",
     "EvidenciaResponse",
+    "EnlaceInvitacionCreate", "EnlaceInvitacionResponse", "AceptarInvitacionResponse",
 ]

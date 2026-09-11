@@ -3,11 +3,15 @@ import { BrowserRouter, Navigate, Route, Routes, useNavigate } from 'react-route
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
+import AceptarInvitacionPage from './pages/AceptarInvitacionPage';
 import './App.css';
 
 // Componente interno para manejar la redirección DESPUÉS de que el estado cambie
 function AppRoutes() {
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  // Antes esto siempre arrancaba en false, así que recargar la página con
+  // sesión iniciada te mandaba de vuelta al login aunque el token siguiera
+  // guardado. Ahora arranca según si hay token o no.
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => !!localStorage.getItem('token'));
   const navigate = useNavigate();
 
   const handleLoginSuccess = () => {
@@ -22,8 +26,9 @@ function AppRoutes() {
   };
 
   // Cuando isLoggedIn cambia a true, navega al dashboard
+  // (a menos que haya una invitación pendiente por aceptar, ver AceptarInvitacionPage)
   useEffect(() => {
-    if (isLoggedIn) {
+    if (isLoggedIn && !sessionStorage.getItem('invitacion_pendiente')) {
       navigate('/dashboard', { replace: true });
     }
   }, [isLoggedIn]);
@@ -50,6 +55,10 @@ function AppRoutes() {
             <Navigate to="/login" replace />
           )
         }
+      />
+      <Route
+        path="/invitacion/:token"
+        element={<AceptarInvitacionPage isLoggedIn={isLoggedIn} onLoginSuccess={handleLoginSuccess} />}
       />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

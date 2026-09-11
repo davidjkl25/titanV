@@ -23,11 +23,17 @@ interface Proyecto {
   nombre_proyecto: string;
 }
 
+interface Usuario {
+  id: number;
+  nombre_completo: string;
+}
+
 const ESTADOS_DISPONIBLES = ['Pendiente', 'En Proceso', 'Completada'];
 
 const TareasTab: React.FC = () => {
   const [tareas, setTareas] = useState<Tarea[]>([]);
   const [proyectos, setProyectos] = useState<Proyecto[]>([]);
+  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [cargando, setCargando] = useState<boolean>(false);
   const [guardando, setGuardando] = useState<boolean>(false);
 
@@ -48,6 +54,7 @@ const TareasTab: React.FC = () => {
   useEffect(() => {
     obtenerTareas();
     obtenerProyectos();
+    obtenerUsuarios();
   }, []);
 
   const mostrarNotificacion = (tipo: 'exito' | 'error', texto: string) => {
@@ -68,6 +75,20 @@ const TareasTab: React.FC = () => {
       console.warn('No se pudieron cargar proyectos:', error);
     }
   };
+
+  const obtenerUsuarios = async () => {
+    try {
+      const respuesta = await axios.get<Usuario[]>(`${API_URL}/usuarios/`, authHeaders());
+      setUsuarios(respuesta.data);
+      if (respuesta.data.length > 0) {
+        setUsuarioId(respuesta.data[0].id);
+      }
+    } catch (error) {
+      console.warn('No se pudieron cargar usuarios:', error);
+    }
+  };
+
+  const nombreUsuario = (id: number) => usuarios.find((u) => u.id === id)?.nombre_completo || `Usuario #${id}`;
 
   const formatearError = (error: any, fallback: string) => {
     if (error.code === 'ERR_NETWORK' || error.message === 'Network Error' || !error.response) {
@@ -358,13 +379,11 @@ const TareasTab: React.FC = () => {
 
             <div>
               <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '4px', textTransform: 'uppercase' }}>
-                ID Operario Asignado
+                Asignar a
               </label>
-              <input
-                type="number"
-                min="1"
+              <select
                 value={usuarioId}
-                onChange={(e) => setUsuarioId(Number(e.target.value) || 1)}
+                onChange={(e) => setUsuarioId(Number(e.target.value))}
                 style={{
                   width: '100%',
                   padding: '10px',
@@ -374,7 +393,12 @@ const TareasTab: React.FC = () => {
                   boxSizing: 'border-box',
                 }}
                 required
-              />
+              >
+                <option value="" disabled>Selecciona un operario</option>
+                {usuarios.map((u) => (
+                  <option key={u.id} value={u.id}>{u.nombre_completo}</option>
+                ))}
+              </select>
             </div>
 
             <button
@@ -561,7 +585,7 @@ const TareasTab: React.FC = () => {
                       >
                         <div style={{ display: 'flex', gap: '12px' }}>
                           <span>🏗 Proyecto: #{t.proyecto_id}</span>
-                          <span>👤 Operario: #{t.usuario_id}</span>
+                          <span>👤 Operario: {nombreUsuario(t.usuario_id)}</span>
                         </div>
 
                         {/* Botones de acción */}

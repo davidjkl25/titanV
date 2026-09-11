@@ -38,7 +38,7 @@ async def guardar_archivo_en_disco(archivo: UploadFile) -> str:
 
 
 async def subir_evidencia(
-    db: Session, proyecto_id: int, usuario_id: int, archivo: UploadFile, descripcion: Optional[str] = None
+    db: Session, tarea_id: int, usuario_id: int, archivo: UploadFile, descripcion: Optional[str] = None
 ) -> EvidenciaMultimedia:
     if not archivo.filename or not _extension_valida(archivo.filename):
         raise ValueError(
@@ -48,7 +48,7 @@ async def subir_evidencia(
     ruta = await guardar_archivo_en_disco(archivo)
 
     nueva_evidencia = EvidenciaMultimedia(
-        proyecto_id=proyecto_id,
+        tarea_id=tarea_id,
         usuario_id=usuario_id,
         nombre_archivo=archivo.filename,
         ruta_archivo=ruta,
@@ -60,8 +60,8 @@ async def subir_evidencia(
     return nueva_evidencia
 
 
-def listar_evidencias(db: Session, proyecto_id: int, incluir_eliminadas: bool = False) -> List[EvidenciaMultimedia]:
-    query = db.query(EvidenciaMultimedia).filter(EvidenciaMultimedia.proyecto_id == proyecto_id)
+def listar_evidencias(db: Session, tarea_id: int, incluir_eliminadas: bool = False) -> List[EvidenciaMultimedia]:
+    query = db.query(EvidenciaMultimedia).filter(EvidenciaMultimedia.tarea_id == tarea_id)
     if not incluir_eliminadas:
         query = sin_eliminados(query, EvidenciaMultimedia)
     return query.order_by(EvidenciaMultimedia.fecha_subida.desc()).all()
