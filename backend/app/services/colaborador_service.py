@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from sqlalchemy.orm import Session
 
@@ -42,13 +42,25 @@ def obtener_colaborador(db: Session, proyecto_id: int, colaborador_id: int) -> O
 
 
 def obtener_rol_de_usuario(db: Session, proyecto_id: int, usuario_id: int) -> Optional[RolProyecto]:
-    """Para más adelante: consultar con qué rol participa (o no) un usuario en un proyecto."""
+    """Consultar con qué rol participa (o no) un usuario en un proyecto."""
     colaborador = (
         db.query(ProyectoColaborador)
         .filter(ProyectoColaborador.proyecto_id == proyecto_id, ProyectoColaborador.usuario_id == usuario_id)
         .first()
     )
     return RolProyecto(colaborador.rol) if colaborador else None
+
+
+def roles_de_usuario(db: Session, usuario_id: int) -> Dict[int, RolProyecto]:
+    """Rol del usuario en cada proyecto donde participa: {proyecto_id: RolProyecto}.
+    Permite pintar en el panel el distintivo de rol (Arquitecto/Trabajador/Visualizador)
+    sin hacer una consulta por proyecto."""
+    filas = (
+        db.query(ProyectoColaborador.proyecto_id, ProyectoColaborador.rol)
+        .filter(ProyectoColaborador.usuario_id == usuario_id)
+        .all()
+    )
+    return {proyecto_id: RolProyecto(rol) for proyecto_id, rol in filas}
 
 
 def agregar_arquitecto(db: Session, proyecto_id: int, usuario_id: int) -> ProyectoColaborador:
