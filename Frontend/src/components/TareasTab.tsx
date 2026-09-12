@@ -24,9 +24,11 @@ interface Proyecto {
   nombre_proyecto: string;
 }
 
-interface Usuario {
-  id: number;
-  nombre_completo: string;
+// Colaboradores del proyecto activo: solo ellos deberían asignarse a una tarea.
+interface Colaborador {
+  usuario_id: number;
+  usuario_nombre: string;
+  rol: string;
 }
 
 const ESTADOS_DISPONIBLES = ['Pendiente', 'En Proceso', 'Completada'];
@@ -38,7 +40,7 @@ interface TareasTabProps {
 const TareasTab: React.FC<TareasTabProps> = ({ proyectoId: proyectoFijo }) => {
   const [tareas, setTareas] = useState<Tarea[]>([]);
   const [proyectos, setProyectos] = useState<Proyecto[]>([]);
-  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
+  const [colaboradores, setColaboradores] = useState<Colaborador[]>([]);
   const [cargando, setCargando] = useState<boolean>(false);
   const [guardando, setGuardando] = useState<boolean>(false);
 
@@ -58,12 +60,14 @@ const TareasTab: React.FC<TareasTabProps> = ({ proyectoId: proyectoFijo }) => {
 
   useEffect(() => {
     obtenerProyectos();
-    obtenerUsuarios();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    if (proyectoId) obtenerTareas(Number(proyectoId));
+    if (proyectoId) {
+      obtenerTareas(Number(proyectoId));
+      obtenerColaboradores(Number(proyectoId));
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [proyectoId]);
 
@@ -93,19 +97,24 @@ const TareasTab: React.FC<TareasTabProps> = ({ proyectoId: proyectoFijo }) => {
     }
   };
 
-  const obtenerUsuarios = async () => {
+  const obtenerColaboradores = async (idProyecto: number) => {
     try {
-      const respuesta = await axios.get<Usuario[]>(`${API_URL}/usuarios/`, authHeaders());
-      setUsuarios(respuesta.data);
-      if (respuesta.data.length > 0) {
-        setUsuarioId(respuesta.data[0].id);
+      // Solo el equipo del proyecto: no todos los usuarios del sistema.
+      const respuesta = await fetchConToken(`/proyectos/${idProyecto}/colaboradores/`);
+      if (!respuesta.ok) throw new Error('No se pudieron cargar los colaboradores.');
+      const data = await respuesta.json();
+      setColaboradores(data);
+      if (data.length > 0) {
+        setUsuarioId(data[0].usuario_id);
       }
     } catch (error) {
-      console.warn('No se pudieron cargar usuarios:', error);
+      console.warn('No se pudieron cargar los colaboradores:', error);
+      setColaboradores([]);
     }
   };
 
-  const nombreUsuario = (id: number) => usuarios.find((u) => u.id === id)?.nombre_completo || `Usuario #${id}`;
+  const nombreUsuario = (id: number) =>
+    colaboradores.find((c) => c.usuario_id === id)?.usuario_nombre || `Operario #${id}`;
 
   const formatearError = (error: any, fallback: string) => {
     if (error.code === 'ERR_NETWORK' || error.message === 'Network Error' || !error.response) {
@@ -398,7 +407,7 @@ const TareasTab: React.FC<TareasTabProps> = ({ proyectoId: proyectoFijo }) => {
 
             <div>
               <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '4px', textTransform: 'uppercase' }}>
-                Asignar a
+                Asignar a (equipo del proyecto)
               </label>
               <select
                 value={usuarioId}
@@ -414,8 +423,11 @@ const TareasTab: React.FC<TareasTabProps> = ({ proyectoId: proyectoFijo }) => {
                 required
               >
                 <option value="" disabled>Selecciona un operario</option>
-                {usuarios.map((u) => (
-                  <option key={u.id} value={u.id}>{u.nombre_completo}</option>
+                {colaboradores.length === 0 && (
+                  <option value="" disabled>No hay colaboradores en este proyecto</option>
+                )}
+                {colaboradores.map((c) => (
+                  <option key={c.usuario_id} value={c.usuario_id}>{c.usuario_nombre}</option>
                 ))}
               </select>
             </div>

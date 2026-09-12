@@ -16,9 +16,11 @@ interface Proyecto {
   nombre_proyecto: string;
 }
 
-interface Usuario {
-  id: number;
-  nombre_completo: string;
+// Colaboradores del proyecto activo: solo ellos deberían poder asignarse a un turno.
+interface Colaborador {
+  usuario_id: number;
+  usuario_nombre: string;
+  rol: string;
 }
 
 const ESTADOS = ['Programado', 'Presente', 'Ausente'];
@@ -30,7 +32,7 @@ interface TurnosTabProps {
 export const TurnosTab = ({ proyectoId: proyectoFijo }: TurnosTabProps) => {
   const [turnos, setTurnos] = useState<Turno[]>([]);
   const [proyectos, setProyectos] = useState<Proyecto[]>([]);
-  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
+  const [colaboradores, setColaboradores] = useState<Colaborador[]>([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
   const [guardando, setGuardando] = useState(false);
@@ -47,16 +49,14 @@ export const TurnosTab = ({ proyectoId: proyectoFijo }: TurnosTabProps) => {
     setError('');
     try {
       const queryTurnos = proyectoFijo ? `?proyecto_id=${proyectoFijo}` : '';
-      const [rTurnos, rProyectos, rUsuarios] = await Promise.all([
+      const [rTurnos, rProyectos] = await Promise.all([
         fetchConToken(`/turnos/${queryTurnos}`),
         fetchConToken('/proyectos/'),
-        fetchConToken('/usuarios/'),
       ]);
       if (!rTurnos.ok) throw new Error('No se pudieron cargar los turnos.');
       setTurnos(await rTurnos.json());
       const dataProyectos = rProyectos.ok ? await rProyectos.json() : [];
       setProyectos(proyectoFijo ? dataProyectos.filter((p: Proyecto) => p.id === proyectoFijo) : dataProyectos);
-      setUsuarios(rUsuarios.ok ? await rUsuarios.json() : []);
       if (proyectoFijo) setProyectoId(proyectoFijo);
     } catch (err: any) {
       setError(err.message || 'No se pudieron cargar los turnos.');
@@ -65,12 +65,38 @@ export const TurnosTab = ({ proyectoId: proyectoFijo }: TurnosTabProps) => {
     }
   };
 
+  const cargarColaboradores = async (idProyecto: number) => {
+    try {
+      const respuesta = await fetchConToken(`/proyectos/${idProyecto}/colaboradores/`);
+      if (!respuesta.ok) {
+        setColaboradores([]);
+        return;
+      }
+      const data = await respuesta.json();
+      setColaboradores(data);
+      if (data.length > 0 && usuarioId === '') {
+        setUsuarioId(data[0].usuario_id);
+      }
+    } catch {
+      setColaboradores([]);
+    }
+  };
+
   useEffect(() => {
     cargarTodo();
   }, []);
 
+  useEffect(() => {
+    if (proyectoId !== '') {
+      cargarColaboradores(Number(proyectoId));
+      setUsuarioId('');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [proyectoId]);
+
   const nombreProyecto = (id: number) => proyectos.find((p) => p.id === id)?.nombre_proyecto || `Proyecto #${id}`;
-  const nombreUsuario = (id: number) => usuarios.find((u) => u.id === id)?.nombre_completo || `Usuario #${id}`;
+  const nombreUsuario = (id: number) =>
+    colaboradores.find((c) => c.usuario_id === id)?.usuario_nombre || `Usuario #${id}`;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -149,7 +175,10 @@ export const TurnosTab = ({ proyectoId: proyectoFijo }: TurnosTabProps) => {
               <label>Operario</label>
               <select value={usuarioId} onChange={(e) => setUsuarioId(e.target.value ? Number(e.target.value) : '')} required>
                 <option value="">Selecciona un operario</option>
-                {usuarios.map((u) => <option key={u.id} value={u.id}>{u.nombre_completo}</option>)}
+                {colaboradores.length === 0 && (
+                  <option value="" disabled>Sin colaboradores en el proyecto seleccionado</option>
+                )}
+                {colaboradores.map((c) => <option key={c.usuario_id} value={c.usuario_id}>{c.usuario_nombre}</option>)}
               </select>
             </div>
             <div className="input-group">
