@@ -31,7 +31,11 @@ interface Usuario {
 
 const ESTADOS_DISPONIBLES = ['Pendiente', 'En Proceso', 'Completada'];
 
-const TareasTab: React.FC = () => {
+interface TareasTabProps {
+  proyectoId?: number;
+}
+
+const TareasTab: React.FC<TareasTabProps> = ({ proyectoId: proyectoFijo }) => {
   const [tareas, setTareas] = useState<Tarea[]>([]);
   const [proyectos, setProyectos] = useState<Proyecto[]>([]);
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
@@ -42,7 +46,7 @@ const TareasTab: React.FC = () => {
   const [nombreTarea, setNombreTarea] = useState<string>('');
   const [descripcion, setDescripcion] = useState<string>('');
   const [estado, setEstado] = useState<string>('Pendiente');
-  const [proyectoId, setProyectoId] = useState<number>(1);
+  const [proyectoId, setProyectoId] = useState<number>(proyectoFijo ?? 1);
   const [usuarioId, setUsuarioId] = useState<number>(1);
 
   // Tarea seleccionada para comentarios
@@ -77,9 +81,12 @@ const TareasTab: React.FC = () => {
       const respuesta = await fetchConToken('/proyectos/');
       if (!respuesta.ok) throw new Error('No se pudieron cargar proyectos.');
       const data = await respuesta.json();
-      setProyectos(data);
-      if (data.length > 0) {
-        setProyectoId(data[0].id);
+      const visibles = proyectoFijo ? (data as Proyecto[]).filter((p) => p.id === proyectoFijo) : data;
+      setProyectos(visibles);
+      if (visibles.length > 0) {
+        setProyectoId(visibles[0].id);
+      } else if (proyectoFijo) {
+        setProyectoId(proyectoFijo);
       }
     } catch (error) {
       console.warn('No se pudieron cargar proyectos:', error);

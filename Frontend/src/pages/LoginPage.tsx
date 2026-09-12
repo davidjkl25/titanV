@@ -9,13 +9,6 @@ interface LoginPageProps {
   onLoginSuccess: () => void;
 }
 
-interface GoogleUserInfo {
-  email: string;
-  name: string;
-  picture?: string;
-  sub: string;
-}
-
 const API_URL = 'http://localhost:8000';
 
 const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
@@ -55,25 +48,15 @@ const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
 
   // ── GOOGLE OAUTH REAL ────────────────────────────────────────────────────────
   // Abre la ventana emergente ORIGINAL de Google (selector de cuenta).
-  // Después de elegir la cuenta, obtiene el perfil del usuario y lo registra
-  // o inicia sesión en PostgreSQL automáticamente via /auth/google del backend.
+  // El access_token obtenido se envía al backend, que lo vuelve a verificar
+  // contra Google server-side y toma de ahí el correo/nombre verificados.
+  // No se llama a googleapis userinfo desde el navegador: ese request
+  // cross-origin falla por CORS y produciría "Network Error".
   const iniciarConGoogle = useGoogleLogin({
     flow: 'implicit',
     onSuccess: async (tokenResponse) => {
       try {
-        // Obtener datos reales del perfil de la cuenta de Google seleccionada
-        const infoRes = await axios.get<GoogleUserInfo>(
-          'https://www.googleapis.com/oauth2/v3/userinfo',
-          { headers: { Authorization: `Bearer ${tokenResponse.access_token}` } }
-        );
-
-        const userInfo = infoRes.data;
-
-        // Registrar o autenticar en PostgreSQL via FastAPI
         const respuesta = await axios.post(`${API_URL}/auth/google`, {
-          correo_electronico: userInfo.email,
-          nombre_completo: userInfo.name,
-          foto_url: userInfo.picture || null,
           credential: tokenResponse.access_token,
         });
 

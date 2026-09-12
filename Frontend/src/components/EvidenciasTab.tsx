@@ -19,7 +19,11 @@ interface Tarea {
 
 const API_URL = 'http://localhost:8000';
 
-export const EvidenciasTab = () => {
+interface EvidenciasTabProps {
+  proyectoId?: number;
+}
+
+export const EvidenciasTab = ({ proyectoId: proyectoFijo }: EvidenciasTabProps) => {
   const [tareas, setTareas] = useState<Tarea[]>([]);
   const [tareaId, setTareaId] = useState<number | ''>('');
   const [evidencias, setEvidencias] = useState<Evidencia[]>([]);
@@ -33,7 +37,8 @@ export const EvidenciasTab = () => {
   const usuarioId = localStorage.getItem('usuario_id') || '1';
 
   const cargarTareas = async () => {
-    const respuesta = await fetchConToken('/tareas/');
+    const query = proyectoFijo ? `/?proyecto_id=${proyectoFijo}` : '';
+    const respuesta = await fetchConToken(`/tareas${query}`);
     if (respuesta.ok) {
       const data = await respuesta.json();
       setTareas(data);

@@ -2,15 +2,18 @@ interface SidebarProps {
   activeTab: string;
   onSelectTab: (tab: string) => void;
   onLogout: () => void;
-  bloqueado?: boolean;
+  proyecto: { id: number; nombre_proyecto: string } | null;
+  onSalirProyecto: () => void;
 }
 
-const ITEMS_LIBRES = ['inicio', 'proyectos'];
+const ITEMS_MODULO = ['colaboradores', 'materiales', 'tareas', 'turnos', 'evidencias'];
 
-export const Sidebar = ({ activeTab, onSelectTab, onLogout, bloqueado = false }: SidebarProps) => {
+export const Sidebar = ({ activeTab, onSelectTab, onLogout, proyecto, onSalirProyecto }: SidebarProps) => {
+  const sinProyecto = !proyecto;
+
   const manejarClick = (tab: string) => {
-    if (bloqueado && !ITEMS_LIBRES.includes(tab)) {
-      alert('Primero crea tu primer proyecto en "Proyectos de Obra" para desbloquear esta sección.');
+    if (sinProyecto && ITEMS_MODULO.includes(tab)) {
+      alert('Primero entra a un proyecto desde "Inicio" para desbloquear estas secciones.');
       return;
     }
     onSelectTab(tab);
@@ -18,12 +21,12 @@ export const Sidebar = ({ activeTab, onSelectTab, onLogout, bloqueado = false }:
 
   const claseItem = (tab: string) => {
     let clase = activeTab === tab ? 'active' : '';
-    if (bloqueado && !ITEMS_LIBRES.includes(tab)) clase += ' bloqueado';
+    if (sinProyecto && ITEMS_MODULO.includes(tab)) clase += ' bloqueado';
     return clase.trim();
   };
 
   const icono = (tab: string) =>
-    bloqueado && !ITEMS_LIBRES.includes(tab) ? (
+    sinProyecto && ITEMS_MODULO.includes(tab) ? (
       <i className="fas fa-lock" style={{ fontSize: '11px', marginLeft: '6px' }}></i>
     ) : null;
 
@@ -32,6 +35,43 @@ export const Sidebar = ({ activeTab, onSelectTab, onLogout, bloqueado = false }:
       <div className="logo">
         TITAN <span>V</span>
       </div>
+
+      {proyecto && (
+        <div
+          style={{
+            margin: '0 12px 14px',
+            padding: '12px 14px',
+            borderRadius: '10px',
+            backgroundColor: 'rgba(255, 214, 10, 0.12)',
+            border: '1px solid rgba(255, 214, 10, 0.4)',
+          }}
+        >
+          <div style={{ fontSize: '11px', color: '#ffd60a', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>
+            Proyecto activo
+          </div>
+          <div style={{ color: '#fff', fontSize: '14px', fontWeight: 700, marginBottom: '10px', wordBreak: 'break-word' }}>
+            <i className="fas fa-diagram-project" style={{ marginRight: '6px' }}></i>
+            {proyecto.nombre_proyecto}
+          </div>
+          <button
+            onClick={onSalirProyecto}
+            style={{
+              width: '100%',
+              backgroundColor: 'transparent',
+              color: '#ffd60a',
+              border: '1px solid #ffd60a',
+              borderRadius: '6px',
+              padding: '6px 10px',
+              fontWeight: 700,
+              fontSize: '12px',
+              cursor: 'pointer',
+            }}
+          >
+            Cambiar de proyecto
+          </button>
+        </div>
+      )}
+
       <div className="sidebar-menu">
         <a style={{ cursor: 'pointer' }} className={claseItem('inicio')} onClick={() => manejarClick('inicio')}>
           Inicio
@@ -39,11 +79,11 @@ export const Sidebar = ({ activeTab, onSelectTab, onLogout, bloqueado = false }:
         <a style={{ cursor: 'pointer' }} className={claseItem('proyectos')} onClick={() => manejarClick('proyectos')}>
           Proyectos de Obra
         </a>
+        <a style={{ cursor: 'pointer' }} className={claseItem('colaboradores')} onClick={() => manejarClick('colaboradores')}>
+          Colaboradores {icono('colaboradores')}
+        </a>
         <a style={{ cursor: 'pointer' }} className={claseItem('materiales')} onClick={() => manejarClick('materiales')}>
           Inventario Insumos {icono('materiales')}
-        </a>
-        <a style={{ cursor: 'pointer' }} className={claseItem('usuarios')} onClick={() => manejarClick('usuarios')}>
-          Gestión de Usuarios {icono('usuarios')}
         </a>
         <a style={{ cursor: 'pointer' }} className={claseItem('tareas')} onClick={() => manejarClick('tareas')}>
           Gestión de Tareas {icono('tareas')}

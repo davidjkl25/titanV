@@ -15,6 +15,12 @@ const ROL_LABEL: Record<string, string> = {
   Visualizador: 'Visualizador',
 };
 
+const RESTRICCIONES: Record<string, string[]> = {
+  Arquitecto: ['Control total del proyecto', 'Invita colaboradores por correo o enlace', 'Gestiona roles, evidencias e inventario'],
+  Trabajador: ['Crea y actualiza tareas y turnos', 'Sube evidencias de avance del proyecto', 'Registra entradas/salidas de material'],
+  Visualizador: ['Solo lectura: ver tareas, turnos, evidencias e inventario', 'No puede crear, editar ni eliminar registros'],
+};
+
 const AceptarInvitacionPage = ({ isLoggedIn, onLoginSuccess }: AceptarInvitacionPageProps) => {
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
@@ -135,10 +141,20 @@ const AceptarInvitacionPage = ({ isLoggedIn, onLoginSuccess }: AceptarInvitacion
   }
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#121212', color: 'white', gap: '16px' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#121212', color: 'white', gap: '16px', padding: '30px' }}>
       <h2 style={{ color: '#ffd60a' }}>¡Listo!</h2>
       <p>{mensaje}</p>
       <p>Tu rol en este proyecto: <strong>{ROL_LABEL[rol] || rol}</strong></p>
+      <div style={{ background: '#1e1e1e', border: '1px solid #333', borderRadius: '10px', padding: '16px 20px', maxWidth: '420px', width: '100%' }}>
+        <p style={{ color: '#ffd60a', fontWeight: 700, marginBottom: '8px', fontSize: '13px' }}>
+          Restricciones de tu rol en este proyecto:
+        </p>
+        <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '13px', color: '#ccc', lineHeight: '1.7' }}>
+          {(RESTRICCIONES[rol] || []).map((restriccion, i) => (
+            <li key={i}>{restriccion}</li>
+          ))}
+        </ul>
+      </div>
       <button
         onClick={() => navigate('/dashboard')}
         style={{ background: '#ffd60a', border: 'none', padding: '10px 20px', borderRadius: '999px', fontWeight: 700, cursor: 'pointer' }}
