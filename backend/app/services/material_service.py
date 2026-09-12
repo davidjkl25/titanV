@@ -7,11 +7,13 @@ from app.models import Material
 from app.schemas import MaterialCreate, MaterialUpdate
 
 
-def listar_materiales(db: Session, incluir_eliminados: bool = False, skip: int = 0, limit: int = 100):
-    query = db.query(Material)
+def listar_materiales(db: Session, proyecto_id: int, incluir_eliminados: bool = False, skip: int = 0, limit: int = 100):
+    """Solo los insumos del proyecto indicado. Cada proyecto tiene su propio
+    inventario: los materiales no se comparten entre proyectos."""
+    query = db.query(Material).filter(Material.proyecto_id == proyecto_id)
     if not incluir_eliminados:
         query = sin_eliminados(query, Material)
-    return query.offset(skip).limit(limit).all()
+    return query.order_by(Material.id.desc()).offset(skip).limit(limit).all()
 
 
 def obtener_material(db: Session, material_id: int, incluir_eliminados: bool = False) -> Optional[Material]:

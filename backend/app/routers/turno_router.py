@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.core.permissions import verificar_rol_proyecto
-from app.models import Usuario
+from app.models import RolProyecto, Usuario
 from app.schemas import TurnoCreate, TurnoResponse, TurnoUpdate
 from app.services import asistencia_service, colaborador_service
 
@@ -22,6 +22,14 @@ def _verificar_acceso_turno(db: Session, turno_id: int, usuario: Usuario):
             status_code=status.HTTP_403_FORBIDDEN,
             detail="No eres colaborador del proyecto de este turno",
         )
+    return turno
+
+
+def _verificar_escritura_turno(db: Session, turno_id: int, usuario: Usuario):
+    """Como _verificar_acceso_turno, pero además exige un rol de escritura
+    (Arquitecto o Trabajador). El Visualizador solo puede leer."""
+    turno = _verificar_acceso_turno(db, turno_id, usuario)
+    verificar_rol_proyecto(db, usuario, turno.proyecto_id, RolProyecto.ARQUITECTO, RolProyecto.TRABAJADOR)
     return turno
 
 
@@ -59,7 +67,7 @@ def create_turno(
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_user),
 ):
-    verificar_rol_proyecto(db, current_user, turno.proyecto_id)
+    verificar_rol_proyecto(db, current_user, turno.proyecto_id, RolProyecto.ARQUITECTO, RolProyecto.TRABAJADOR)
     return asistencia_service.crear_turno(db, turno)
 
 
@@ -70,7 +78,7 @@ def update_turno(
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_user),
 ):
-    _verificar_acceso_turno(db, turno_id, current_user)
+    _verificar_escritura_turno(db, turno_id, current_user)
     turno = asistencia_service.actualizar_turno(db, turno_id, turno_actualizado)
     if not turno:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Turno no encontrado")
@@ -83,7 +91,7 @@ def delete_turno(
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_user),
 ):
-    _verificar_acceso_turno(db, turno_id, current_user)
+    _verificar_escritura_turno(db, turno_id, current_user)
     if not asistencia_service.eliminar_turno(db, turno_id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Turno no encontrado")
     return None

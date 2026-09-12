@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.core.permissions import verificar_rol_proyecto
-from app.models import Usuario
+from app.models import RolProyecto, Usuario
 from app.schemas import ComentarioCreate, ComentarioResponse, TareaCreate, TareaResponse, TareaUpdate
 from app.services import colaborador_service, tarea_service
 
@@ -24,6 +24,14 @@ def _verificar_acceso_tarea(db: Session, tarea_id: int, usuario: Usuario):
             status_code=status.HTTP_403_FORBIDDEN,
             detail="No eres colaborador del proyecto de esta tarea",
         )
+    return tarea
+
+
+def _verificar_escritura_tarea(db: Session, tarea_id: int, usuario: Usuario):
+    """Como _verificar_acceso_tarea, pero además exige un rol de escritura
+    (Arquitecto o Trabajador). El Visualizador solo puede leer."""
+    tarea = _verificar_acceso_tarea(db, tarea_id, usuario)
+    verificar_rol_proyecto(db, usuario, tarea.proyecto_id, RolProyecto.ARQUITECTO, RolProyecto.TRABAJADOR)
     return tarea
 
 
@@ -66,7 +74,7 @@ def create_tarea(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Debes indicar el proyecto de la tarea.",
         )
-    verificar_rol_proyecto(db, current_user, tarea.proyecto_id)
+    verificar_rol_proyecto(db, current_user, tarea.proyecto_id, RolProyecto.ARQUITECTO, RolProyecto.TRABAJADOR)
     try:
         return tarea_service.crear_tarea(db, tarea)
     except HTTPException:
@@ -85,7 +93,7 @@ def update_tarea(
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_user),
 ):
-    _verificar_acceso_tarea(db, tarea_id, current_user)
+    _verificar_escritura_tarea(db, tarea_id, current_user)
     tarea = tarea_service.actualizar_tarea(db, tarea_id, tarea_actualizada)
     if not tarea:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tarea no encontrada")
@@ -98,7 +106,7 @@ def delete_tarea(
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_user),
 ):
-    _verificar_acceso_tarea(db, tarea_id, current_user)
+    _verificar_escritura_tarea(db, tarea_id, current_user)
     if not tarea_service.eliminar_tarea(db, tarea_id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tarea no encontrada")
     return None
@@ -110,7 +118,7 @@ def restaurar_tarea(
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_user),
 ):
-    _verificar_acceso_tarea(db, tarea_id, current_user)
+    _verificar_escritura_tarea(db, tarea_id, current_user)
     tarea = tarea_service.restaurar_tarea(db, tarea_id)
     if not tarea:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tarea no encontrada o no está eliminada")
@@ -141,7 +149,8 @@ def create_comentario(
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_user),
 ):
-    _verificar_acceso_tarea(db, tarea_id, current_user)
+    tarea = _verificar_acceso_tarea(db, tarea_id, current_user)
+    verificar_rol_proyecto(db, current_user, tarea.proyecto_id, RolProyecto.ARQUITECTO, RolProyecto.TRABAJADOR)
     return tarea_service.crear_comentario(db, tarea_id, current_user.id_usuario, comentario)
 
 
@@ -154,7 +163,13 @@ def delete_comentario(
     comentario = tarea_service.obtener_comentario(db, comentario_id)
     if not comentario:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Comentario no encontrado")
-    _verificar_acceso_tarea(db, comentario.tarea_id, current_user)
+    tarea = _verificar_acceso_tarea(db, comentario.tarea_id, current_user)
+    rol = colaborador_service.obtener_rol_de_usuario(db, tarea.proyecto_id, current_user.id_usuario)
+    if comentario.usuario_id != current_user.id_usuario and rol != RolProyecto.ARQUITECTO:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Solo puedes eliminar tus propios comentarios; el Arquitecto del proyecto puede eliminar cualquiera.",
+        )
     if not tarea_service.eliminar_comentario(db, comentario_id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Comentario no encontrado")
     return None

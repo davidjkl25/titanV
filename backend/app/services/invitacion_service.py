@@ -3,7 +3,7 @@ from typing import List, Optional
 
 from sqlalchemy.orm import Session
 
-from app.models import EnlaceInvitacion, ProyectoColaborador
+from app.models import EnlaceInvitacion, ProyectoColaborador, RolProyecto
 from app.schemas import EnlaceInvitacionCreate
 
 
@@ -52,6 +52,25 @@ def _obtener_enlace_valido(db: Session, token: str) -> Optional[EnlaceInvitacion
     return enlace
 
 
+def _validar_no_es_ultimo_arquitecto(db: Session, proyecto_id: int, colaborador_id_excluir: int) -> None:
+    """Un proyecto siempre debe conservar al menos un Arquitecto: un enlace no
+    debe poder degradar al único Arquitecto restante."""
+    otros_arquitectos = (
+        db.query(ProyectoColaborador)
+        .filter(
+            ProyectoColaborador.proyecto_id == proyecto_id,
+            ProyectoColaborador.rol == RolProyecto.ARQUITECTO.value,
+            ProyectoColaborador.id != colaborador_id_excluir,
+        )
+        .count()
+    )
+    if otros_arquitectos == 0:
+        raise ValueError(
+            "No puedes degradar al último Arquitecto del proyecto a través de este enlace. "
+            "Asigna otro Arquitecto primero."
+        )
+
+
 def aceptar_invitacion(db: Session, token: str, usuario_id: int) -> EnlaceInvitacion:
     """Vincula al usuario que abrió el link al proyecto, con el rol que trae el enlace.
 
@@ -72,6 +91,9 @@ def aceptar_invitacion(db: Session, token: str, usuario_id: int) -> EnlaceInvita
     )
 
     if colaborador_existente:
+        rol_actual = RolProyecto(colaborador_existente.rol)
+        if rol_actual == RolProyecto.ARQUITECTO and enlace.rol != RolProyecto.ARQUITECTO.value:
+            _validar_no_es_ultimo_arquitecto(db, enlace.proyecto_id, colaborador_existente.id)
         colaborador_existente.rol = enlace.rol
         db.commit()
     else:

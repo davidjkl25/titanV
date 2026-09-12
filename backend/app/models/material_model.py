@@ -17,10 +17,12 @@ class Material(Base):
     __tablename__ = "materiales"
 
     id = Column(Integer, primary_key=True, index=True)
+    proyecto_id = Column(Integer, ForeignKey("proyectos_obra.id", ondelete="CASCADE"), nullable=True)
     nombre_material = Column(String(100), nullable=False)
     unidad_medida = Column(String(50), nullable=False)
     fecha_eliminacion = Column(DateTime, nullable=True, default=None)
 
+    proyecto = relationship("ProyectoObra", back_populates="materiales")
     inventario = relationship("InventarioObra", back_populates="material", cascade="all, delete-orphan")
     historial_movimientos = relationship(
         "HistorialMovimiento", back_populates="material", cascade="all, delete-orphan"

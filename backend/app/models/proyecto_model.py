@@ -36,3 +36,4 @@ class ProyectoObra(Base):
     )
     actas_campo = relationship("ActaCampo", back_populates="proyecto", cascade="all, delete-orphan")
     colaboradores = relationship("ProyectoColaborador", back_populates="proyecto", cascade="all, delete-orphan")
+    materiales = relationship("Material", back_populates="proyecto", cascade="all, delete-orphan")

@@ -33,6 +33,11 @@ def crear_enlace(
 ):
     if not proyecto_service.obtener_proyecto(db, proyecto_id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Proyecto no encontrado")
+    if datos.rol == RolProyecto.ARQUITECTO:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Los enlaces solo conceden roles de colaborador (Trabajador o Visualizador).",
+        )
     _exigir_arquitecto(db, proyecto_id, usuario_actual)
     return invitacion_service.crear_enlace(db, proyecto_id, usuario_actual.id_usuario, datos)
 

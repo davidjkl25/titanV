@@ -17,6 +17,7 @@ from app.schemas.colaborador_schema import (
     ColaboradorInvitar,
     ColaboradorResponse,
     ColaboradorUpdate,
+    InvitacionCorreoResponse,
 )
 from app.schemas.proyecto_schema import (
     ProyectoBase,
@@ -57,6 +58,7 @@ from app.schemas.invitacion_schema import (
 __all__ = [
     "UsuarioBase", "UsuarioCreate", "UsuarioUpdate", "UsuarioResponse", "UsuarioLogin", "TokenResponse", "GoogleAuthRequest",
     "ColaboradorCreate", "ColaboradorInvitar", "ColaboradorUpdate", "ColaboradorResponse",
+    "InvitacionCorreoResponse",
     "ProyectoBase", "ProyectoCreate", "ProyectoUpdate", "ProyectoResponse",
     "MaterialBase", "MaterialCreate", "MaterialUpdate", "MaterialResponse",
     "RegistroMovimiento", "KardexResponse", "InventarioResponse",

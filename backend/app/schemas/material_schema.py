@@ -12,9 +12,10 @@ class MaterialBase(BaseModel):
 
 
 class MaterialCreate(MaterialBase):
-    """Esquema para registrar un nuevo tipo de material en el sistema."""
+    """Esquema para registrar un nuevo insumo. Cada material pertenece a un
+    proyecto puntual (proyecto_id), no es un catálogo global."""
 
-    pass
+    proyecto_id: int
 
 
 class MaterialUpdate(BaseModel):
@@ -26,6 +27,7 @@ class MaterialUpdate(BaseModel):
 
 class MaterialResponse(MaterialBase):
     id: int
+    proyecto_id: Optional[int] = None
 
     class Config:
         from_attributes = True

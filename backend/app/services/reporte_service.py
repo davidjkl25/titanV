@@ -67,6 +67,14 @@ def listar_evidencias(db: Session, tarea_id: int, incluir_eliminadas: bool = Fal
     return query.order_by(EvidenciaMultimedia.fecha_subida.desc()).all()
 
 
+def obtener_evidencia(db: Session, evidencia_id: int) -> Optional[EvidenciaMultimedia]:
+    return (
+        db.query(EvidenciaMultimedia)
+        .filter(EvidenciaMultimedia.id == evidencia_id, EvidenciaMultimedia.fecha_eliminacion.is_(None))
+        .first()
+    )
+
+
 def eliminar_evidencia(db: Session, evidencia_id: int) -> bool:
     """Soft delete: el archivo NO se borra del disco, solo se oculta del listado.
     Así, si hace falta revisar evidencia antigua de un reclamo, sigue disponible."""
