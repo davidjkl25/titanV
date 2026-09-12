@@ -18,7 +18,8 @@ cliente contratante sobre el avance de su proyecto, sin costos de licenciamiento
 
 - [x] Gestión de proyectos de obra (CRUD completo)
 - [x] Gestión de colaboradores por proyecto (roles: Arquitecto, Trabajador, Visualizador)
-- [x] Gestión de materiales (CRUD completo)
+- [x] Invitación por correo con enlace (SMTP): la persona no necesita cuenta previa
+- [x] Gestión de materiales (CRUD completo) **por proyecto** — cada obra tiene su propio inventario
 - [x] Gestión de usuarios (CRUD completo)
 - [x] Gestión de tareas y comentarios anidados (CRUD completo)
 - [x] Gestión de turnos y asistencia (CRUD completo)
@@ -29,6 +30,8 @@ cliente contratante sobre el avance de su proyecto, sin costos de licenciamiento
 - [x] Inicio de sesión con Google OAuth 2.0 (verificación server-side)
 - [x] Enlaces de invitación por proyecto (link con rol y expiración)
 - [x] Evidencias multimedia vinculadas a proyectos (subida de archivos con vista previa)
+- [x] Flujo de "proyecto activo": los módulos operativos requieren entrar a un proyecto
+- [x] Permisos por rol: el Visualizador solo lee; Arquitecto/Trabajador escriben
 - [x] Verificación de sesión activa
 
 ## 🛠️ Stack tecnológico
@@ -50,8 +53,8 @@ titanV/
 │   │   ├── main.tsx           # Entry point (GoogleOAuthProvider)
 │   │   ├── App.tsx            # Rutas y estado de autenticación
 │   │   ├── api.ts             # Helper fetchConToken (JWT automático)
-│   │   ├── components/        # Sidebar, Inicio, Proyectos, Materiales,
-│   │   │                      # Usuarios, Tareas, Comentarios, Turnos,
+│   │   ├── components/        # Sidebar, Inicio, Proyectos, Colaboradores,
+│   │   │                      # Materiales, Usuarios, Tareas, Comentarios, Turnos,
 │   │   │                      # Evidencias, Login, Registro, QuienesSomos
 │   │   └── pages/             # LandingPage, LoginPage, DashboardPage,
 │   │                          # AceptarInvitacionPage
@@ -87,6 +90,8 @@ titanV/
         │   └── invitacion_router.py    # enlaces y aceptación de invitación
         │
         └── services/         # Lógica de negocio (independiente de FastAPI)
+            ├── email_service.py   # envío de correos SMTP (invitaciones)
+            └── ...                # auth, colaborador, invitacion, material, reporte, …
 ```
 
 **Flujo de una petición:** `router` recibe la petición HTTP y valida con un `schema`
@@ -95,12 +100,28 @@ leer/escribir en PostgreSQL a través de `core/database.py`.
 
 ## 🔑 Sistema de invitaciones
 
-- El **Arquitecto** de un proyecto genera un enlace con un rol ya decidido
-  (Arquitecto, Trabajador o Visualizador) y un periodo de expiración (7 días).
-- Quien abre el enlace e inicia sesión queda vinculado al proyecto con ese rol,
-  sin que el Arquitecto necesite conocer su correo de antemano.
-- Si la persona ya era colaboradora, su rol se actualiza al del enlace.
+- El **Arquitecto** de un proyecto invita colaboradores desde el módulo
+  **Colaboradores**, indicando el correo y el rol (Trabajador o Visualizador).
+- El backend crea un enlace con expiración (7 días) y envía un correo SMTP con
+  el link; quien lo abre puede **registrarse e ingresar** sin que el Arquitecto
+  necesite conocer una cuenta previa.
+- Si la persona ya era colaboradora, su rol se actualiza al del enlace (con
+  protección para no dejar al proyecto sin Arquitecto).
+- Si el correo no puede enviarse (por ejemplo, sin SMTP configurado), la
+  respuesta incluye el enlace para que el Arquitecto lo comparta manualmente.
 - Los enlaces pueden listarse y revocarse en cualquier momento.
+
+## 👷 Permisos por rol
+
+| Rol          | Puede                                                                  | No puede                                                  |
+|--------------|------------------------------------------------------------------------|-----------------------------------------------------------|
+| Arquitecto   | Control total: invitar, cambiar roles, quitar colaboradores, CRUD       | —                                                         |
+| Trabajador   | Crear/editar tareas y turnos, subir evidencias, registrar movimientos   | Invitar ni administrar colaboradores                      |
+| Visualizador | Leer tareas, turnos, evidencias e inventario                            | Crear, editar, eliminar o subir registros                 |
+
+Los módulos operativos (Colaboradores, Insumos, Tareas, Turnos, Evidencias)
+solo se desbloquean al **entrar a un proyecto** desde Inicio o desde la barra
+lateral, que muestra el proyecto activo y permite cambiarlo en cualquier momento.
 
 ## 📡 Endpoints principales
 
@@ -114,8 +135,8 @@ leer/escribir en PostgreSQL a través de `core/database.py`.
 | PUT/DELETE | `/usuarios/{id}`   | Actualizar / Eliminar usuario             |
 | GET/POST | `/proyectos/`        | Listar / Crear proyectos                  |
 | PUT/DELETE | `/proyectos/{id}`  | Actualizar / Eliminar proyecto            |
-| GET/POST | `/proyectos/{id}/colaboradores/` | Gestionar colaboradores        |
-| GET/POST | `/materiales/`       | Listar / Crear materiales                 |
+| GET/POST | `/proyectos/{id}/colaboradores/` | Invitar por correo (genera enlace + SMTP) |
+| GET/POST | `/materiales/?proyecto_id=` | Listar / Crear insumos del proyecto      |
 | PUT/DELETE | `/materiales/{id}` | Actualizar / Eliminar material            |
 | POST | `/movimientos/`        | Registrar entrada/salida de material (valida stock) |
 | GET | `/movimientos/`        | Historial de movimientos (kardex)         |
@@ -151,6 +172,11 @@ pip install -r requirements.txt
 
 # Copia el archivo de ejemplo y ajusta tu conexión a Postgres
 copy .env.example .env          # En Linux/Mac: cp .env.example .env
+
+# Opcional: configura SMTP para que las invitaciones lleguen por correo.
+# En Gmail usa una contraseña de aplicación (16 dígitos) en SMTP_PASSWORD.
+# Si no lo configuras, el enlace de invitación se devuelve al Arquitecto
+# para que lo comparta manualmente.
 
 # Crear la base de datos (una sola vez)
 psql -U postgres -c "CREATE DATABASE titanv_db;"
