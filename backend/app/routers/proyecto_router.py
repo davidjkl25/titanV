@@ -35,16 +35,7 @@ def get_proyectos(
     """Devuelve PROYECTOS del usuario autenticado. La identidad siempre sale del
     token JWT; el query param usuario_id se conserva solo por compatibilidad y
     no se usa como fuente de verdad."""
-    proyectos = proyecto_service.listar_proyectos(
-        db, current_user.id_usuario, incluir_eliminados, skip, limit
-    )
-    roles = colaborador_service.roles_de_usuario(db, current_user.id_usuario)
-    respuesta = []
-    for proyecto in proyectos:
-        item = ProyectoResponse.model_validate(proyecto)
-        item.mi_rol = roles.get(proyecto.id)
-        respuesta.append(item)
-    return respuesta
+    return proyecto_service.listar_proyectos(db, current_user.id_usuario, incluir_eliminados, skip, limit)
 
 
 @router.get("/{proyecto_id}", response_model=ProyectoResponse)

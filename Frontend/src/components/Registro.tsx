@@ -15,6 +15,29 @@ interface RegistroProps {
 
 const API_URL = 'http://localhost:8000';
 
+const validarContrasena = (valor: string): string | null => {
+  if (valor.length < 8) {
+    return 'La contraseña debe tener al menos 8 caracteres.';
+  }
+  if (!/[A-Z]/.test(valor)) {
+    return 'La contraseña debe tener al menos una letra mayúscula.';
+  }
+  if (!/[0-9]/.test(valor)) {
+    return 'La contraseña debe tener al menos un número.';
+  }
+  return null;
+};
+
+const validarUsuario = (valor: string): string | null => {
+  if (!/[A-Z]/.test(valor)) {
+    return 'El nombre de usuario debe tener al menos una letra mayúscula.';
+  }
+  if (!/[0-9]/.test(valor)) {
+    return 'El nombre de usuario debe tener al menos un número.';
+  }
+  return null;
+};
+
 const Registro: React.FC<RegistroProps> = ({ onRegistrar, onVolver }) => {
 
   const [nombre, setNombre] = useState('');
@@ -28,8 +51,15 @@ const Registro: React.FC<RegistroProps> = ({ onRegistrar, onVolver }) => {
   const manejarRegistro = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (contrasena.length < 8) {
-      alert('La contraseña debe tener al menos 8 caracteres.');
+    const errorUsuario = validarUsuario(usuario);
+    if (errorUsuario) {
+      alert(errorUsuario);
+      return;
+    }
+
+    const errorContrasena = validarContrasena(contrasena);
+    if (errorContrasena) {
+      alert(errorContrasena);
       return;
     }
 
@@ -159,6 +189,17 @@ const Registro: React.FC<RegistroProps> = ({ onRegistrar, onVolver }) => {
               required
               style={estilos.input}
             />
+
+            {usuario.length > 0 && (
+              <ul style={estilos.listaRequisitos}>
+                <li style={/[A-Z]/.test(usuario) ? estilos.requisitoOk : estilos.requisitoFalta}>
+                  {/[A-Z]/.test(usuario) ? '✓' : '○'} Al menos una mayúscula
+                </li>
+                <li style={/[0-9]/.test(usuario) ? estilos.requisitoOk : estilos.requisitoFalta}>
+                  {/[0-9]/.test(usuario) ? '✓' : '○'} Al menos un número
+                </li>
+              </ul>
+            )}
           </div>
 
           <div style={estilos.grupo}>
@@ -174,6 +215,20 @@ const Registro: React.FC<RegistroProps> = ({ onRegistrar, onVolver }) => {
               required
               style={estilos.input}
             />
+
+            {contrasena.length > 0 && (
+              <ul style={estilos.listaRequisitos}>
+                <li style={contrasena.length >= 8 ? estilos.requisitoOk : estilos.requisitoFalta}>
+                  {contrasena.length >= 8 ? '✓' : '○'} Mínimo 8 caracteres
+                </li>
+                <li style={/[A-Z]/.test(contrasena) ? estilos.requisitoOk : estilos.requisitoFalta}>
+                  {/[A-Z]/.test(contrasena) ? '✓' : '○'} Al menos una mayúscula
+                </li>
+                <li style={/[0-9]/.test(contrasena) ? estilos.requisitoOk : estilos.requisitoFalta}>
+                  {/[0-9]/.test(contrasena) ? '✓' : '○'} Al menos un número
+                </li>
+              </ul>
+            )}
           </div>
 
           <button
@@ -312,7 +367,24 @@ const estilos = {
     fontSize: '11px',
     marginTop: '20px',
     lineHeight: '1.5'
-  }
+  },
+
+  listaRequisitos: {
+    listStyle: 'none',
+    padding: 0,
+    margin: '8px 0 0 0',
+    fontSize: '12px',
+  },
+
+  requisitoOk: {
+    color: '#4ade80',
+    marginBottom: '3px',
+  },
+
+  requisitoFalta: {
+    color: '#888',
+    marginBottom: '3px',
+  },
 
 };
 

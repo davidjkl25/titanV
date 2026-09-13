@@ -6,11 +6,7 @@ import DashboardPage from './pages/DashboardPage';
 import AceptarInvitacionPage from './pages/AceptarInvitacionPage';
 import './App.css';
 
-// Componente interno para manejar la redirección DESPUÉS de que el estado cambie
 function AppRoutes() {
-  // Antes esto siempre arrancaba en false, así que recargar la página con
-  // sesión iniciada te mandaba de vuelta al login aunque el token siguiera
-  // guardado. Ahora arranca según si hay token o no.
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => !!localStorage.getItem('token'));
   const navigate = useNavigate();
 
@@ -25,13 +21,11 @@ function AppRoutes() {
     localStorage.removeItem('usuario_nombre');
   };
 
-  // Cuando isLoggedIn cambia a true, navega al dashboard
-  // (a menos que haya una invitación pendiente por aceptar, ver AceptarInvitacionPage)
   useEffect(() => {
     if (isLoggedIn && !sessionStorage.getItem('invitacion_pendiente')) {
       navigate('/dashboard', { replace: true });
     }
-  }, [isLoggedIn]);
+  }, [isLoggedIn, navigate]);
 
   return (
     <Routes>
@@ -42,7 +36,7 @@ function AppRoutes() {
           isLoggedIn ? (
             <Navigate to="/dashboard" replace />
           ) : (
-            <LoginPage onLoginSuccess={handleLoginSuccess} />
+            <LoginPage />
           )
         }
       />
@@ -74,4 +68,3 @@ function App() {
 }
 
 export default App;
-

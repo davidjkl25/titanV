@@ -1,6 +1,6 @@
 import enum
 
-from sqlalchemy import Boolean, Column, Date, Integer, String
+from sqlalchemy import Boolean, Column, Date, DateTime, Integer, String
 from sqlalchemy.orm import relationship
 
 from app.core.database import Base
@@ -25,6 +25,10 @@ class Usuario(Base):
     activo = Column(Boolean, default=True)
     fecha_vencimiento_licencia = Column(Date, nullable=True)
     tiene_certificacion_maquinaria = Column(Boolean, default=False)
+
+    # Campos para la recuperación de contraseña por PIN de 4 dígitos
+    reset_pin = Column(String(4), nullable=True)
+    reset_pin_expira = Column(DateTime, nullable=True)
 
     # Relaciones inversas
     comentarios = relationship("Comentario", back_populates="usuario", cascade="all, delete-orphan")

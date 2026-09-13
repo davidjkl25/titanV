@@ -71,3 +71,17 @@ class GoogleAuthRequest(BaseModel):
     nombre_completo: Optional[str] = None
     foto_url: Optional[str] = None
 
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class VerifyPinRequest(BaseModel):
+    email: EmailStr
+    pin: str = Field(..., min_length=4, max_length=4)
+
+
+class ResetPasswordRequest(BaseModel):
+    email: EmailStr
+    pin: str = Field(..., min_length=4, max_length=4)
+    newPassword: str = Field(..., min_length=6)

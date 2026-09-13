@@ -49,6 +49,34 @@ def construir_url_invitacion(token: str) -> str:
     return f"{_frontend_url()}/invitacion/{token}"
 
 
+def _enviar(destinatario: str, asunto: str, cuerpo_html: str) -> None:
+    """Función interna común para armar y mandar cualquier correo por SMTP."""
+    cfg = _config_smtp()
+    if cfg is None:
+        raise EmailError(
+            "El servidor de correo no está configurado. "
+            "Asigna SMTP_HOST, SMTP_PORT, SMTP_USER y SMTP_PASSWORD en backend/.env"
+        )
+
+    msg = EmailMessage()
+    msg["From"] = f"{_nombre_desde()} <{_correo_desde()}>"
+    msg["To"] = destinatario
+    msg["Subject"] = asunto
+    msg.add_alternative(cuerpo_html, subtype="html")
+
+    try:
+        with smtplib.SMTP(cfg["host"], cfg["port"]) as server:
+            server.starttls()
+            server.login(cfg["user"], cfg["pwd"])
+            server.send_message(msg)
+            logger.info("Correo enviado a %s (%s)", destinatario, asunto)
+    except EmailError:
+        raise
+    except Exception as exc:
+        logger.warning("No se pudo enviar correo a %s: %s", destinatario, exc)
+        raise EmailError(f"No se pudo enviar el correo: {exc}") from exc
+
+
 def _cuerpo_html(nombre_proyecto: str, rol: str, enlace_url: str) -> str:
     if rol == "Trabajador":
         descripcion = (
@@ -90,29 +118,34 @@ def enviar_correo_invitacion(
 
     Raises EmailError si no hay configuración SMTP o el envío falla.
     """
-    cfg = _config_smtp()
-    if cfg is None:
-        raise EmailError(
-            "El servidor de correo no está configurado. "
-            "Asigna SMTP_HOST, SMTP_PORT, SMTP_USER y SMTP_PASSWORD en backend/.env"
-        )
-
     enlace_url = f"{_frontend_url()}/invitacion/{token}"
+    asunto = f"Invitación al proyecto «{nombre_proyecto}» — Titan V"
+    _enviar(destinatario, asunto, _cuerpo_html(nombre_proyecto, rol, enlace_url))
 
-    msg = EmailMessage()
-    msg["From"] = f"{_nombre_desde()} <{_correo_desde()}>"
-    msg["To"] = destinatario
-    msg["Subject"] = f"Invitación al proyecto «{nombre_proyecto}» — Titan V"
-    msg.add_alternative(_cuerpo_html(nombre_proyecto, rol, enlace_url), subtype="html")
 
-    try:
-        with smtplib.SMTP(cfg["host"], cfg["port"]) as server:
-            server.starttls()
-            server.login(cfg["user"], cfg["pwd"])
-            server.send_message(msg)
-            logger.info("Correo de invitación enviado a %s", destinatario)
-    except EmailError:
-        raise
-    except Exception as exc:
-        logger.warning("No se pudo enviar correo a %s: %s", destinatario, exc)
-        raise EmailError(f"No se pudo enviar el correo: {exc}") from exc
+def _cuerpo_html_pin(pin: str) -> str:
+    return (
+        '<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;color:#1e1e1e">'
+        '<div style="background:#ffd60a;padding:18px 24px;border-radius:12px 12px 0 0">'
+        '<h2 style="margin:0;font-size:18px;color:#000">'
+        "\U0001f510 Recuperación de contraseña — Titan V"
+        "</h2></div>"
+        '<div style="background:#f8f9fa;padding:24px;border-radius:0 0 12px 12px;border:1px solid #e5e7eb">'
+        '<p style="margin:0 0 12px">Has solicitado restablecer tu contraseña.</p>'
+        '<p style="margin:0 0 8px">Tu código PIN de verificación es:</p>'
+        f'<div style="font-size:28px;font-weight:700;letter-spacing:8px;'
+        'background:#181a20;color:#ffcc00;padding:16px;text-align:center;'
+        f'border-radius:8px;margin:0 0 16px">{pin}</div>'
+        '<p style="margin:0;font-size:13px;color:#555">'
+        "Este código expira en 15 minutos. Si no solicitaste este cambio, "
+        "puedes ignorar este correo.</p></div></div>"
+    )
+
+
+def enviar_pin_por_correo(destinatario: str, pin: str) -> None:
+    """Envía el código PIN de recuperación de contraseña por correo.
+
+    Raises EmailError si no hay configuración SMTP o el envío falla.
+    """
+    asunto = "Código de recuperación — Titan V"
+    _enviar(destinatario, asunto, _cuerpo_html_pin(pin))

@@ -15,9 +15,6 @@ export interface ProyectoResumen {
   nombre_proyecto: string;
   ubicacion_direccion?: string;
   estado?: string;
-  fecha_inicio?: string;
-  fecha_fin_estimada?: string;
-  mi_rol?: 'Arquitecto' | 'Trabajador' | 'Visualizador';
 }
 
 interface DashboardPageProps {
@@ -66,21 +63,6 @@ const DashboardPage = ({ onLogout }: DashboardPageProps) => {
     setTabActual('inicio');
   };
 
-  const actualizarEstadoProyecto = async (proyectoId: number, estado: string) => {
-    const respuesta = await fetchConToken(`/proyectos/${proyectoId}`, {
-      method: 'PUT',
-      body: JSON.stringify({ estado }),
-    });
-    if (!respuesta.ok) {
-      const data = await respuesta.json().catch(() => null);
-      alert(data?.detail || 'No se pudo cambiar el estado del proyecto.');
-      return;
-    }
-    setProyectos((prev) =>
-      prev.map((p) => (p.id === proyectoId ? { ...p, estado } : p))
-    );
-  };
-
   const irA = (tab: string) => {
     if (MODULOS_PROYECTO.includes(tab) && !proyectoSeleccionado) {
       alert('Primero entra a un proyecto desde "Inicio" para desbloquear estas secciones.');
@@ -113,7 +95,6 @@ const DashboardPage = ({ onLogout }: DashboardPageProps) => {
             onSalirProyecto={salirProyecto}
             onIrA={irA}
             onCrearProyecto={crearProyecto}
-            onActualizarEstado={actualizarEstadoProyecto}
           />
         )}
         {/* Proyectos siempre queda accesible: es la única forma de crear proyectos */}

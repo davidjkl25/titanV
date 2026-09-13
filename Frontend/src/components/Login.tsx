@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { CardAccion } from './CardAccion';
 import Registro from './Registro';
+import RecuperarContrasena from './RecuperarContrasena';
 // IMPORTACIÓN CORRECTA DEL VIDEO DESDE TU CARPETA ASSETS
 import videoLogin from '../assets/video_login.mp4'; 
 
@@ -23,6 +24,7 @@ export const Login: React.FC<LoginProps> = ({
 }) => {
 
   const [mostrarRegistro, setMostrarRegistro] = useState(false);
+  const [showForgotModal, setShowForgotModal] = useState(false);
 
   const manejarRegistro = (datos: {
     nombre: string;
@@ -197,10 +199,29 @@ export const Login: React.FC<LoginProps> = ({
             </button>
           )}
 
+          {/* BOTÓN OLVIDASTE TU CONTRASEÑA */}
+          <div style={{ textAlign: 'center', marginTop: '16px', marginBottom: '4px' }}>
+            <button
+              type="button"
+              onClick={() => setShowForgotModal(true)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#ffcc00',
+                fontSize: '12px',
+                cursor: 'pointer',
+                textDecoration: 'underline',
+                padding: 0
+              }}
+            >
+              ¿Olvidaste tu contraseña?
+            </button>
+          </div>
+
         </form>
 
         <div style={{
-          marginTop: '22px',
+          marginTop: '18px',
           fontSize: '12px'
         }}>
 
@@ -228,6 +249,11 @@ export const Login: React.FC<LoginProps> = ({
         </div>
 
       </div>
+
+      {showForgotModal && (
+        <RecuperarContrasena onClose={() => setShowForgotModal(false)} />
+      )}
+
     </div>
   );
 };

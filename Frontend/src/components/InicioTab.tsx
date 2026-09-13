@@ -3,25 +3,7 @@ interface ProyectoResumen {
   nombre_proyecto: string;
   ubicacion_direccion?: string;
   estado?: string;
-  fecha_inicio?: string;
-  fecha_fin_estimada?: string;
-  mi_rol?: 'Arquitecto' | 'Trabajador' | 'Visualizador';
 }
-
-const COLOR_ROL: Record<string, { bg: string; color: string }> = {
-  Arquitecto: { bg: '#fef3c7', color: '#b45309' },
-  Trabajador: { bg: '#e0f2fe', color: '#0369a1' },
-  Visualizador: { bg: '#f1f5f9', color: '#475569' },
-};
-
-const COLOR_ESTADO: Record<string, { bg: string; color: string }> = {
-  Planificación: { bg: '#e0e7ff', color: '#4338ca' },
-  'En Ejecución': { bg: '#fef3c7', color: '#b45309' },
-  Finalizado: { bg: '#dcfce7', color: '#15803d' },
-};
-
-const formatearFecha = (fecha?: string) =>
-  fecha ? new Date(`${fecha}T00:00:00`).toLocaleDateString('es-CO') : '—';
 
 interface InicioTabProps {
   proyectos: ProyectoResumen[];
@@ -31,10 +13,7 @@ interface InicioTabProps {
   onSalirProyecto: () => void;
   onIrA: (tab: string) => void;
   onCrearProyecto: () => void;
-  onActualizarEstado: (proyectoId: number, estado: string) => void;
 }
-
-const ESTADOS = ['Planificación', 'En Ejecución', 'Finalizado'];
 
 const MODULOS = [
   { tab: 'colaboradores', icono: 'fa-user-group', titulo: 'Colaboradores', texto: 'Invita por correo y gestiona los roles del equipo.' },
@@ -52,7 +31,6 @@ export const InicioTab = ({
   onSalirProyecto,
   onIrA,
   onCrearProyecto,
-  onActualizarEstado,
 }: InicioTabProps) => {
   if (cargando) {
     return (
@@ -139,72 +117,6 @@ export const InicioTab = ({
               <p style={{ padding: '20px 25px', color: '#666', fontSize: '14px' }}>
                 {p.ubicacion_direccion ? p.ubicacion_direccion : 'Sin ubicación registrada.'}
               </p>
-              <div
-                style={{
-                  padding: '0 25px 16px',
-                  display: 'flex',
-                  gap: '12px',
-                  flexWrap: 'wrap',
-                  alignItems: 'center',
-                }}
-              >
-                {p.estado && p.mi_rol === 'Arquitecto' ? (
-                  <select
-                    value={p.estado}
-                    onClick={(e) => e.stopPropagation()}
-                    onChange={(e) => onActualizarEstado(p.id, e.target.value)}
-                    style={{
-                      backgroundColor: COLOR_ESTADO[p.estado]?.bg || '#f1f5f9',
-                      color: COLOR_ESTADO[p.estado]?.color || '#475569',
-                      padding: '3px 8px',
-                      borderRadius: '999px',
-                      fontSize: '12px',
-                      fontWeight: 700,
-                      border: `1px solid ${COLOR_ESTADO[p.estado]?.color || '#cbd5e1'}`,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    {ESTADOS.map((e) => (
-                      <option key={e} value={e}>{e}</option>
-                    ))}
-                  </select>
-                ) : p.estado ? (
-                  <span
-                    style={{
-                      backgroundColor: COLOR_ESTADO[p.estado]?.bg || '#f1f5f9',
-                      color: COLOR_ESTADO[p.estado]?.color || '#475569',
-                      padding: '3px 10px',
-                      borderRadius: '999px',
-                      fontSize: '12px',
-                      fontWeight: 700,
-                    }}
-                  >
-                    <i className="fas fa-circle" style={{ fontSize: '8px', marginRight: '6px' }}></i>
-                    {p.estado}
-                  </span>
-                ) : null}
-                <span style={{ fontSize: '12px', color: '#64748b' }}>
-                  <i className="fas fa-calendar-days" style={{ marginRight: '6px' }}></i>
-                  {formatearFecha(p.fecha_inicio)} → {formatearFecha(p.fecha_fin_estimada)}
-                </span>
-              </div>
-              {p.mi_rol && (
-                <div style={{ padding: '0 25px 16px' }}>
-                  <span
-                    style={{
-                      backgroundColor: COLOR_ROL[p.mi_rol].bg,
-                      color: COLOR_ROL[p.mi_rol].color,
-                      padding: '3px 10px',
-                      borderRadius: '999px',
-                      fontSize: '12px',
-                      fontWeight: 700,
-                    }}
-                  >
-                    <i className="fas fa-id-badge" style={{ marginRight: '6px' }}></i>
-                    Tu rol: {p.mi_rol}
-                  </span>
-                </div>
-              )}
               <div style={{ padding: '0 25px 20px' }}>
                 <span
                   className="btn-save"

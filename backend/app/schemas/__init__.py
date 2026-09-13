@@ -4,13 +4,16 @@ Reexporta todos los esquemas de Pydantic para mantener compatibilidad con
 """
 
 from app.schemas.usuario_schema import (
+    ForgotPasswordRequest,
     GoogleAuthRequest,
+    ResetPasswordRequest,
     TokenResponse,
     UsuarioBase,
     UsuarioCreate,
     UsuarioLogin,
     UsuarioResponse,
     UsuarioUpdate,
+    VerifyPinRequest,
 )
 from app.schemas.colaborador_schema import (
     ColaboradorCreate,
@@ -57,6 +60,7 @@ from app.schemas.invitacion_schema import (
 
 __all__ = [
     "UsuarioBase", "UsuarioCreate", "UsuarioUpdate", "UsuarioResponse", "UsuarioLogin", "TokenResponse", "GoogleAuthRequest",
+    "ForgotPasswordRequest", "VerifyPinRequest", "ResetPasswordRequest",
     "ColaboradorCreate", "ColaboradorInvitar", "ColaboradorUpdate", "ColaboradorResponse",
     "InvitacionCorreoResponse",
     "ProyectoBase", "ProyectoCreate", "ProyectoUpdate", "ProyectoResponse",

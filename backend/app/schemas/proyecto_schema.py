@@ -3,7 +3,7 @@ from typing import Optional
 
 from pydantic import BaseModel, Field
 
-from app.models import EstadoProyecto, RolProyecto
+from app.models import EstadoProyecto
 
 
 class ProyectoBase(BaseModel):
@@ -30,9 +30,6 @@ class ProyectoUpdate(BaseModel):
 
 class ProyectoResponse(ProyectoBase):
     id: int
-    # Rol del usuario autenticado en este proyecto (Arquitecto/Trabajador/Visualizador).
-    # Lo llena el router con los datos del JWT; no viene del cliente.
-    mi_rol: Optional[RolProyecto] = None
 
     class Config:
         from_attributes = True
