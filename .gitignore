@@ -1,0 +1,10 @@
+**/node_modules/
+**/__pycache__/
+**/venv/
+*.pyc
+.env
+*.log
+dist/
+build/
+PRESENTACION_TITAN_V.md
+commits-comandos.txt
