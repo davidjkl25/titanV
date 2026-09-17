@@ -18,6 +18,7 @@ export interface ProyectoResumen {
   nombre_proyecto: string;
   ubicacion_direccion?: string;
   estado?: string;
+  mi_rol?: string;
 }
 
 interface DashboardPageProps {
@@ -96,6 +97,7 @@ const DashboardPage = ({ onLogout }: DashboardPageProps) => {
         onSelectTab={irA}
         onLogout={handleLogout}
         proyecto={proyectoSeleccionado}
+        rolProyecto={proyectoSeleccionado?.mi_rol ?? null}
         onSalirProyecto={salirProyecto}
       />
 
@@ -109,6 +111,7 @@ const DashboardPage = ({ onLogout }: DashboardPageProps) => {
             onSalirProyecto={salirProyecto}
             onIrA={irA}
             onCrearProyecto={crearProyecto}
+            onCambioProyectos={verificarProyectos}
           />
         )}
         {/* Proyectos siempre queda accesible: es la única forma de crear proyectos */}

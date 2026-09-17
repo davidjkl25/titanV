@@ -30,6 +30,7 @@ class ProyectoUpdate(BaseModel):
 
 class ProyectoResponse(ProyectoBase):
     id: int
+    mi_rol: Optional[str] = None
 
     class Config:
         from_attributes = True

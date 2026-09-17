@@ -21,7 +21,16 @@ def listar_proyectos(
     if not incluir_eliminados:
         query = sin_eliminados(query, ProyectoObra)
 
-    return query.offset(skip).limit(limit).all()
+    proyectos = query.offset(skip).limit(limit).all()
+
+    if usuario_id is not None:
+        # Agrega mi_rol (rol del usuario en cada proyecto) para que el frontend
+        # pueda mostrar/ocultar controles de administración sin llamadas extra.
+        for proyecto in proyectos:
+            rol = colaborador_service.obtener_rol_de_usuario(db, proyecto.id, usuario_id)
+            proyecto.mi_rol = rol.value if rol is not None else None
+
+    return proyectos
 
 
 def obtener_proyecto(db: Session, proyecto_id: int, incluir_eliminados: bool = False) -> Optional[ProyectoObra]:

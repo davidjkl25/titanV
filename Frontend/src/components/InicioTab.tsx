@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+import { fetchConToken } from '../api';
 import videoHero from '../assets/video_landing.mp4';
 import logoImg from '../assets/logo.png';
 
@@ -6,6 +8,7 @@ interface ProyectoResumen {
   nombre_proyecto: string;
   ubicacion_direccion?: string;
   estado?: string;
+  mi_rol?: string;
 }
 
 interface InicioTabProps {
@@ -16,7 +19,10 @@ interface InicioTabProps {
   onSalirProyecto: () => void;
   onIrA: (tab: string) => void;
   onCrearProyecto: () => void;
+  onCambioProyectos?: () => void;
 }
+
+const ESTADOS = ['Planificación', 'En Ejecución', 'Finalizado'];
 
 const MODULOS = [
   { tab: 'colaboradores', icono: 'fa-user-group', titulo: 'Colaboradores', texto: 'Invita por correo y gestiona los roles del equipo.' },
@@ -61,7 +67,61 @@ export const InicioTab = ({
   onSalirProyecto,
   onIrA,
   onCrearProyecto,
+  onCambioProyectos,
 }: InicioTabProps) => {
+  const [estadoObra, setEstadoObra] = useState<string>(proyectoSeleccionado?.estado || 'Planificación');
+  const [guardandoEstado, setGuardandoEstado] = useState(false);
+  const [eliminandoObra, setEliminandoObra] = useState(false);
+
+  useEffect(() => {
+    setEstadoObra(proyectoSeleccionado?.estado || 'Planificación');
+  }, [proyectoSeleccionado]);
+
+  const esArquitecto = proyectoSeleccionado?.mi_rol === 'Arquitecto';
+
+  const cambiarEstado = async () => {
+    if (!proyectoSeleccionado) return;
+    setGuardandoEstado(true);
+    try {
+      const respuesta = await fetchConToken(`/proyectos/${proyectoSeleccionado.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ estado: estadoObra }),
+      });
+      if (!respuesta.ok) {
+        const data = await respuesta.json().catch(() => null);
+        throw new Error(data?.detail || 'No se pudo actualizar el estado de la obra.');
+      }
+      alert('Estado de la obra actualizado correctamente.');
+      onCambioProyectos?.();
+    } catch (err: any) {
+      alert(err.message || 'No se pudo actualizar el estado de la obra.');
+    } finally {
+      setGuardandoEstado(false);
+    }
+  };
+
+  const eliminarObra = async () => {
+    if (!proyectoSeleccionado) return;
+    if (!window.confirm(
+      `¿Eliminar la obra "${proyectoSeleccionado.nombre_proyecto}"?\n\nLa obra dejará de aparecer en el sistema. Esta acción solo puede revertirla un Arquitecto.`
+    )) return;
+    setEliminandoObra(true);
+    try {
+      const respuesta = await fetchConToken(`/proyectos/${proyectoSeleccionado.id}`, { method: 'DELETE' });
+      if (!respuesta.ok && respuesta.status !== 204) {
+        const data = await respuesta.json().catch(() => null);
+        throw new Error(data?.detail || 'No se pudo eliminar la obra.');
+      }
+      alert(`La obra "${proyectoSeleccionado.nombre_proyecto}" fue eliminada.`);
+      onSalirProyecto();
+      onCambioProyectos?.();
+    } catch (err: any) {
+      alert(err.message || 'No se pudo eliminar la obra.');
+    } finally {
+      setEliminandoObra(false);
+    }
+  };
+
   if (cargando) {
     return (
       <div className="tab-content active animated-fadeIn">
@@ -90,7 +150,7 @@ export const InicioTab = ({
     );
   }
 
-  // Dentro de un proyecto: atajos a los módulos del proyecto activo.
+  // Dentro de un proyecto: atajos a los módulos + administración del estado de la obra.
   if (proyectoSeleccionado) {
     return (
       <div className="tab-content active animated-fadeIn">
@@ -114,6 +174,48 @@ export const InicioTab = ({
             </div>
           ))}
         </div>
+
+        {/* Estado y administración de la obra */}
+        <div className="card" style={{ marginTop: '24px', maxWidth: '560px' }}>
+          <div className="card-header">
+            <h3><i className="fas fa-flag-checkered"></i> Estado de la obra</h3>
+          </div>
+          <div style={{ padding: '20px 25px' }}>
+            {esArquitecto ? (
+              <>
+                <div className="input-group">
+                  <label>Estado actual</label>
+                  <select value={estadoObra} onChange={(e) => setEstadoObra(e.target.value)}>
+                    {ESTADOS.map((e) => <option key={e} value={e}>{e}</option>)}
+                  </select>
+                </div>
+                <div style={{ display: 'flex', gap: '10px', marginTop: '14px', flexWrap: 'wrap' }}>
+                  <button
+                    className="btn-save"
+                    onClick={cambiarEstado}
+                    disabled={guardandoEstado || eliminandoObra}
+                  >
+                    {guardandoEstado ? 'Guardando...' : 'Guardar estado'}
+                  </button>
+                  <button
+                    className="btn-delete"
+                    onClick={eliminarObra}
+                    disabled={eliminandoObra || guardandoEstado}
+                  >
+                    <i className="fas fa-trash"></i> {eliminandoObra ? 'Eliminando...' : 'Eliminar obra'}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <p style={{ margin: 0, color: '#94a3b8', fontSize: '14px' }}>
+                <i className="fas fa-circle-info" style={{ marginRight: '6px' }}></i>
+                Estado actual de la obra: <strong style={{ color: '#fff' }}>{estadoObra}</strong>.
+                Solo el <strong>Arquitecto</strong> puede cambiar el estado o eliminar la obra.
+              </p>
+            )}
+          </div>
+        </div>
+
         <button
           onClick={onSalirProyecto}
           style={{

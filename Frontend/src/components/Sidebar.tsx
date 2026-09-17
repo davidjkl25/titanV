@@ -5,16 +5,24 @@ interface SidebarProps {
   onSelectTab: (tab: string) => void;
   onLogout: () => void;
   proyecto: { id: number; nombre_proyecto: string } | null;
+  rolProyecto: string | null;
   onSalirProyecto: () => void;
 }
 
 const ITEMS_MODULO = ['colaboradores', 'materiales', 'tareas', 'turnos', 'evidencias'];
 
-export const Sidebar = ({ activeTab, onSelectTab, onLogout, proyecto, onSalirProyecto }: SidebarProps) => {
+const INFO_ROL_PROYECTO: Record<string, { icono: string; clase: string; etiqueta: string }> = {
+  Arquitecto: { icono: 'fas fa-shield-alt', clase: 'role-admin', etiqueta: 'Rol: Arquitecto' },
+  Trabajador: { icono: 'fas fa-hard-hat', clase: 'role-trabajador', etiqueta: 'Rol: Trabajador' },
+  Visualizador: { icono: 'fas fa-eye', clase: 'role-visualizador', etiqueta: 'Rol: Visualizador' },
+};
+
+export const Sidebar = ({ activeTab, onSelectTab, onLogout, proyecto, rolProyecto, onSalirProyecto }: SidebarProps) => {
   const sinProyecto = !proyecto;
   const rolStorage = localStorage.getItem('usuario_rol');
-  const rol = Number(rolStorage !== null ? rolStorage : '3');
-  const esAdmin = rol === 1;
+  const esAdmin = Number(rolStorage) === 1;
+
+  const infoRol = proyecto && rolProyecto ? INFO_ROL_PROYECTO[rolProyecto] : null;
 
   const correoUsuario = localStorage.getItem('usuario_correo') || 'usuario@titanv.com';
   const nombreUsuario = localStorage.getItem('usuario_nombre') || 'Usuario';
@@ -51,13 +59,16 @@ export const Sidebar = ({ activeTab, onSelectTab, onLogout, proyecto, onSalirPro
           </div>
         </div>
 
-        {/* INDICADOR DE ROL */}
-        <div className="sidebar-role-wrapper">
-          <div className={`sidebar-role-badge ${esAdmin ? 'role-admin' : 'role-user'}`}>
-            <i className={esAdmin ? 'fas fa-shield-alt' : 'fas fa-hard-hat'}></i>
-            <span>{esAdmin ? 'Rol: Administrador' : 'Rol: Usuario (Obra)'}</span>
+        {/* INDICADOR DE ROL: solo se muestra dentro de un proyecto, con el rol
+            (Arquitecto / Trabajador / Visualizador) que el usuario tiene en él */}
+        {infoRol && (
+          <div className="sidebar-role-wrapper">
+            <div className={`sidebar-role-badge ${infoRol.clase}`}>
+              <i className={infoRol.icono}></i>
+              <span>{infoRol.etiqueta}</span>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* PROYECTO ACTIVO */}
