@@ -10,6 +10,7 @@ import { InventarioTab } from '../components/InventarioTab';
 import TareasTab from '../components/TareasTab';
 import { TurnosTab } from '../components/TurnosTab';
 import { EvidenciasTab } from '../components/EvidenciasTab';
+import videoFondo from '../assets/video_landing.mp4';
 
 export interface ProyectoResumen {
   id: number;
@@ -106,8 +107,55 @@ const DashboardPage = ({ onLogout }: DashboardPageProps) => {
     setTabActual('proyectos');
   };
 
+  const cambiarEstadoProyecto = async (estado: string) => {
+    if (!proyectoSeleccionado || estado === proyectoSeleccionado.estado) return;
+
+    try {
+      const respuesta = await fetchConToken(`/proyectos/${proyectoSeleccionado.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ estado }),
+      });
+      const data = await respuesta.json().catch(() => null);
+      if (!respuesta.ok) throw new Error(data?.detail || 'No se pudo actualizar el estado del proyecto.');
+
+      const proyectoActualizado = { ...proyectoSeleccionado, estado: data.estado };
+      setProyectoSeleccionado(proyectoActualizado);
+      setProyectos((proyectosActuales) =>
+        proyectosActuales.map((proyecto) => (proyecto.id === proyectoActualizado.id ? proyectoActualizado : proyecto)),
+      );
+    } catch (error: any) {
+      alert(error.message || 'No se pudo actualizar el estado del proyecto.');
+    }
+  };
+
+  const eliminarProyectoSeleccionado = async () => {
+    if (!proyectoSeleccionado) return;
+    if (!window.confirm(`¿Eliminar el proyecto "${proyectoSeleccionado.nombre_proyecto}"?`)) return;
+
+    try {
+      const respuesta = await fetchConToken(`/proyectos/${proyectoSeleccionado.id}`, { method: 'DELETE' });
+      if (!respuesta.ok && respuesta.status !== 204) {
+        const data = await respuesta.json().catch(() => null);
+        throw new Error(data?.detail || 'No se pudo eliminar el proyecto.');
+      }
+
+      setProyectos((proyectosActuales) =>
+        proyectosActuales.filter((proyecto) => proyecto.id !== proyectoSeleccionado.id),
+      );
+      salirProyecto();
+    } catch (error: any) {
+      alert(error.message || 'No se pudo eliminar el proyecto.');
+    }
+  };
+
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f4f6f9' }}>
+    <div className="dashboard-layout">
+      <div className="dashboard-bg-video-wrapper" aria-hidden="true">
+        <video autoPlay loop muted playsInline className="dashboard-bg-video">
+          <source src={videoFondo} type="video/mp4" />
+        </video>
+        <div className="dashboard-bg-overlay" />
+      </div>
       <Sidebar
         activeTab={tabActual}
         onSelectTab={irA}
@@ -128,6 +176,8 @@ const DashboardPage = ({ onLogout }: DashboardPageProps) => {
             onCrearProyecto={crearProyecto}
             puedeCrearProyecto={true}
             puedeVerModulo={puedeAccederTab}
+            onCambiarEstadoProyecto={cambiarEstadoProyecto}
+            onEliminarProyecto={eliminarProyectoSeleccionado}
           />
         )}
         {/* Proyectos siempre queda accesible: es la única forma de crear proyectos */}

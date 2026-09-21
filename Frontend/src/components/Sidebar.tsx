@@ -32,42 +32,35 @@ export const Sidebar = ({ activeTab, onSelectTab, onLogout, proyecto, onSalirPro
       <i className="fas fa-lock" style={{ fontSize: '11px', marginLeft: '6px' }}></i>
     ) : null;
 
+  const nombreUsuario = localStorage.getItem('usuario_nombre') || 'Usuario';
+  const correoUsuario = localStorage.getItem('usuario_correo') || '';
+
   return (
     <div className="sidebar">
-      <div className="logo">
-        TITAN <span>V</span>
+      <div className="sidebar-header">
+        <div className="sidebar-brand">
+          <div className="sidebar-logo-circle">
+            <img src={logoImg} alt="Logo de Titan V" className="sidebar-logo-img" />
+          </div>
+          <div className="logo-title">TITAN <span>V</span></div>
+        </div>
+        <p className="sidebar-caption">Control de obra</p>
       </div>
 
       {proyecto && (
         <div
-          style={{
-            margin: '0 12px 14px',
-            padding: '12px 14px',
-            borderRadius: '10px',
-            backgroundColor: 'rgba(255, 214, 10, 0.12)',
-            border: '1px solid rgba(255, 214, 10, 0.4)',
-          }}
+          className="sidebar-project-card"
         >
-          <div style={{ fontSize: '11px', color: '#ffd60a', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>
+          <div className="sidebar-project-label">
             Proyecto activo
           </div>
-          <div style={{ color: '#fff', fontSize: '14px', fontWeight: 700, marginBottom: '10px', wordBreak: 'break-word' }}>
+          <div className="sidebar-project-name">
             <i className="fas fa-diagram-project" style={{ marginRight: '6px' }}></i>
             {proyecto.nombre_proyecto}
           </div>
           <button
             onClick={onSalirProyecto}
-            style={{
-              width: '100%',
-              backgroundColor: 'transparent',
-              color: '#ffd60a',
-              border: '1px solid #ffd60a',
-              borderRadius: '6px',
-              padding: '6px 10px',
-              fontWeight: 700,
-              fontSize: '12px',
-              cursor: 'pointer',
-            }}
+            className="sidebar-change-project"
           >
             Cambiar de proyecto
           </button>
@@ -75,35 +68,46 @@ export const Sidebar = ({ activeTab, onSelectTab, onLogout, proyecto, onSalirPro
       )}
 
       <div className="sidebar-menu">
-        <a style={{ cursor: 'pointer' }} className={claseItem('inicio')} onClick={() => manejarClick('inicio')}>
-          Inicio
+        <a className={claseItem('inicio')} onClick={() => manejarClick('inicio')}>
+          <i className="fas fa-house"></i><span>Inicio</span>
         </a>
-        <a style={{ cursor: 'pointer' }} className={claseItem('proyectos')} onClick={() => manejarClick('proyectos')}>
-          Proyectos de Obra
+        <a className={claseItem('proyectos')} onClick={() => manejarClick('proyectos')}>
+          <i className="fas fa-diagram-project"></i><span>Proyectos de Obra</span>
         </a>
-        {puedeVer('colaboradores') && <a style={{ cursor: 'pointer' }} className={claseItem('colaboradores')} onClick={() => manejarClick('colaboradores')}>
-          Colaboradores {icono('colaboradores')}
+        {puedeVer('colaboradores') && <a className={claseItem('colaboradores')} onClick={() => manejarClick('colaboradores')}>
+          <i className="fas fa-user-group"></i><span>Colaboradores {icono('colaboradores')}</span>
         </a>}
-        {puedeVer('materiales') && <a style={{ cursor: 'pointer' }} className={claseItem('materiales')} onClick={() => manejarClick('materiales')}>
-          Materiales {icono('materiales')}
+        {puedeVer('materiales') && <a className={claseItem('materiales')} onClick={() => manejarClick('materiales')}>
+          <i className="fas fa-boxes-stacked"></i><span>Materiales {icono('materiales')}</span>
         </a>}
-        {puedeVer('inventario') && <a style={{ cursor: 'pointer' }} className={claseItem('inventario')} onClick={() => manejarClick('inventario')}>
-          Inventario Insumos {icono('inventario')}
+        {puedeVer('inventario') && <a className={claseItem('inventario')} onClick={() => manejarClick('inventario')}>
+          <i className="fas fa-warehouse"></i><span>Inventario Insumos {icono('inventario')}</span>
         </a>}
-        {puedeVer('tareas') && <a style={{ cursor: 'pointer' }} className={claseItem('tareas')} onClick={() => manejarClick('tareas')}>
-          Gestión de Tareas {icono('tareas')}
+        {puedeVer('tareas') && <a className={claseItem('tareas')} onClick={() => manejarClick('tareas')}>
+          <i className="fas fa-list-check"></i><span>Gestión de Tareas {icono('tareas')}</span>
         </a>}
-        {puedeVer('turnos') && <a style={{ cursor: 'pointer' }} className={claseItem('turnos')} onClick={() => manejarClick('turnos')}>
-          Turnos y Asistencia {icono('turnos')}
+        {puedeVer('turnos') && <a className={claseItem('turnos')} onClick={() => manejarClick('turnos')}>
+          <i className="fas fa-clock"></i><span>Turnos y Asistencia {icono('turnos')}</span>
         </a>}
-        {puedeVer('evidencias') && <a style={{ cursor: 'pointer' }} className={claseItem('evidencias')} onClick={() => manejarClick('evidencias')}>
-          Evidencias {icono('evidencias')}
+        {puedeVer('evidencias') && <a className={claseItem('evidencias')} onClick={() => manejarClick('evidencias')}>
+          <i className="fas fa-camera"></i><span>Evidencias {icono('evidencias')}</span>
         </a>}
+      </div>
 
-        <a onClick={onLogout} style={{ marginTop: '20px', color: '#ff4757', cursor: 'pointer' }}>
-          Cerrar Sesión
-        </a>
+      <div className="sidebar-footer">
+        <div className="sidebar-user-card">
+          <i className="fas fa-user-circle user-icon-circle"></i>
+          <div className="user-text-info">
+            <span className="user-session-label">Sesión iniciada como</span>
+            <span className="user-session-name" title={nombreUsuario}>{nombreUsuario}</span>
+            {correoUsuario && <span className="user-session-email" title={correoUsuario}>{correoUsuario}</span>}
+          </div>
+        </div>
+        <button type="button" onClick={onLogout} className="sidebar-logout-btn">
+          <i className="fas fa-arrow-right-from-bracket"></i> Cerrar sesión
+        </button>
       </div>
     </div>
   );
 };
+import logoImg from '../assets/logo.png';

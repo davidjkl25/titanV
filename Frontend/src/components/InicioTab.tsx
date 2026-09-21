@@ -1,3 +1,6 @@
+import videoHero from '../assets/video_landing.mp4';
+import logoImg from '../assets/logo.png';
+
 interface ProyectoResumen {
   id: number;
   nombre_proyecto: string;
@@ -15,7 +18,11 @@ interface InicioTabProps {
   onCrearProyecto: () => void;
   puedeCrearProyecto: boolean;
   puedeVerModulo: (tab: string) => boolean;
+  onCambiarEstadoProyecto: (estado: string) => Promise<void>;
+  onEliminarProyecto: () => Promise<void>;
 }
+
+const ESTADOS_PROYECTO = ['Planificación', 'En Ejecución', 'Finalizado'];
 
 const MODULOS = [
   { tab: 'colaboradores', icono: 'fa-user-group', titulo: 'Colaboradores', texto: 'Invita por correo y gestiona los roles del equipo.' },
@@ -36,6 +43,8 @@ export const InicioTab = ({
   onCrearProyecto,
   puedeCrearProyecto,
   puedeVerModulo,
+  onCambiarEstadoProyecto,
+  onEliminarProyecto,
 }: InicioTabProps) => {
   if (cargando) {
     return (
@@ -43,7 +52,7 @@ export const InicioTab = ({
         <div className="section-header">
           <h2><i className="fas fa-house"></i> Bienvenido a Titan V</h2>
         </div>
-        <p style={{ color: '#666' }}>Cargando...</p>
+        <p className="muted-text">Cargando...</p>
       </div>
     );
   }
@@ -51,17 +60,54 @@ export const InicioTab = ({
   // Dentro de un proyecto: atajos a los módulos del proyecto activo.
   if (proyectoSeleccionado) {
     return (
-      <div className="tab-content active">
+      <div className="tab-content active animated-fadeIn">
+        <div className="panel-hero-banner panel-hero-project">
+          <video autoPlay loop muted playsInline className="panel-hero-video">
+            <source src={videoHero} type="video/mp4" />
+          </video>
+          <div className="panel-hero-overlay" />
+          <div className="panel-hero-content">
+            <div className="panel-hero-badge"><img src={logoImg} alt="" /> Proyecto activo</div>
+            <h1 className="panel-hero-title">{proyectoSeleccionado.nombre_proyecto}</h1>
+            <p className="panel-hero-subtitle">Gestiona el equipo, los insumos y el avance de esta obra desde un solo lugar.</p>
+          </div>
+        </div>
         <div className="section-header">
-          <h2><i className="fas fa-diagram-project"></i> {proyectoSeleccionado.nombre_proyecto}</h2>
+          <h2><i className="fas fa-grid-2"></i> Módulos de la obra</h2>
+          <p className="muted-text">
+            Estado actual: <strong>{proyectoSeleccionado.estado || 'Planificación'}</strong>
+          </p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '14px', alignItems: 'end' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, marginBottom: '5px', color: '#666' }}>
+                  Cambiar estado
+                </label>
+                <select
+                  value={proyectoSeleccionado.estado || 'Planificación'}
+                  onChange={(e) => void onCambiarEstadoProyecto(e.target.value)}
+                  className="project-status-select"
+                >
+                  {ESTADOS_PROYECTO.map((estado) => <option key={estado} value={estado}>{estado}</option>)}
+                </select>
+              </div>
+              <button
+                type="button"
+                onClick={() => void onEliminarProyecto()}
+                className="btn-delete"
+                style={{ padding: '10px 14px' }}
+              >
+                <i className="fas fa-trash"></i> Eliminar proyecto
+              </button>
+          </div>
         </div>
         <div className="grid">
           {MODULOS.filter((m) => puedeVerModulo(m.tab)).map((m) => (
-            <div key={m.tab} className="card" style={{ cursor: 'pointer' }} onClick={() => onIrA(m.tab)}>
+            <div key={m.tab} className="card card-interactive" onClick={() => onIrA(m.tab)}>
               <div className="card-header">
-                <h3><i className={`fas ${m.icono}`}></i> {m.titulo}</h3>
+                <h3><span className="card-icon-bubble"><i className={`fas ${m.icono}`}></i></span> {m.titulo}</h3>
               </div>
-              <p style={{ padding: '20px 25px', color: '#666', fontSize: '14px' }}>{m.texto}</p>
+              <p className="card-description">{m.texto}</p>
+              <div className="card-footer-action">Abrir módulo <i className="fas fa-arrow-right"></i></div>
             </div>
           ))}
         </div>
@@ -86,22 +132,32 @@ export const InicioTab = ({
 
   // Sin proyecto activo: listar proyectos para entrar o crear uno.
   return (
-    <div className="tab-content active">
+    <div className="tab-content active animated-fadeIn">
+      <div className="panel-hero-banner">
+        <video autoPlay loop muted playsInline className="panel-hero-video">
+          <source src={videoHero} type="video/mp4" />
+        </video>
+        <div className="panel-hero-overlay" />
+        <div className="panel-hero-content">
+          <div className="panel-hero-badge"><img src={logoImg} alt="" /> Plataforma de control constructivo</div>
+          <h1 className="panel-hero-title">Bienvenido a <span>Titan V</span></h1>
+          <p className="panel-hero-subtitle">Selecciona una obra para administrar cada detalle de tu operación.</p>
+        </div>
+      </div>
       <div className="section-header">
-        <h2><i className="fas fa-house"></i> Bienvenido a Titan V</h2>
-        <p style={{ color: '#666' }}>Entra a un proyecto para trabajar en sus módulos, o crea uno nuevo.</p>
+        <h2><i className="fas fa-diagram-project"></i> Mis proyectos</h2>
+        <p className="muted-text">Entra a un proyecto para trabajar en sus módulos, o crea uno nuevo.</p>
       </div>
 
       <div className="grid">
         {puedeCrearProyecto && <div
-          className="card"
-          style={{ cursor: 'pointer', border: '2px dashed #cbd5e1', textAlign: 'center' }}
+          className="card card-interactive create-project-card"
           onClick={onCrearProyecto}
         >
           <div className="card-header" style={{ justifyContent: 'center' }}>
             <h3><i className="fas fa-plus-circle"></i> Crear proyecto</h3>
           </div>
-          <p style={{ padding: '20px 25px', color: '#666', fontSize: '14px' }}>
+          <p className="card-description">
             Registra una nueva obra para empezar a gestionar su equipo, inventario, tareas y evidencias.
           </p>
         </div>}
@@ -115,21 +171,14 @@ export const InicioTab = ({
           </div>
         ) : (
           proyectos.map((p) => (
-            <div key={p.id} className="card" style={{ cursor: 'pointer' }} onClick={() => onEntrarProyecto(p)}>
+            <div key={p.id} className="card card-interactive" onClick={() => onEntrarProyecto(p)}>
               <div className="card-header">
                 <h3><i className="fas fa-diagram-project"></i> {p.nombre_proyecto}</h3>
               </div>
-              <p style={{ padding: '20px 25px', color: '#666', fontSize: '14px' }}>
+              <p className="card-description">
                 {p.ubicacion_direccion ? p.ubicacion_direccion : 'Sin ubicación registrada.'}
               </p>
-              <div style={{ padding: '0 25px 20px' }}>
-                <span
-                  className="btn-save"
-                  style={{ display: 'inline-block', cursor: 'pointer', padding: '8px 14px', fontSize: '13px' }}
-                >
-                  Entrar al proyecto
-                </span>
-              </div>
+              <div className="card-footer-action">Entrar al proyecto <i className="fas fa-arrow-right"></i></div>
             </div>
           ))
         )}

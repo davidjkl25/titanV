@@ -116,6 +116,7 @@ const Comentarios: React.FC<ComentariosProps> = ({ tareaId, tareaNombre, onCerra
 
   return (
     <div
+      className="comments-panel"
       style={{
         backgroundColor: '#ffffff',
         borderRadius: '12px',
@@ -184,6 +185,7 @@ const Comentarios: React.FC<ComentariosProps> = ({ tareaId, tareaNombre, onCerra
 
       {/* Formulario de creación de comentario */}
       <form
+        className="comments-form"
         onSubmit={manejarEnvioComentario}
         style={{
           display: 'flex',

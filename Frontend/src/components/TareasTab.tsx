@@ -224,7 +224,7 @@ const TareasTab: React.FC<TareasTabProps> = ({ proyectoId: proyectoFijo }) => {
   });
 
   return (
-    <div style={{ padding: '30px', width: '100%', boxSizing: 'border-box' }}>
+    <div className="task-panel" style={{ padding: '30px', width: '100%', boxSizing: 'border-box' }}>
       {/* Encabezado */}
       <div className="section-header" style={{ marginBottom: '25px' }}>
         <h1 style={{ color: '#0f172a', margin: '0 0 6px 0', fontSize: '26px' }}>
@@ -238,6 +238,7 @@ const TareasTab: React.FC<TareasTabProps> = ({ proyectoId: proyectoFijo }) => {
       {/* Banner de Notificación */}
       {notificacion && (
         <div
+          className="task-surface"
           style={{
             padding: '12px 18px',
             borderRadius: '8px',
@@ -446,6 +447,7 @@ const TareasTab: React.FC<TareasTabProps> = ({ proyectoId: proyectoFijo }) => {
           
           {/* Tarjeta de Lista de Tareas */}
           <div
+            className="task-surface"
             style={{
               backgroundColor: '#ffffff',
               padding: '24px',
@@ -536,6 +538,7 @@ const TareasTab: React.FC<TareasTabProps> = ({ proyectoId: proyectoFijo }) => {
 
                   return (
                     <div
+                      className="task-item"
                       key={t.id}
                       style={{
                         padding: '16px',
