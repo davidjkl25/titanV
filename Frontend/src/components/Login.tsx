@@ -12,6 +12,7 @@ export interface LoginProps {
   onContrasenaChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onEnviar: (e: React.FormEvent) => void;
   onGoogleLogin?: () => void;
+  onVolverPrincipal: () => void;
 }
 
 export const Login: React.FC<LoginProps> = ({
@@ -21,6 +22,7 @@ export const Login: React.FC<LoginProps> = ({
   onContrasenaChange,
   onEnviar,
   onGoogleLogin,
+  onVolverPrincipal,
 }) => {
 
   const [mostrarRegistro, setMostrarRegistro] = useState(false);
@@ -90,6 +92,30 @@ export const Login: React.FC<LoginProps> = ({
         backgroundColor: 'rgba(0, 0, 0, 0.65)',
         zIndex: 2
       }} />
+
+      <button
+        type="button"
+        onClick={onVolverPrincipal}
+        style={{
+          position: 'absolute',
+          top: '24px',
+          left: '24px',
+          zIndex: 3,
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '8px',
+          padding: '10px 15px',
+          backgroundColor: 'rgba(18, 18, 18, 0.86)',
+          border: '1px solid rgba(255, 204, 0, 0.55)',
+          borderRadius: '999px',
+          color: '#ffcc00',
+          fontWeight: 700,
+          cursor: 'pointer',
+          boxShadow: '0 4px 15px rgba(0,0,0,0.35)',
+        }}
+      >
+        <i className="fas fa-arrow-left" /> Volver al inicio
+      </button>
 
       {/* TARJETA DEL FORMULARIO DE INICIO DE SESIÓN */}
       <div style={{

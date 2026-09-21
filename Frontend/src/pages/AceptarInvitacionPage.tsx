@@ -110,6 +110,7 @@ const AceptarInvitacionPage = ({ isLoggedIn, onLoginSuccess }: AceptarInvitacion
           onCorreoChange={(e) => setCorreo(e.target.value)}
           onContrasenaChange={(e) => setContrasena(e.target.value)}
           onEnviar={handleEnviarLogin}
+          onVolverPrincipal={() => navigate('/')}
         />
         <p style={{ textAlign: 'center', marginTop: '-10px', paddingBottom: '20px' }}>
           ¿No tienes cuenta?{' '}

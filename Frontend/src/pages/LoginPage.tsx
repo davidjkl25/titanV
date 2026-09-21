@@ -87,6 +87,7 @@ const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
       onContrasenaChange={handleContrasenaChange}
       onEnviar={handleEnviar}
       onGoogleLogin={() => iniciarConGoogle()}
+      onVolverPrincipal={() => navigate('/')}
     />
   );
 };
