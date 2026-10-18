@@ -45,11 +45,8 @@ CREATE TABLE usuarios (
 	activo BOOLEAN, 
 	fecha_vencimiento_licencia DATE, 
 	tiene_certificacion_maquinaria BOOLEAN, 
-<<<<<<< HEAD
-=======
 	reset_pin VARCHAR(4), 
 	reset_pin_expira TIMESTAMP WITHOUT TIME ZONE, 
->>>>>>> test
 	PRIMARY KEY (id_usuario), 
 	UNIQUE (correo_electronico)
 );
@@ -215,8 +212,4 @@ DROP TRIGGER IF EXISTS trigger_validar_stock ON historial_movimientos;
 CREATE TRIGGER trigger_validar_stock
     BEFORE INSERT ON historial_movimientos
     FOR EACH ROW
-<<<<<<< HEAD
     EXECUTE FUNCTION validar_stock_antes_de_movimiento();
-=======
-    EXECUTE FUNCTION validar_stock_antes_de_movimiento();
->>>>>>> test

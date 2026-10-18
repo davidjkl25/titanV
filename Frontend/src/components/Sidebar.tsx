@@ -2,17 +2,6 @@ interface SidebarProps {
   activeTab: string;
   onSelectTab: (tab: string) => void;
   onLogout: () => void;
-<<<<<<< HEAD
-  bloqueado?: boolean;
-}
-
-const ITEMS_LIBRES = ['inicio', 'proyectos'];
-
-export const Sidebar = ({ activeTab, onSelectTab, onLogout, bloqueado = false }: SidebarProps) => {
-  const manejarClick = (tab: string) => {
-    if (bloqueado && !ITEMS_LIBRES.includes(tab)) {
-      alert('Primero crea tu primer proyecto en "Proyectos de Obra" para desbloquear esta sección.');
-=======
   proyecto: { id: number; nombre_proyecto: string } | null;
   onSalirProyecto: () => void;
 }
@@ -26,64 +15,19 @@ export const Sidebar = ({ activeTab, onSelectTab, onLogout, proyecto, onSalirPro
   const manejarClick = (tab: string) => {
     if (sinProyecto && ITEMS_MODULO.includes(tab)) {
       alert('Primero entra a un proyecto desde "Inicio" para desbloquear estas secciones.');
->>>>>>> test
       return;
     }
     onSelectTab(tab);
   };
-<<<<<<< HEAD
-
-  const claseItem = (tab: string) => {
-    let clase = activeTab === tab ? 'active' : '';
-    if (bloqueado && !ITEMS_LIBRES.includes(tab)) clase += ' bloqueado';
-=======
   
 
   const claseItem = (tab: string) => {
     let clase = activeTab === tab ? 'active' : '';
     if (sinProyecto && ITEMS_MODULO.includes(tab)) clase += ' bloqueado';
->>>>>>> test
     return clase.trim();
   };
 
   const icono = (tab: string) =>
-<<<<<<< HEAD
-    bloqueado && !ITEMS_LIBRES.includes(tab) ? (
-      <i className="fas fa-lock" style={{ fontSize: '11px', marginLeft: '6px' }}></i>
-    ) : null;
-
-  return (
-    <div className="sidebar">
-      <div className="logo">
-        TITAN <span>V</span>
-      </div>
-      <div className="sidebar-menu">
-        <a style={{ cursor: 'pointer' }} className={claseItem('inicio')} onClick={() => manejarClick('inicio')}>
-          Inicio
-        </a>
-        <a style={{ cursor: 'pointer' }} className={claseItem('proyectos')} onClick={() => manejarClick('proyectos')}>
-          Proyectos de Obra
-        </a>
-        <a style={{ cursor: 'pointer' }} className={claseItem('materiales')} onClick={() => manejarClick('materiales')}>
-          Inventario Insumos {icono('materiales')}
-        </a>
-        <a style={{ cursor: 'pointer' }} className={claseItem('usuarios')} onClick={() => manejarClick('usuarios')}>
-          Gestión de Usuarios {icono('usuarios')}
-        </a>
-        <a style={{ cursor: 'pointer' }} className={claseItem('tareas')} onClick={() => manejarClick('tareas')}>
-          Gestión de Tareas {icono('tareas')}
-        </a>
-        <a style={{ cursor: 'pointer' }} className={claseItem('turnos')} onClick={() => manejarClick('turnos')}>
-          Turnos y Asistencia {icono('turnos')}
-        </a>
-        <a style={{ cursor: 'pointer' }} className={claseItem('evidencias')} onClick={() => manejarClick('evidencias')}>
-          Evidencias {icono('evidencias')}
-        </a>
-
-        <a onClick={onLogout} style={{ marginTop: '20px', color: '#ff4757', cursor: 'pointer' }}>
-          Cerrar Sesión
-        </a>
-=======
     sinProyecto && ITEMS_MODULO.includes(tab) ? (
       <i className="fas fa-lock" style={{ fontSize: '11px', marginLeft: '6px' }}></i>
     ) : null;
@@ -162,12 +106,8 @@ export const Sidebar = ({ activeTab, onSelectTab, onLogout, proyecto, onSalirPro
         <button type="button" onClick={onLogout} className="sidebar-logout-btn">
           <i className="fas fa-arrow-right-from-bracket"></i> Cerrar sesión
         </button>
->>>>>>> test
       </div>
     </div>
   );
 };
-<<<<<<< HEAD
-=======
 import logoImg from '../assets/logo.png';
->>>>>>> test

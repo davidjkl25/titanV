@@ -248,9 +248,6 @@ th {
         margin-left: 70px;
         width: calc(100% - 70px);
     }
-<<<<<<< HEAD
-}
-=======
 }
 
 /* ===== MATERIALes ===== */
@@ -489,4 +486,3 @@ body {
     .panel-hero-banner { min-height: 200px; padding: 28px 24px; }
     .panel-hero-title { font-size: 25px; }
 }
->>>>>>> test

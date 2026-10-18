@@ -1,16 +1,11 @@
 import os
 
 from fastapi import FastAPI
-<<<<<<< HEAD
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-=======
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import inspect, text
->>>>>>> test
 
 from app.core.database import Base, engine
 
@@ -27,28 +22,12 @@ from app.routers.tarea_router import router as tarea_router
 from app.routers.turno_router import router as turno_router
 from app.routers.movimiento_router import router as movimiento_router
 from app.routers.evidencia_router import router as evidencia_router
-<<<<<<< HEAD
-=======
 from app.routers.invitacion_router import router as invitacion_router
 from app.routers.solicitud_router import router as solicitud_router
->>>>>>> test
 
 # Crear tablas automáticamente si la base de datos está disponible
 try:
     Base.metadata.create_all(bind=engine)
-<<<<<<< HEAD
-    print("✅ [Titan V API] Tablas de base de datos conectadas y sincronizadas exitosamente.")
-except Exception as e:
-    print(f"⚠️ [Titan V API] Advertencia al conectar con la base de datos: {e}")
-    print("👉 Asegúrate de que el servicio de PostgreSQL esté iniciado y revisa la variable DATABASE_URL en tu archivo backend/.env")
-
-app = FastAPI(title="Titan V API")
-
-# Configuración de CORS (necesaria para que el frontend, servido desde otro origen, pueda llamar a la API)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-=======
     columnas_materiales = {columna["name"] for columna in inspect(engine).get_columns("materiales")}
     if "cantidad_inicial" not in columnas_materiales:
         with engine.begin() as conexion:
@@ -105,7 +84,6 @@ app.add_middleware(
         "http://localhost:5173",
         "http://127.0.0.1:5173",
     ],
->>>>>>> test
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -121,11 +99,8 @@ app.include_router(tarea_router)
 app.include_router(turno_router)
 app.include_router(movimiento_router)
 app.include_router(evidencia_router)
-<<<<<<< HEAD
-=======
 app.include_router(invitacion_router)
 app.include_router(solicitud_router)
->>>>>>> test
 
 # Sirve los archivos subidos (fotos/PDF de evidencias) en /uploads/...
 CARPETA_UPLOADS = os.path.join(os.path.dirname(os.path.dirname(__file__)), "uploads")

@@ -28,14 +28,11 @@ export const ProyectosTab = ({ onProyectoCreado }: ProyectosTabProps = {}) => {
   const [fechaFin, setFechaFin] = useState('');
   const [guardando, setGuardando] = useState(false);
 
-<<<<<<< HEAD
-=======
   const [proyectoEnlaceId, setProyectoEnlaceId] = useState<number | null>(null);
   const [rolEnlace, setRolEnlace] = useState<'Trabajador' | 'Visualizador'>('Trabajador');
   const [enlaceGenerado, setEnlaceGenerado] = useState('');
   const [generandoEnlace, setGenerandoEnlace] = useState(false);
 
->>>>>>> test
   const usuarioId = localStorage.getItem('usuario_id') || '1';
 
   const cargarProyectos = async () => {
@@ -108,8 +105,6 @@ export const ProyectosTab = ({ onProyectoCreado }: ProyectosTabProps = {}) => {
     }
   };
 
-<<<<<<< HEAD
-=======
   const abrirGeneradorEnlace = (id: number) => {
     setProyectoEnlaceId(id);
     setRolEnlace('Trabajador');
@@ -141,7 +136,6 @@ export const ProyectosTab = ({ onProyectoCreado }: ProyectosTabProps = {}) => {
     alert('Enlace copiado. Compártelo con la persona que quieres invitar.');
   };
 
->>>>>>> test
   return (
     <div className="tab-content active">
       <div className="section-header">
@@ -190,16 +184,6 @@ export const ProyectosTab = ({ onProyectoCreado }: ProyectosTabProps = {}) => {
               <div className="empty-msg">No hay proyectos registrados actualmente.</div>
             )}
             {!cargando && proyectos.map((p) => (
-<<<<<<< HEAD
-              <div key={p.id} className="project-item">
-                <div>
-                  <h4>{p.nombre_proyecto}</h4>
-                  <span style={{ fontSize: '12px', color: '#666' }}>{p.ubicacion_direccion} — {p.estado}</span>
-                </div>
-                <button onClick={() => eliminarProyecto(p.id, p.nombre_proyecto)} className="btn-delete">
-                  <i className="fas fa-trash"></i>
-                </button>
-=======
               <div key={p.id} className="project-item" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
@@ -255,7 +239,6 @@ export const ProyectosTab = ({ onProyectoCreado }: ProyectosTabProps = {}) => {
                     </p>
                   </div>
                 )}
->>>>>>> test
               </div>
             ))}
           </div>

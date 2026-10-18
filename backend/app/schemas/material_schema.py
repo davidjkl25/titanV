@@ -7,23 +7,6 @@ from app.models import TipoMovimiento
 
 
 class MaterialBase(BaseModel):
-<<<<<<< HEAD
-    nombre_material: str = Field(..., max_length=100, example="Cemento Gris ARGOS")
-    unidad_medida: str = Field(..., max_length=20, example="Bultos")
-
-
-class MaterialCreate(MaterialBase):
-    """Esquema para registrar un nuevo tipo de material en el sistema."""
-
-    pass
-
-
-class MaterialUpdate(BaseModel):
-    """No existía: el PUT usaba MaterialCreate y obligaba a reenviar todos los campos."""
-
-    nombre_material: Optional[str] = Field(None, max_length=100)
-    unidad_medida: Optional[str] = Field(None, max_length=20)
-=======
     nombre_material: str = Field(
         ...,
         max_length=100,
@@ -59,17 +42,13 @@ class MaterialUpdate(BaseModel):
         None,
         max_length=20
     )
->>>>>>> test
 
 
 class MaterialResponse(MaterialBase):
     id: int
-<<<<<<< HEAD
-=======
     proyecto_id: Optional[int] = None
     cantidad_inicial: float = 0
     cantidad_disponible: float = 0
->>>>>>> test
 
     class Config:
         from_attributes = True
@@ -81,15 +60,11 @@ class RegistroMovimiento(BaseModel):
     material_id: int
     proyecto_id: int
     tipo_movimiento: TipoMovimiento
-<<<<<<< HEAD
-    cantidad: float = Field(..., gt=0, description="La cantidad debe ser mayor a cero")
-=======
     cantidad: float = Field(
         ...,
         gt=0,
         description="La cantidad debe ser mayor a cero"
     )
->>>>>>> test
 
 
 class InventarioResponse(BaseModel):
@@ -98,11 +73,8 @@ class InventarioResponse(BaseModel):
     proyecto_id: int
     material_id: int
     cantidad_disponible: float
-<<<<<<< HEAD
-=======
     material_nombre: Optional[str] = None
     unidad_medida: Optional[str] = None
->>>>>>> test
 
     class Config:
         from_attributes = True
@@ -118,13 +90,10 @@ class KardexResponse(BaseModel):
     tipo_movimiento: TipoMovimiento
     cantidad: float
     fecha_movimiento: datetime
-<<<<<<< HEAD
-=======
     material_nombre: Optional[str] = None
     unidad_medida: Optional[str] = None
     usuario_nombre: Optional[str] = None
     proyecto_nombre: Optional[str] = None
->>>>>>> test
 
     class Config:
         from_attributes = True

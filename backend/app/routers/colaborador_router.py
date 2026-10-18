@@ -6,15 +6,9 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.core.permissions import verificar_rol_proyecto
-<<<<<<< HEAD
-from app.models import RolColaborador, Usuario
-from app.schemas import ColaboradorInvitar, ColaboradorResponse, ColaboradorUpdate
-from app.services import colaborador_service, proyecto_service
-=======
 from app.models import RolColaborador, RolProyecto, Usuario
 from app.schemas import ColaboradorInvitar, ColaboradorResponse, ColaboradorUpdate, EnlaceInvitacionCreate, InvitacionCorreoResponse
 from app.services import colaborador_service, email_service, invitacion_service, proyecto_service
->>>>>>> test
 
 router = APIRouter(prefix="/proyectos/{proyecto_id}/colaboradores", tags=["Colaboradores"])
 
@@ -35,28 +29,13 @@ def get_colaboradores(
     return colaborador_service.listar_colaboradores(db, proyecto_id)
 
 
-<<<<<<< HEAD
-@router.post("/", response_model=ColaboradorResponse, status_code=status.HTTP_201_CREATED)
-=======
 @router.post("/", response_model=InvitacionCorreoResponse, status_code=status.HTTP_201_CREATED)
->>>>>>> test
 def add_colaborador(
     proyecto_id: int,
     datos: ColaboradorInvitar,
     current_user: Usuario = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-<<<<<<< HEAD
-    """Solo el Arquitecto del proyecto puede agregar colaboradores. Se invita por
-    correo (la persona debe tener cuenta creada en Titan V de antemano)."""
-    _validar_proyecto(db, proyecto_id)
-    verificar_rol_proyecto(db, current_user, proyecto_id, RolColaborador.ARQUITECTO)
-
-    try:
-        return colaborador_service.invitar_colaborador(db, proyecto_id, datos)
-    except ValueError as error:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error))
-=======
     """Solo el Arquitecto puede invitar. Crea un enlace de invitación con el rol
     elegido y envía un correo a la persona con el link; quien lo abre se une al
     proyecto (no es necesario que tenga cuenta creada todavía)."""
@@ -102,7 +81,6 @@ def add_colaborador(
         correo_enviado=correo_enviado,
         mensaje=mensaje,
     )
->>>>>>> test
 
 
 @router.put("/{colaborador_id}", response_model=ColaboradorResponse)

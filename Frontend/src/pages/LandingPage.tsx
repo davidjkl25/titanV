@@ -1,14 +1,9 @@
 import { useNavigate } from 'react-router-dom';
 import QuienesSomos from '../components/QuienesSomos';
-<<<<<<< HEAD
-// IMPORTACIÓN CON EL NOMBRE DE TU VIDEO
-import videoFondo from '../assets/video_landing.mp4'; 
-=======
 import CookieBanner from '../components/CookieBanner';
 // IMPORTACIÓN CON EL NOMBRE DE TU VIDEO
 import videoFondo from '../assets/video_landing.mp4';
 import logoImg from '../assets/logo.png';
->>>>>>> test
 
 const caracteristicas = [
   {
@@ -49,10 +44,6 @@ const LandingPage = () => {
           zIndex: 10,
         }}
       >
-<<<<<<< HEAD
-        <div style={{ fontSize: '22px', fontWeight: 800 }}>
-          TITAN <span style={{ color: '#ffd60a' }}>V</span>
-=======
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '22px', fontWeight: 800 }}>
           <div style={{
             width: '44px',
@@ -69,7 +60,6 @@ const LandingPage = () => {
             <img src={logoImg} alt="Logo de Titan V" style={{ width: '80%', height: '80%', objectFit: 'contain' }} />
           </div>
           <span>TITAN <span style={{ color: '#ffd60a' }}>V</span></span>
->>>>>>> test
         </div>
         <button
           onClick={() => navigate('/login')}
@@ -233,10 +223,7 @@ const LandingPage = () => {
       <footer style={{ padding: '30px 8%', textAlign: 'center', color: '#777', fontSize: '13px' }}>
         © 2026 Titan V — Todos los derechos reservados
       </footer>
-<<<<<<< HEAD
-=======
       <CookieBanner />
->>>>>>> test
     </div>
   );
 };

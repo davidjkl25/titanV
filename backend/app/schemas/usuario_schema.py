@@ -1,12 +1,3 @@
-<<<<<<< HEAD
-from datetime import date
-from typing import Optional
-
-from pydantic import BaseModel, EmailStr, Field
-
-from app.models import RolUsuario
-
-=======
 import re
 from datetime import date
 from typing import Optional
@@ -48,7 +39,6 @@ def validar_nombre_completo(valor: Optional[str]) -> Optional[str]:
         )
     return valor
 
->>>>>>> test
 
 class UsuarioBase(BaseModel):
     nombre_completo: str = Field(..., max_length=150, example="David Felipe Galindo")
@@ -57,28 +47,21 @@ class UsuarioBase(BaseModel):
     fecha_vencimiento_licencia: Optional[date] = None
     tiene_certificacion_maquinaria: bool = False
 
-<<<<<<< HEAD
-=======
     @field_validator("nombre_completo")
     @classmethod
     def _nombre_valido(cls, valor):
         return validar_nombre_completo(valor)
 
->>>>>>> test
 
 class UsuarioCreate(UsuarioBase):
     """Esquema para el registro: exige la contraseña."""
 
-<<<<<<< HEAD
-    contrasena: str = Field(..., min_length=8, max_length=100, example="ClaveSegura123*")
-=======
     contrasena: str = Field(..., min_length=8, max_length=72, example="ClaveSegura123")
 
     @field_validator("contrasena")
     @classmethod
     def _contrasena_valida(cls, valor):
         return validar_contrasena(valor)
->>>>>>> test
 
 
 class UsuarioUpdate(BaseModel):
@@ -87,9 +70,6 @@ class UsuarioUpdate(BaseModel):
     activo: Optional[bool] = None
     fecha_vencimiento_licencia: Optional[date] = None
     tiene_certificacion_maquinaria: Optional[bool] = None
-<<<<<<< HEAD
-    contrasena: Optional[str] = Field(None, min_length=8, max_length=100, example="NuevaClave123*")
-=======
     contrasena: Optional[str] = Field(None, min_length=8, max_length=72, example="NuevaClave123")
 
     @field_validator("nombre_completo")
@@ -101,7 +81,6 @@ class UsuarioUpdate(BaseModel):
     @classmethod
     def _contrasena_valida(cls, valor):
         return validar_contrasena(valor)
->>>>>>> test
 
 
 class UsuarioResponse(UsuarioBase):
@@ -115,12 +94,6 @@ class UsuarioResponse(UsuarioBase):
 
 
 class UsuarioLogin(BaseModel):
-<<<<<<< HEAD
-    """TV-AUTH-02: Credenciales de inicio de sesión."""
-
-    correo_electronico: EmailStr
-    contrasena: str
-=======
     """TV-AUTH-02: Credenciales de inicio de sesión.
 
     La contraseña no se valida con las reglas de fuerza aquí: es una credencial
@@ -129,7 +102,6 @@ class UsuarioLogin(BaseModel):
 
     correo_electronico: EmailStr
     contrasena: str = Field(..., max_length=256)
->>>>>>> test
 
 
 class TokenResponse(BaseModel):
@@ -152,17 +124,11 @@ class GoogleAuthRequest(BaseModel):
     tal cual los manda el cliente, porque esos campos se pueden falsificar.
     """
 
-<<<<<<< HEAD
-    credential: str
-=======
     credential: str = Field(..., min_length=10, max_length=4096)
->>>>>>> test
     correo_electronico: Optional[EmailStr] = None
     nombre_completo: Optional[str] = None
     foto_url: Optional[str] = None
 
-<<<<<<< HEAD
-=======
 
 class ForgotPasswordRequest(BaseModel):
     email: EmailStr
@@ -182,4 +148,3 @@ class ResetPasswordRequest(BaseModel):
     @classmethod
     def _contrasena_valida(cls, valor):
         return validar_contrasena(valor)
->>>>>>> test

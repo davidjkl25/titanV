@@ -7,18 +7,11 @@ interface RegistroProps {
     apellido: string;
     correo: string;
     telefono: string;
-<<<<<<< HEAD
-    usuario: string;
-=======
->>>>>>> test
     contrasena: string;
   }) => void;
   onVolver?: () => void;
 }
 
-<<<<<<< HEAD
-const API_URL = 'http://localhost:8000';
-=======
 const API_URL = 'http://127.0.0.1:8000/api';
 
 const validarContrasena = (valor: string): string | null => {
@@ -33,7 +26,6 @@ const validarContrasena = (valor: string): string | null => {
   }
   return null;
 };
->>>>>>> test
 
 const Registro: React.FC<RegistroProps> = ({ onRegistrar, onVolver }) => {
 
@@ -41,27 +33,16 @@ const Registro: React.FC<RegistroProps> = ({ onRegistrar, onVolver }) => {
   const [apellido, setApellido] = useState('');
   const [correo, setCorreo] = useState('');
   const [telefono, setTelefono] = useState('');
-<<<<<<< HEAD
-  const [usuario, setUsuario] = useState('');
-  const [contrasena, setContrasena] = useState('');
-  const [cargando, setCargando] = useState(false);
-=======
   const [contrasena, setContrasena] = useState('');
   const [cargando, setCargando] = useState(false);
   const [verContrasena, setVerContrasena] = useState(false);
->>>>>>> test
 
   const manejarRegistro = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-<<<<<<< HEAD
-    if (contrasena.length < 8) {
-      alert('La contraseña debe tener al menos 8 caracteres.');
-=======
     const errorContrasena = validarContrasena(contrasena);
     if (errorContrasena) {
       alert(errorContrasena);
->>>>>>> test
       return;
     }
 
@@ -86,11 +67,7 @@ const Registro: React.FC<RegistroProps> = ({ onRegistrar, onVolver }) => {
       );
 
       if (onRegistrar) {
-<<<<<<< HEAD
-        onRegistrar({ nombre, apellido, correo, telefono, usuario, contrasena });
-=======
         onRegistrar({ nombre, apellido, correo, telefono, contrasena });
->>>>>>> test
       } else if (onVolver) {
         onVolver();
       }
@@ -184,34 +161,6 @@ const Registro: React.FC<RegistroProps> = ({ onRegistrar, onVolver }) => {
 
           <div style={estilos.grupo}>
             <label style={estilos.label}>
-<<<<<<< HEAD
-              Nombre de usuario
-            </label>
-
-            <input
-              type="text"
-              placeholder="Elige un usuario"
-              value={usuario}
-              onChange={(e) => setUsuario(e.target.value)}
-              required
-              style={estilos.input}
-            />
-          </div>
-
-          <div style={estilos.grupo}>
-            <label style={estilos.label}>
-              Contraseña
-            </label>
-
-            <input
-              type="password"
-              placeholder="Crea una contraseña"
-              value={contrasena}
-              onChange={(e) => setContrasena(e.target.value)}
-              required
-              style={estilos.input}
-            />
-=======
               Contraseña
             </label>
 
@@ -272,7 +221,6 @@ const Registro: React.FC<RegistroProps> = ({ onRegistrar, onVolver }) => {
                 </li>
               </ul>
             )}
->>>>>>> test
           </div>
 
           <button
@@ -411,9 +359,6 @@ const estilos = {
     fontSize: '11px',
     marginTop: '20px',
     lineHeight: '1.5'
-<<<<<<< HEAD
-  }
-=======
   },
 
   listaRequisitos: {
@@ -432,7 +377,6 @@ const estilos = {
     color: '#888',
     marginBottom: '3px',
   },
->>>>>>> test
 
 };
 

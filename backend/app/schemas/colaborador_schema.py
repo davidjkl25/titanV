@@ -33,9 +33,6 @@ class ColaboradorResponse(BaseModel):
 
 
 # Alias agregado para solucionar el error del router
-<<<<<<< HEAD
-ColaboradorCreate = ColaboradorInvitar
-=======
 ColaboradorCreate = ColaboradorInvitar
 
 
@@ -49,4 +46,3 @@ class InvitacionCorreoResponse(BaseModel):
     enlace_url: str
     correo_enviado: bool
     mensaje: str
->>>>>>> test

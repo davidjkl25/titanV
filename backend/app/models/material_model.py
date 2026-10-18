@@ -17,12 +17,6 @@ class Material(Base):
     __tablename__ = "materiales"
 
     id = Column(Integer, primary_key=True, index=True)
-<<<<<<< HEAD
-    nombre_material = Column(String(100), nullable=False)
-    unidad_medida = Column(String(50), nullable=False)
-    fecha_eliminacion = Column(DateTime, nullable=True, default=None)
-
-=======
     proyecto_id = Column(Integer, ForeignKey("proyectos_obra.id", ondelete="CASCADE"), nullable=True)
     nombre_material = Column(String(100), nullable=False)
     unidad_medida = Column(String(50), nullable=False)
@@ -30,20 +24,16 @@ class Material(Base):
     fecha_eliminacion = Column(DateTime, nullable=True, default=None)
 
     proyecto = relationship("ProyectoObra", back_populates="materiales")
->>>>>>> test
     inventario = relationship("InventarioObra", back_populates="material", cascade="all, delete-orphan")
     historial_movimientos = relationship(
         "HistorialMovimiento", back_populates="material", cascade="all, delete-orphan"
     )
-<<<<<<< HEAD
-=======
     solicitudes = relationship("SolicitudMaterial", back_populates="material", cascade="all, delete-orphan")
 
     @property
     def cantidad_disponible(self) -> float:
         """Stock actual del material en su proyecto."""
         return self.inventario[0].cantidad_disponible if self.inventario else 0.0
->>>>>>> test
 
 
 class InventarioObra(Base):

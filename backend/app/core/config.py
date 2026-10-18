@@ -1,20 +1,11 @@
 import os
-<<<<<<< HEAD
-from datetime import timedelta
-=======
 import secrets
 from datetime import timedelta
 
->>>>>>> test
 from dotenv import load_dotenv
 
 load_dotenv()
 
-<<<<<<< HEAD
-SECRET_KEY = os.getenv("JWT_SECRET_KEY", "clave-secreta-de-desarrollo-titan-v-2026")
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE = timedelta(minutes=int(os.getenv("JWT_EXPIRE_MINUTES", 60)))
-=======
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE = timedelta(minutes=int(os.getenv("JWT_EXPIRE_MINUTES", 60)))
 
@@ -37,4 +28,3 @@ else:
 # Tope de usuarios del sistema. 0 (por defecto) = sin límite, para que no
 # bloquee el registro en desarrollo/pruebas.
 MAX_USUARIOS = int(os.getenv("MAX_USUARIOS", "0"))
->>>>>>> test

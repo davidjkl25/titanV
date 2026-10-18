@@ -4,13 +4,6 @@ import { fetchConToken } from '../api';
 import { Sidebar } from '../components/Sidebar';
 import { InicioTab } from '../components/InicioTab';
 import { ProyectosTab } from '../components/ProyectosTab';
-<<<<<<< HEAD
-import { MaterialesTab } from '../components/MaterialesTab';
-import Usuarios from '../components/Usuarios';
-import TareasTab from '../components/TareasTab';
-import { TurnosTab } from '../components/TurnosTab';
-import { EvidenciasTab } from '../components/EvidenciasTab';
-=======
 import { ColaboradoresTab } from '../components/ColaboradoresTab';
 import { MaterialesTab } from '../components/MaterialesTab';
 import { InventarioTab } from '../components/InventarioTab';
@@ -25,30 +18,11 @@ export interface ProyectoResumen {
   ubicacion_direccion?: string;
   estado?: string;
 }
->>>>>>> test
 
 interface DashboardPageProps {
   onLogout: () => void;
 }
 
-<<<<<<< HEAD
-const DashboardPage = ({ onLogout }: DashboardPageProps) => {
-  const navigate = useNavigate();
-  const [tabActual, setTabActual] = useState('inicio');
-  const [tieneProyectos, setTieneProyectos] = useState(false);
-  const [cargandoProyectos, setCargandoProyectos] = useState(true);
-
-  const usuarioId = localStorage.getItem('usuario_id') || '1';
-
-  const verificarProyectos = async () => {
-    try {
-      const respuesta = await fetchConToken(`/proyectos/?usuario_id=${usuarioId}`);
-      const proyectos = respuesta.ok ? await respuesta.json() : [];
-      setTieneProyectos(Array.isArray(proyectos) && proyectos.length > 0);
-    } catch {
-      // Si falla la verificación, no bloqueamos al usuario de más: lo dejamos pasar.
-      setTieneProyectos(true);
-=======
 const MODULOS_PROYECTO = ['colaboradores', 'materiales', 'inventario', 'tareas', 'turnos', 'evidencias'];
 
 const DashboardPage = ({ onLogout }: DashboardPageProps) => {
@@ -66,7 +40,6 @@ const DashboardPage = ({ onLogout }: DashboardPageProps) => {
       setProyectos(Array.isArray(data) ? data : []);
     } catch {
       setProyectos([]);
->>>>>>> test
     } finally {
       setCargandoProyectos(false);
     }
@@ -83,31 +56,6 @@ const DashboardPage = ({ onLogout }: DashboardPageProps) => {
     navigate('/');
   };
 
-<<<<<<< HEAD
-  const bloqueado = !cargandoProyectos && !tieneProyectos;
-
-  const irA = (tab: string) => {
-    if (bloqueado && tab !== 'inicio' && tab !== 'proyectos') return;
-    setTabActual(tab);
-  };
-
-  return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f4f6f9' }}>
-      <Sidebar activeTab={tabActual} onSelectTab={irA} onLogout={handleLogout} bloqueado={bloqueado} />
-
-      <div className="main-content">
-        {tabActual === 'inicio' && (
-          <InicioTab onIrA={irA} tieneProyectos={tieneProyectos} cargando={cargandoProyectos} />
-        )}
-        {/* Proyectos siempre queda accesible: es la única forma de desbloquear el resto */}
-        {tabActual === 'proyectos' && <ProyectosTab onProyectoCreado={verificarProyectos} />}
-
-        {!bloqueado && tabActual === 'materiales' && <MaterialesTab />}
-        {!bloqueado && tabActual === 'usuarios' && <Usuarios />}
-        {!bloqueado && tabActual === 'tareas' && <TareasTab />}
-        {!bloqueado && tabActual === 'turnos' && <TurnosTab />}
-        {!bloqueado && tabActual === 'evidencias' && <EvidenciasTab />}
-=======
   const entrarProyecto = (proyecto: ProyectoResumen) => {
     setProyectoSeleccionado(proyecto);
     setTabActual('inicio');
@@ -254,7 +202,6 @@ const DashboardPage = ({ onLogout }: DashboardPageProps) => {
         {proyectoSeleccionado && tabActual === 'evidencias' && (
           <EvidenciasTab proyectoId={proyectoSeleccionado.id} />
         )}
->>>>>>> test
       </div>
     </div>
   );

@@ -1,10 +1,7 @@
 import React, { useState } from 'react';
 import { CardAccion } from './CardAccion';
 import Registro from './Registro';
-<<<<<<< HEAD
-=======
 import RecuperarContrasena from './RecuperarContrasena';
->>>>>>> test
 // IMPORTACIÓN CORRECTA DEL VIDEO DESDE TU CARPETA ASSETS
 import videoLogin from '../assets/video_login.mp4'; 
 
@@ -15,10 +12,7 @@ export interface LoginProps {
   onContrasenaChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onEnviar: (e: React.FormEvent) => void;
   onGoogleLogin?: () => void;
-<<<<<<< HEAD
-=======
   onVolverPrincipal: () => void;
->>>>>>> test
 }
 
 export const Login: React.FC<LoginProps> = ({
@@ -28,27 +22,17 @@ export const Login: React.FC<LoginProps> = ({
   onContrasenaChange,
   onEnviar,
   onGoogleLogin,
-<<<<<<< HEAD
-}) => {
-
-  const [mostrarRegistro, setMostrarRegistro] = useState(false);
-=======
   onVolverPrincipal,
 }) => {
 
   const [mostrarRegistro, setMostrarRegistro] = useState(false);
   const [showForgotModal, setShowForgotModal] = useState(false);
->>>>>>> test
 
   const manejarRegistro = (datos: {
     nombre: string;
     apellido: string;
     correo: string;
     telefono: string;
-<<<<<<< HEAD
-    usuario: string;
-=======
->>>>>>> test
     contrasena: string;
   }) => {
     console.log('Módulo Login - Registro recibido:', datos);
@@ -108,8 +92,6 @@ export const Login: React.FC<LoginProps> = ({
         zIndex: 2
       }} />
 
-<<<<<<< HEAD
-=======
       <button
         type="button"
         onClick={onVolverPrincipal}
@@ -134,7 +116,6 @@ export const Login: React.FC<LoginProps> = ({
         <i className="fas fa-arrow-left" /> Volver al inicio
       </button>
 
->>>>>>> test
       {/* TARJETA DEL FORMULARIO DE INICIO DE SESIÓN */}
       <div style={{
         backgroundColor: 'rgba(30, 30, 30, 0.88)',
@@ -243,12 +224,6 @@ export const Login: React.FC<LoginProps> = ({
             </button>
           )}
 
-<<<<<<< HEAD
-        </form>
-
-        <div style={{
-          marginTop: '22px',
-=======
           {/* BOTÓN OLVIDASTE TU CONTRASEÑA */}
           <div style={{ textAlign: 'center', marginTop: '16px', marginBottom: '4px' }}>
             <button
@@ -272,7 +247,6 @@ export const Login: React.FC<LoginProps> = ({
 
         <div style={{
           marginTop: '18px',
->>>>>>> test
           fontSize: '12px'
         }}>
 
@@ -300,14 +274,11 @@ export const Login: React.FC<LoginProps> = ({
         </div>
 
       </div>
-<<<<<<< HEAD
-=======
 
       {showForgotModal && (
         <RecuperarContrasena onClose={() => setShowForgotModal(false)} />
       )}
 
->>>>>>> test
     </div>
   );
 };

@@ -4,23 +4,15 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-<<<<<<< HEAD
-from app.models import Usuario
-from app.schemas import ComentarioCreate, ComentarioResponse, TareaCreate, TareaResponse, TareaUpdate
-from app.services import auth_service, tarea_service
-=======
 from app.core.deps import get_current_user
 from app.core.permissions import verificar_rol_proyecto
 from app.models import RolProyecto, Usuario
 from app.schemas import ComentarioCreate, ComentarioResponse, TareaCreate, TareaResponse, TareaUpdate
 from app.services import colaborador_service, tarea_service
->>>>>>> test
 
 router = APIRouter(prefix="/tareas", tags=["Tareas"])
 
 
-<<<<<<< HEAD
-=======
 def _verificar_acceso_tarea(db: Session, tarea_id: int, usuario: Usuario):
     """Devuelve la tarea solo si el usuario es colaborador del proyecto al que
     pertenece. Lanza 403 si no tiene acceso."""
@@ -43,26 +35,12 @@ def _verificar_escritura_tarea(db: Session, tarea_id: int, usuario: Usuario):
     return tarea
 
 
->>>>>>> test
 @router.get("/", response_model=List[TareaResponse])
 def get_tareas(
     proyecto_id: Optional[int] = Query(None, description="Filtrar por proyecto"),
     incluir_eliminados: bool = False,
     skip: int = 0,
     limit: int = 100,
-<<<<<<< HEAD
-    db: Session = Depends(get_db),
-):
-    return tarea_service.listar_tareas(db, proyecto_id, incluir_eliminados, skip, limit)
-
-
-@router.get("/{tarea_id}", response_model=TareaResponse)
-def get_tarea(tarea_id: int, incluir_eliminados: bool = False, db: Session = Depends(get_db)):
-    tarea = tarea_service.obtener_tarea(db, tarea_id, incluir_eliminados)
-    if not tarea:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tarea no encontrada")
-    return tarea
-=======
     current_user: Usuario = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -83,17 +61,12 @@ def get_tarea(
 ):
     _verificar_acceso_tarea(db, tarea_id, current_user)
     return tarea_service.obtener_tarea(db, tarea_id, incluir_eliminados)
->>>>>>> test
 
 
 @router.post("/", response_model=TareaResponse, status_code=status.HTTP_201_CREATED)
 def create_tarea(
     tarea: TareaCreate,
     db: Session = Depends(get_db),
-<<<<<<< HEAD
-    usuario_actual: Usuario = Depends(auth_service.obtener_usuario_actual),
-):
-=======
     current_user: Usuario = Depends(get_current_user),
 ):
     if tarea.proyecto_id is None:
@@ -102,7 +75,6 @@ def create_tarea(
             detail="Debes indicar el proyecto de la tarea.",
         )
     verificar_rol_proyecto(db, current_user, tarea.proyecto_id, RolProyecto.ARQUITECTO, RolProyecto.TRABAJADOR)
->>>>>>> test
     try:
         return tarea_service.crear_tarea(db, tarea)
     except HTTPException:
@@ -119,14 +91,9 @@ def update_tarea(
     tarea_id: int,
     tarea_actualizada: TareaUpdate,
     db: Session = Depends(get_db),
-<<<<<<< HEAD
-    usuario_actual: Usuario = Depends(auth_service.obtener_usuario_actual),
-):
-=======
     current_user: Usuario = Depends(get_current_user),
 ):
     _verificar_escritura_tarea(db, tarea_id, current_user)
->>>>>>> test
     tarea = tarea_service.actualizar_tarea(db, tarea_id, tarea_actualizada)
     if not tarea:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tarea no encontrada")
@@ -137,14 +104,9 @@ def update_tarea(
 def delete_tarea(
     tarea_id: int,
     db: Session = Depends(get_db),
-<<<<<<< HEAD
-    usuario_actual: Usuario = Depends(auth_service.obtener_usuario_actual),
-):
-=======
     current_user: Usuario = Depends(get_current_user),
 ):
     _verificar_escritura_tarea(db, tarea_id, current_user)
->>>>>>> test
     if not tarea_service.eliminar_tarea(db, tarea_id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tarea no encontrada")
     return None
@@ -154,14 +116,9 @@ def delete_tarea(
 def restaurar_tarea(
     tarea_id: int,
     db: Session = Depends(get_db),
-<<<<<<< HEAD
-    usuario_actual: Usuario = Depends(auth_service.obtener_usuario_actual),
-):
-=======
     current_user: Usuario = Depends(get_current_user),
 ):
     _verificar_escritura_tarea(db, tarea_id, current_user)
->>>>>>> test
     tarea = tarea_service.restaurar_tarea(db, tarea_id)
     if not tarea:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tarea no encontrada o no está eliminada")
@@ -171,11 +128,6 @@ def restaurar_tarea(
 # --- Comentarios anidados bajo una tarea ---
 
 @router.get("/{tarea_id}/comentarios", response_model=List[ComentarioResponse])
-<<<<<<< HEAD
-def get_comentarios(tarea_id: int, incluir_eliminados: bool = False, db: Session = Depends(get_db)):
-    if not tarea_service.obtener_tarea(db, tarea_id):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tarea no encontrada")
-=======
 def get_comentarios(
     tarea_id: int,
     incluir_eliminados: bool = False,
@@ -183,7 +135,6 @@ def get_comentarios(
     db: Session = Depends(get_db),
 ):
     _verificar_acceso_tarea(db, tarea_id, current_user)
->>>>>>> test
     return tarea_service.listar_comentarios(db, tarea_id, incluir_eliminados)
 
 
@@ -195,32 +146,18 @@ def get_comentarios(
 def create_comentario(
     tarea_id: int,
     comentario: ComentarioCreate,
-<<<<<<< HEAD
-    usuario_id: int = Query(..., description="ID del usuario que publica el comentario"),
-    db: Session = Depends(get_db),
-    usuario_actual: Usuario = Depends(auth_service.obtener_usuario_actual),
-):
-    if not tarea_service.obtener_tarea(db, tarea_id):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tarea no encontrada")
-    return tarea_service.crear_comentario(db, tarea_id, usuario_id, comentario)
-=======
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(get_current_user),
 ):
     tarea = _verificar_acceso_tarea(db, tarea_id, current_user)
     verificar_rol_proyecto(db, current_user, tarea.proyecto_id, RolProyecto.ARQUITECTO, RolProyecto.TRABAJADOR)
     return tarea_service.crear_comentario(db, tarea_id, current_user.id_usuario, comentario)
->>>>>>> test
 
 
 @router.delete("/comentarios/{comentario_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_comentario(
     comentario_id: int,
     db: Session = Depends(get_db),
-<<<<<<< HEAD
-    usuario_actual: Usuario = Depends(auth_service.obtener_usuario_actual),
-):
-=======
     current_user: Usuario = Depends(get_current_user),
 ):
     comentario = tarea_service.obtener_comentario(db, comentario_id)
@@ -233,7 +170,6 @@ def delete_comentario(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Solo puedes eliminar tus propios comentarios; el Arquitecto del proyecto puede eliminar cualquiera.",
         )
->>>>>>> test
     if not tarea_service.eliminar_comentario(db, comentario_id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Comentario no encontrado")
     return None

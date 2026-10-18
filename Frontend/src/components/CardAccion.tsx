@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-import React from 'react';
-=======
 import React, { useState } from 'react';
->>>>>>> test
 export interface CardAccionProps {
   label: string;
   tipo?: string;
@@ -11,26 +7,6 @@ export interface CardAccionProps {
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-<<<<<<< HEAD
-export const CardAccion: React.FC<CardAccionProps> = ({ label, tipo = 'text', placeholder, valor, onChange }) => {
-  return (
-    <div style={{ marginBottom: '15px', display: 'flex', flexDirection: 'column' }}>
-      <label style={{ color: '#ccc', fontSize: '14px', marginBottom: '5px' }}>{label}</label>
-      <input
-        type={tipo}
-        placeholder={placeholder}
-        value={valor}
-        onChange={onChange}
-        style={{
-          padding: '10px',
-          borderRadius: '6px',
-          border: '1px solid #444',
-          backgroundColor: '#222',
-          color: '#fff',
-          outline: 'none'
-        }}
-      />
-=======
 const iconoOjo = (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" />
@@ -95,7 +71,6 @@ export const CardAccion: React.FC<CardAccionProps> = ({ label, tipo = 'text', pl
           </button>
         )}
       </div>
->>>>>>> test
     </div>
   );
 };

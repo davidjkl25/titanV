@@ -8,11 +8,7 @@ from app.core.deps import get_current_user
 from app.core.permissions import verificar_rol_proyecto
 from app.models import RolColaborador, Usuario
 from app.schemas import InventarioResponse, KardexResponse, RegistroMovimiento
-<<<<<<< HEAD
-from app.services import movimiento_service
-=======
 from app.services import colaborador_service, movimiento_service
->>>>>>> test
 from app.services.movimiento_service import StockInsuficienteError
 
 router = APIRouter(prefix="/movimientos", tags=["Inventario y Kardex"])
@@ -28,19 +24,11 @@ def registrar_movimiento(
     # Antes el autor del movimiento venia de un query param "usuario_id" (cualquiera
     # podia registrar movimientos a nombre de otro). Ahora se toma del token validado.
     verificar_rol_proyecto(
-<<<<<<< HEAD
-        db, current_user, movimiento.proyecto_id, RolColaborador.ARQUITECTO, RolColaborador.TRABAJADOR
-    )
-    try:
-        return movimiento_service.registrar_movimiento(db, current_user.id_usuario, movimiento)
-    except StockInsuficienteError as error:
-=======
         db, current_user, movimiento.proyecto_id, RolColaborador.ARQUITECTO
     )
     try:
         return movimiento_service.registrar_movimiento(db, current_user.id_usuario, movimiento)
     except (StockInsuficienteError, ValueError) as error:
->>>>>>> test
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error))
 
 
@@ -53,12 +41,6 @@ def listar_movimientos(
     current_user: Usuario = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-<<<<<<< HEAD
-    """TV-KDX-14: historial inmutable de movimientos, filtrable por proyecto y/o material."""
-    if proyecto_id is not None:
-        verificar_rol_proyecto(db, current_user, proyecto_id)
-    return movimiento_service.listar_movimientos(db, proyecto_id, material_id, skip, limit)
-=======
     """TV-KDX-14: historial inmutable de movimientos, filtrable por proyecto y/o material.
     SIEMPRE acotado a los proyectos donde el usuario es colaborador."""
     if proyecto_id is not None:
@@ -77,7 +59,6 @@ def listar_movimientos(
         }
         for m in movimientos
     ]
->>>>>>> test
 
 
 @router.get("/inventario/{proyecto_id}", response_model=List[InventarioResponse])
@@ -88,9 +69,6 @@ def get_inventario_proyecto(
 ):
     """Stock actual de cada material dentro de un proyecto puntual."""
     verificar_rol_proyecto(db, current_user, proyecto_id)
-<<<<<<< HEAD
-    return movimiento_service.listar_inventario_proyecto(db, proyecto_id)
-=======
     inventario = movimiento_service.listar_inventario_proyecto(db, proyecto_id)
     return [
         {
@@ -102,4 +80,3 @@ def get_inventario_proyecto(
         }
         for item in inventario
     ]
->>>>>>> test

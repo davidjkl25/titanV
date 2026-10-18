@@ -23,15 +23,11 @@ interface Usuario {
 
 const ESTADOS = ['Programado', 'Presente', 'Ausente'];
 
-<<<<<<< HEAD
-export const TurnosTab = () => {
-=======
 interface TurnosTabProps {
   proyectoId?: number;
 }
 
 export const TurnosTab = ({ proyectoId: proyectoFijo }: TurnosTabProps) => {
->>>>>>> test
   const [turnos, setTurnos] = useState<Turno[]>([]);
   const [proyectos, setProyectos] = useState<Proyecto[]>([]);
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
@@ -50,28 +46,18 @@ export const TurnosTab = ({ proyectoId: proyectoFijo }: TurnosTabProps) => {
     setCargando(true);
     setError('');
     try {
-<<<<<<< HEAD
-      const [rTurnos, rProyectos, rUsuarios] = await Promise.all([
-        fetchConToken('/turnos/'),
-=======
       const queryTurnos = proyectoFijo ? `?proyecto_id=${proyectoFijo}` : '';
       const [rTurnos, rProyectos, rUsuarios] = await Promise.all([
         fetchConToken(`/turnos/${queryTurnos}`),
->>>>>>> test
         fetchConToken('/proyectos/'),
         fetchConToken('/usuarios/'),
       ]);
       if (!rTurnos.ok) throw new Error('No se pudieron cargar los turnos.');
       setTurnos(await rTurnos.json());
-<<<<<<< HEAD
-      setProyectos(rProyectos.ok ? await rProyectos.json() : []);
-      setUsuarios(rUsuarios.ok ? await rUsuarios.json() : []);
-=======
       const dataProyectos = rProyectos.ok ? await rProyectos.json() : [];
       setProyectos(proyectoFijo ? dataProyectos.filter((p: Proyecto) => p.id === proyectoFijo) : dataProyectos);
       setUsuarios(rUsuarios.ok ? await rUsuarios.json() : []);
       if (proyectoFijo) setProyectoId(proyectoFijo);
->>>>>>> test
     } catch (err: any) {
       setError(err.message || 'No se pudieron cargar los turnos.');
     } finally {
