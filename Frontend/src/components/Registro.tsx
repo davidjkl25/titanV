@@ -7,13 +7,33 @@ interface RegistroProps {
     apellido: string;
     correo: string;
     telefono: string;
+<<<<<<< HEAD
     usuario: string;
+=======
+>>>>>>> test
     contrasena: string;
   }) => void;
   onVolver?: () => void;
 }
 
+<<<<<<< HEAD
 const API_URL = 'http://localhost:8000';
+=======
+const API_URL = 'http://127.0.0.1:8000/api';
+
+const validarContrasena = (valor: string): string | null => {
+  if (valor.length < 8) {
+    return 'La contraseña debe tener al menos 8 caracteres.';
+  }
+  if (!/[A-Z]/.test(valor)) {
+    return 'La contraseña debe tener al menos una letra mayúscula.';
+  }
+  if (!/[0-9]/.test(valor)) {
+    return 'La contraseña debe tener al menos un número.';
+  }
+  return null;
+};
+>>>>>>> test
 
 const Registro: React.FC<RegistroProps> = ({ onRegistrar, onVolver }) => {
 
@@ -21,15 +41,27 @@ const Registro: React.FC<RegistroProps> = ({ onRegistrar, onVolver }) => {
   const [apellido, setApellido] = useState('');
   const [correo, setCorreo] = useState('');
   const [telefono, setTelefono] = useState('');
+<<<<<<< HEAD
   const [usuario, setUsuario] = useState('');
   const [contrasena, setContrasena] = useState('');
   const [cargando, setCargando] = useState(false);
+=======
+  const [contrasena, setContrasena] = useState('');
+  const [cargando, setCargando] = useState(false);
+  const [verContrasena, setVerContrasena] = useState(false);
+>>>>>>> test
 
   const manejarRegistro = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
+<<<<<<< HEAD
     if (contrasena.length < 8) {
       alert('La contraseña debe tener al menos 8 caracteres.');
+=======
+    const errorContrasena = validarContrasena(contrasena);
+    if (errorContrasena) {
+      alert(errorContrasena);
+>>>>>>> test
       return;
     }
 
@@ -54,7 +86,11 @@ const Registro: React.FC<RegistroProps> = ({ onRegistrar, onVolver }) => {
       );
 
       if (onRegistrar) {
+<<<<<<< HEAD
         onRegistrar({ nombre, apellido, correo, telefono, usuario, contrasena });
+=======
+        onRegistrar({ nombre, apellido, correo, telefono, contrasena });
+>>>>>>> test
       } else if (onVolver) {
         onVolver();
       }
@@ -148,6 +184,7 @@ const Registro: React.FC<RegistroProps> = ({ onRegistrar, onVolver }) => {
 
           <div style={estilos.grupo}>
             <label style={estilos.label}>
+<<<<<<< HEAD
               Nombre de usuario
             </label>
 
@@ -174,6 +211,68 @@ const Registro: React.FC<RegistroProps> = ({ onRegistrar, onVolver }) => {
               required
               style={estilos.input}
             />
+=======
+              Contraseña
+            </label>
+
+            <div style={{ position: 'relative' }}>
+              <input
+                type={verContrasena ? 'text' : 'password'}
+                placeholder="Crea una contraseña"
+                value={contrasena}
+                onChange={(e) => setContrasena(e.target.value)}
+                required
+                style={{ ...estilos.input, paddingRight: '40px' }}
+              />
+
+              <button
+                type="button"
+                onClick={() => setVerContrasena(!verContrasena)}
+                aria-label={verContrasena ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                style={{
+                  position: 'absolute',
+                  right: '8px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  color: '#aaa',
+                  cursor: 'pointer',
+                  padding: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                }}
+              >
+                {verContrasena ? (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+                    <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+                    <path d="M14.12 14.12a3 3 0 1 1-4.24-4.24" />
+                    <line x1="1" y1="1" x2="23" y2="23" />
+                  </svg>
+                ) : (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                )}
+              </button>
+            </div>
+
+            {contrasena.length > 0 && (
+              <ul style={estilos.listaRequisitos}>
+                <li style={contrasena.length >= 8 ? estilos.requisitoOk : estilos.requisitoFalta}>
+                  {contrasena.length >= 8 ? '✓' : '○'} Mínimo 8 caracteres
+                </li>
+                <li style={/[A-Z]/.test(contrasena) ? estilos.requisitoOk : estilos.requisitoFalta}>
+                  {/[A-Z]/.test(contrasena) ? '✓' : '○'} Al menos una mayúscula
+                </li>
+                <li style={/[0-9]/.test(contrasena) ? estilos.requisitoOk : estilos.requisitoFalta}>
+                  {/[0-9]/.test(contrasena) ? '✓' : '○'} Al menos un número
+                </li>
+              </ul>
+            )}
+>>>>>>> test
           </div>
 
           <button
@@ -312,7 +411,28 @@ const estilos = {
     fontSize: '11px',
     marginTop: '20px',
     lineHeight: '1.5'
+<<<<<<< HEAD
   }
+=======
+  },
+
+  listaRequisitos: {
+    listStyle: 'none',
+    padding: 0,
+    margin: '8px 0 0 0',
+    fontSize: '12px',
+  },
+
+  requisitoOk: {
+    color: '#4ade80',
+    marginBottom: '3px',
+  },
+
+  requisitoFalta: {
+    color: '#888',
+    marginBottom: '3px',
+  },
+>>>>>>> test
 
 };
 

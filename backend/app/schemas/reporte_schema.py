@@ -6,7 +6,11 @@ from pydantic import BaseModel
 
 class EvidenciaResponse(BaseModel):
     id: int
+<<<<<<< HEAD
     proyecto_id: int
+=======
+    tarea_id: int
+>>>>>>> test
     usuario_id: int
     nombre_archivo: str
     ruta_archivo: str

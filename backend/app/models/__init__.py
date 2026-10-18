@@ -11,6 +11,11 @@ from app.models.material_model import HistorialMovimiento, InventarioObra, Mater
 from app.models.tarea_model import Comentario, EstadoTarea, Tarea
 from app.models.asistencia_model import TurnoRelevo
 from app.models.reporte_model import ActaCampo, EvidenciaMultimedia
+<<<<<<< HEAD
+=======
+from app.models.invitacion_model import EnlaceInvitacion
+from app.models.solicitud_model import EstadoSolicitud, SolicitudMaterial
+>>>>>>> test
 
 __all__ = [
     "Usuario",
@@ -25,10 +30,19 @@ __all__ = [
     "InventarioObra",
     "HistorialMovimiento",
     "TipoMovimiento",
+<<<<<<< HEAD
+=======
+    "EstadoSolicitud",
+    "SolicitudMaterial",
+>>>>>>> test
     "Tarea",
     "Comentario",
     "EstadoTarea",
     "TurnoRelevo",
     "EvidenciaMultimedia",
     "ActaCampo",
+<<<<<<< HEAD
+=======
+    "EnlaceInvitacion",
+>>>>>>> test
 ]

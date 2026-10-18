@@ -38,7 +38,11 @@ async def guardar_archivo_en_disco(archivo: UploadFile) -> str:
 
 
 async def subir_evidencia(
+<<<<<<< HEAD
     db: Session, proyecto_id: int, usuario_id: int, archivo: UploadFile, descripcion: Optional[str] = None
+=======
+    db: Session, tarea_id: int, usuario_id: int, archivo: UploadFile, descripcion: Optional[str] = None
+>>>>>>> test
 ) -> EvidenciaMultimedia:
     if not archivo.filename or not _extension_valida(archivo.filename):
         raise ValueError(
@@ -48,7 +52,11 @@ async def subir_evidencia(
     ruta = await guardar_archivo_en_disco(archivo)
 
     nueva_evidencia = EvidenciaMultimedia(
+<<<<<<< HEAD
         proyecto_id=proyecto_id,
+=======
+        tarea_id=tarea_id,
+>>>>>>> test
         usuario_id=usuario_id,
         nombre_archivo=archivo.filename,
         ruta_archivo=ruta,
@@ -60,13 +68,29 @@ async def subir_evidencia(
     return nueva_evidencia
 
 
+<<<<<<< HEAD
 def listar_evidencias(db: Session, proyecto_id: int, incluir_eliminadas: bool = False) -> List[EvidenciaMultimedia]:
     query = db.query(EvidenciaMultimedia).filter(EvidenciaMultimedia.proyecto_id == proyecto_id)
+=======
+def listar_evidencias(db: Session, tarea_id: int, incluir_eliminadas: bool = False) -> List[EvidenciaMultimedia]:
+    query = db.query(EvidenciaMultimedia).filter(EvidenciaMultimedia.tarea_id == tarea_id)
+>>>>>>> test
     if not incluir_eliminadas:
         query = sin_eliminados(query, EvidenciaMultimedia)
     return query.order_by(EvidenciaMultimedia.fecha_subida.desc()).all()
 
 
+<<<<<<< HEAD
+=======
+def obtener_evidencia(db: Session, evidencia_id: int) -> Optional[EvidenciaMultimedia]:
+    return (
+        db.query(EvidenciaMultimedia)
+        .filter(EvidenciaMultimedia.id == evidencia_id, EvidenciaMultimedia.fecha_eliminacion.is_(None))
+        .first()
+    )
+
+
+>>>>>>> test
 def eliminar_evidencia(db: Session, evidencia_id: int) -> bool:
     """Soft delete: el archivo NO se borra del disco, solo se oculta del listado.
     Así, si hace falta revisar evidencia antigua de un reclamo, sigue disponible."""

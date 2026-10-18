@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 import os
+=======
+>>>>>>> test
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
@@ -9,15 +12,22 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 
+<<<<<<< HEAD
+=======
+from app.core.config import ALGORITHM, SECRET_KEY
+>>>>>>> test
 from app.core.database import get_db
 from app.models import Usuario
 from app.schemas import UsuarioLogin
 
+<<<<<<< HEAD
 # La clave con la que se firman los tokens. En producción DEBE venir de una
 # variable de entorno real — el valor por defecto es solo para que el
 # proyecto no se caiga si alguien olvida configurar el .env en desarrollo.
 SECRET_KEY = os.getenv("JWT_SECRET_KEY", "clave-de-desarrollo-cambiar-en-produccion")
 ALGORITHM = "HS256"
+=======
+>>>>>>> test
 MINUTOS_EXPIRACION_TOKEN = 60 * 8  # 8 horas
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
@@ -39,6 +49,7 @@ def verificar_contrasena(contrasena_plana: str, contrasena_hasheada: str) -> boo
 
 
 # --- Autenticación (login) ---
+<<<<<<< HEAD
 
 def autenticar_usuario(db: Session, credenciales: UsuarioLogin) -> Optional[Usuario]:
     """Busca al usuario y valida la contraseña. Devuelve None si las credenciales no son válidas."""
@@ -50,6 +61,11 @@ def autenticar_usuario(db: Session, credenciales: UsuarioLogin) -> Optional[Usua
         return None
 
     return usuario
+=======
+# La validación de credenciales vive en el router /api/auth/login, que además
+# aplica límite de intentos por IP y bloqueo temporal de la cuenta
+# (ver app.services.proteccion_service). No duplicarla aquí.
+>>>>>>> test
 
 
 # --- JWT ---

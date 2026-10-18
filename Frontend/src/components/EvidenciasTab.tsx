@@ -3,7 +3,11 @@ import { fetchConToken } from '../api';
 
 interface Evidencia {
   id: number;
+<<<<<<< HEAD
   proyecto_id: number;
+=======
+  tarea_id: number;
+>>>>>>> test
   usuario_id: number;
   nombre_archivo: string;
   ruta_archivo: string;
@@ -11,16 +15,33 @@ interface Evidencia {
   fecha_subida: string;
 }
 
+<<<<<<< HEAD
 interface Proyecto {
   id: number;
   nombre_proyecto: string;
+=======
+interface Tarea {
+  id: number;
+  nombre_tarea: string;
+  proyecto_id: number;
+>>>>>>> test
 }
 
 const API_URL = 'http://localhost:8000';
 
+<<<<<<< HEAD
 export const EvidenciasTab = () => {
   const [proyectos, setProyectos] = useState<Proyecto[]>([]);
   const [proyectoId, setProyectoId] = useState<number | ''>('');
+=======
+interface EvidenciasTabProps {
+  proyectoId?: number;
+}
+
+export const EvidenciasTab = ({ proyectoId: proyectoFijo }: EvidenciasTabProps) => {
+  const [tareas, setTareas] = useState<Tarea[]>([]);
+  const [tareaId, setTareaId] = useState<number | ''>('');
+>>>>>>> test
   const [evidencias, setEvidencias] = useState<Evidencia[]>([]);
   const [cargando, setCargando] = useState(false);
   const [subiendo, setSubiendo] = useState(false);
@@ -31,12 +52,22 @@ export const EvidenciasTab = () => {
 
   const usuarioId = localStorage.getItem('usuario_id') || '1';
 
+<<<<<<< HEAD
   const cargarProyectos = async () => {
     const respuesta = await fetchConToken('/proyectos/');
     if (respuesta.ok) {
       const data = await respuesta.json();
       setProyectos(data);
       if (data.length > 0) setProyectoId(data[0].id);
+=======
+  const cargarTareas = async () => {
+    const query = proyectoFijo ? `/?proyecto_id=${proyectoFijo}` : '';
+    const respuesta = await fetchConToken(`/tareas${query}`);
+    if (respuesta.ok) {
+      const data = await respuesta.json();
+      setTareas(data);
+      if (data.length > 0) setTareaId(data[0].id);
+>>>>>>> test
     }
   };
 
@@ -44,7 +75,11 @@ export const EvidenciasTab = () => {
     setCargando(true);
     setError('');
     try {
+<<<<<<< HEAD
       const respuesta = await fetchConToken(`/proyectos/${id}/evidencias/`);
+=======
+      const respuesta = await fetchConToken(`/tareas/${id}/evidencias/`);
+>>>>>>> test
       if (!respuesta.ok) throw new Error('No se pudieron cargar las evidencias.');
       setEvidencias(await respuesta.json());
     } catch (err: any) {
@@ -55,6 +90,7 @@ export const EvidenciasTab = () => {
   };
 
   useEffect(() => {
+<<<<<<< HEAD
     cargarProyectos();
   }, []);
 
@@ -65,6 +101,18 @@ export const EvidenciasTab = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!archivo || !proyectoId) return;
+=======
+    cargarTareas();
+  }, []);
+
+  useEffect(() => {
+    if (tareaId) cargarEvidencias(Number(tareaId));
+  }, [tareaId]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!archivo || !tareaId) return;
+>>>>>>> test
 
     setSubiendo(true);
     setError('');
@@ -75,11 +123,19 @@ export const EvidenciasTab = () => {
 
       const token = localStorage.getItem('token');
       const respuesta = await fetch(
+<<<<<<< HEAD
         `${API_URL}/proyectos/${proyectoId}/evidencias/?usuario_id=${usuarioId}`,
         {
           method: 'POST',
           headers: token ? { Authorization: `Bearer ${token}` } : undefined,
           body: formData, // OJO: sin Content-Type manual, el navegador arma el boundary del multipart
+=======
+        `${API_URL}/tareas/${tareaId}/evidencias/?usuario_id=${usuarioId}`,
+        {
+          method: 'POST',
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+          body: formData,
+>>>>>>> test
         }
       );
 
@@ -91,7 +147,11 @@ export const EvidenciasTab = () => {
       setArchivo(null);
       setDescripcion('');
       (document.getElementById('input-archivo-evidencia') as HTMLInputElement).value = '';
+<<<<<<< HEAD
       await cargarEvidencias(Number(proyectoId));
+=======
+      await cargarEvidencias(Number(tareaId));
+>>>>>>> test
     } catch (err: any) {
       alert(err.message || 'No se pudo subir el archivo.');
     } finally {
@@ -102,9 +162,15 @@ export const EvidenciasTab = () => {
   const eliminarEvidencia = async (id: number) => {
     if (!window.confirm('¿Eliminar esta evidencia?')) return;
     try {
+<<<<<<< HEAD
       const respuesta = await fetchConToken(`/proyectos/${proyectoId}/evidencias/${id}`, { method: 'DELETE' });
       if (!respuesta.ok && respuesta.status !== 204) throw new Error('No se pudo eliminar.');
       await cargarEvidencias(Number(proyectoId));
+=======
+      const respuesta = await fetchConToken(`/tareas/${tareaId}/evidencias/${id}`, { method: 'DELETE' });
+      if (!respuesta.ok && respuesta.status !== 204) throw new Error('No se pudo eliminar.');
+      await cargarEvidencias(Number(tareaId));
+>>>>>>> test
     } catch (err: any) {
       alert(err.message || 'No se pudo eliminar la evidencia.');
     }
@@ -115,6 +181,7 @@ export const EvidenciasTab = () => {
   return (
     <div className="tab-content active">
       <div className="section-header">
+<<<<<<< HEAD
         <h2><i className="fas fa-camera"></i> Evidencias de Obra</h2>
       </div>
 
@@ -122,6 +189,16 @@ export const EvidenciasTab = () => {
         <label>Proyecto</label>
         <select value={proyectoId} onChange={(e) => setProyectoId(e.target.value ? Number(e.target.value) : '')}>
           {proyectos.map((p) => <option key={p.id} value={p.id}>{p.nombre_proyecto}</option>)}
+=======
+        <h2><i className="fas fa-camera"></i> Evidencias de Tareas</h2>
+      </div>
+
+      <div className="input-group" style={{ maxWidth: '360px', marginBottom: '20px' }}>
+        <label>Tarea</label>
+        <select value={tareaId} onChange={(e) => setTareaId(e.target.value ? Number(e.target.value) : '')}>
+          {tareas.length === 0 && <option value="">No hay tareas creadas</option>}
+          {tareas.map((t) => <option key={t.id} value={t.id}>{t.nombre_tarea}</option>)}
+>>>>>>> test
         </select>
       </div>
 
@@ -143,19 +220,31 @@ export const EvidenciasTab = () => {
               <label>Descripción (opcional)</label>
               <input type="text" value={descripcion} onChange={(e) => setDescripcion(e.target.value)} placeholder="Ej: Vaciado de placa nivel 2" maxLength={300} />
             </div>
+<<<<<<< HEAD
             <button type="submit" className="btn-save" disabled={subiendo || !proyectoId}>
+=======
+            <button type="submit" className="btn-save" disabled={subiendo || !tareaId}>
+>>>>>>> test
               {subiendo ? 'Subiendo...' : 'Subir evidencia'}
             </button>
           </form>
         </div>
 
         <div className="card">
+<<<<<<< HEAD
           <div className="card-header"><h3><i className="fas fa-images"></i> Evidencias del proyecto</h3></div>
+=======
+          <div className="card-header"><h3><i className="fas fa-images"></i> Evidencias de la tarea</h3></div>
+>>>>>>> test
           <div className="project-container">
             {error && <div className="empty-msg" style={{ color: '#dc2626' }}>{error}</div>}
             {cargando && <div className="empty-msg">Cargando evidencias...</div>}
             {!cargando && !error && evidencias.length === 0 && (
+<<<<<<< HEAD
               <div className="empty-msg">Todavía no hay evidencias para este proyecto.</div>
+=======
+              <div className="empty-msg">Todavía no hay evidencias para esta tarea.</div>
+>>>>>>> test
             )}
             {!cargando && evidencias.map((ev) => (
               <div key={ev.id} className="project-item" style={{ alignItems: 'flex-start' }}>

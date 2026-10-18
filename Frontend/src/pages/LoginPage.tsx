@@ -9,6 +9,7 @@ interface LoginPageProps {
   onLoginSuccess: () => void;
 }
 
+<<<<<<< HEAD
 interface GoogleUserInfo {
   email: string;
   name: string;
@@ -16,6 +17,8 @@ interface GoogleUserInfo {
   sub: string;
 }
 
+=======
+>>>>>>> test
 const API_URL = 'http://localhost:8000';
 
 const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
@@ -38,13 +41,21 @@ const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
       return;
     }
     try {
+<<<<<<< HEAD
       const respuesta = await axios.post(`${API_URL}/auth/login`, {
+=======
+      const respuesta = await axios.post(`${API_URL}/api/auth/login`, {
+>>>>>>> test
         correo_electronico: correo.trim(),
         contrasena: contrasena,
       });
       localStorage.setItem('token', respuesta.data.token);
       localStorage.setItem('usuario_id', String(respuesta.data.usuario_id));
       localStorage.setItem('usuario_nombre', respuesta.data.nombre || 'Usuario');
+<<<<<<< HEAD
+=======
+      localStorage.setItem('rol', String(respuesta.data.rol));
+>>>>>>> test
       onLoginSuccess();
       navigate('/dashboard');
     } catch (error: any) {
@@ -55,12 +66,20 @@ const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
 
   // ── GOOGLE OAUTH REAL ────────────────────────────────────────────────────────
   // Abre la ventana emergente ORIGINAL de Google (selector de cuenta).
+<<<<<<< HEAD
   // Después de elegir la cuenta, obtiene el perfil del usuario y lo registra
   // o inicia sesión en PostgreSQL automáticamente via /auth/google del backend.
+=======
+  // El access_token obtenido se envía al backend, que lo vuelve a verificar
+  // contra Google server-side y toma de ahí el correo/nombre verificados.
+  // No se llama a googleapis userinfo desde el navegador: ese request
+  // cross-origin falla por CORS y produciría "Network Error".
+>>>>>>> test
   const iniciarConGoogle = useGoogleLogin({
     flow: 'implicit',
     onSuccess: async (tokenResponse) => {
       try {
+<<<<<<< HEAD
         // Obtener datos reales del perfil de la cuenta de Google seleccionada
         const infoRes = await axios.get<GoogleUserInfo>(
           'https://www.googleapis.com/oauth2/v3/userinfo',
@@ -74,12 +93,19 @@ const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
           correo_electronico: userInfo.email,
           nombre_completo: userInfo.name,
           foto_url: userInfo.picture || null,
+=======
+        const respuesta = await axios.post(`${API_URL}/api/auth/google`, {
+>>>>>>> test
           credential: tokenResponse.access_token,
         });
 
         localStorage.setItem('token', respuesta.data.token);
         localStorage.setItem('usuario_id', String(respuesta.data.usuario_id));
         localStorage.setItem('usuario_nombre', respuesta.data.nombre);
+<<<<<<< HEAD
+=======
+        localStorage.setItem('rol', String(respuesta.data.rol));
+>>>>>>> test
 
         onLoginSuccess();
         navigate('/dashboard');
@@ -102,8 +128,16 @@ const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
       onContrasenaChange={handleContrasenaChange}
       onEnviar={handleEnviar}
       onGoogleLogin={() => iniciarConGoogle()}
+<<<<<<< HEAD
+=======
+      onVolverPrincipal={() => navigate('/')}
+>>>>>>> test
     />
   );
 };
 
+<<<<<<< HEAD
 export default LoginPage;
+=======
+export default LoginPage;
+>>>>>>> test

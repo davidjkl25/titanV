@@ -2,5 +2,15 @@
 **/__pycache__/
 *.pyc
 .env
+<<<<<<< HEAD
 dist/
 build/
+=======
+*.log
+dist/
+build/
+PRESENTACION_TITAN_V.md
+commits-comandos.txt
+Frontend/.env.saved
+backend/.env.saved
+>>>>>>> test

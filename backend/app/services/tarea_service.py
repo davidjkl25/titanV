@@ -67,11 +67,27 @@ def _asegurar_usuario(db: Session, usuario_id: Optional[int], obligatorio: bool 
 # --- Tareas ---
 
 def listar_tareas(
+<<<<<<< HEAD
     db: Session, proyecto_id: Optional[int] = None, incluir_eliminados: bool = False, skip: int = 0, limit: int = 100
+=======
+    db: Session,
+    proyecto_id: Optional[int] = None,
+    incluir_eliminados: bool = False,
+    skip: int = 0,
+    limit: int = 100,
+    proyectos_permitidos: Optional[list] = None,
+>>>>>>> test
 ):
     query = db.query(Tarea)
     if proyecto_id is not None:
         query = query.filter(Tarea.proyecto_id == proyecto_id)
+<<<<<<< HEAD
+=======
+    elif proyectos_permitidos is not None:
+        if not proyectos_permitidos:
+            return []
+        query = query.filter(Tarea.proyecto_id.in_(proyectos_permitidos))
+>>>>>>> test
     if not incluir_eliminados:
         query = sin_eliminados(query, Tarea)
     return query.order_by(Tarea.id.desc()).offset(skip).limit(limit).all()

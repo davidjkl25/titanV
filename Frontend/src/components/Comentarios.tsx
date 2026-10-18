@@ -115,6 +115,7 @@ const Comentarios: React.FC<ComentariosProps> = ({ tareaId, tareaNombre, onCerra
   };
 
   return (
+<<<<<<< HEAD
     <div
       style={{
         backgroundColor: '#ffffff',
@@ -147,10 +148,39 @@ const Comentarios: React.FC<ComentariosProps> = ({ tareaId, tareaNombre, onCerra
             </p>
           )}
         </div>
+=======
+    <div className="card">
+      <div
+        className="card-header"
+        style={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+          <h3 style={{ margin: 0 }}><i className="fas fa-comments"></i> Comentarios</h3>
+          <span
+            style={{
+              backgroundColor: '#ffd60a',
+              color: '#000',
+              padding: '3px 8px',
+              borderRadius: '4px',
+              fontSize: '11px',
+              fontWeight: 700,
+            }}
+          >
+            TAREA #{tareaId}
+          </span>
+          {tareaNombre && (
+            <span className="muted-text" style={{ fontSize: '13px' }}>
+              {tareaNombre}
+            </span>
+          )}
+        </div>
+
+>>>>>>> test
         {onCerrar && (
           <button
             onClick={onCerrar}
             style={{
+<<<<<<< HEAD
               background: '#f1f5f9',
               border: 'none',
               borderRadius: '6px',
@@ -158,6 +188,15 @@ const Comentarios: React.FC<ComentariosProps> = ({ tareaId, tareaNombre, onCerra
               padding: '6px 10px',
               fontSize: '13px',
               color: '#64748b',
+=======
+              background: 'transparent',
+              border: '1px solid rgba(255, 255, 255, .22)',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              padding: '6px 10px',
+              fontSize: '12px',
+              color: '#cbd5e1',
+>>>>>>> test
               fontWeight: 'bold',
             }}
             title="Cerrar panel de comentarios"
@@ -167,6 +206,7 @@ const Comentarios: React.FC<ComentariosProps> = ({ tareaId, tareaNombre, onCerra
         )}
       </div>
 
+<<<<<<< HEAD
       {mensajeError && (
         <div
           style={{
@@ -365,8 +405,208 @@ const Comentarios: React.FC<ComentariosProps> = ({ tareaId, tareaNombre, onCerra
           ))}
         </div>
       )}
+=======
+      <div style={{ padding: '20px 24px 24px' }}>
+        {mensajeError && (
+          <div
+            style={{
+              backgroundColor: 'rgba(239, 68, 68, .14)',
+              color: '#fca5a5',
+              border: '1px solid rgba(252, 165, 165, .4)',
+              padding: '10px 14px',
+              borderRadius: '6px',
+              fontSize: '13px',
+              marginBottom: '14px',
+            }}
+          >
+            {mensajeError}
+          </div>
+        )}
+
+        {/* Formulario de creación de comentario */}
+        <form
+          onSubmit={manejarEnvioComentario}
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '12px',
+            padding: 0,
+            marginBottom: '20px',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px' }}>
+            <label
+              style={{
+                color: '#ffd60a',
+                fontSize: '12px',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                margin: 0,
+              }}
+            >
+              Publicar como usuario
+            </label>
+            <input
+              type="number"
+              min="1"
+              value={usuarioId}
+              onChange={(e) => setUsuarioId(Number(e.target.value) || 1)}
+              style={{
+                width: '80px',
+                padding: '6px 8px',
+                borderRadius: '6px',
+                fontSize: '13px',
+                textAlign: 'center',
+              }}
+              required
+            />
+          </div>
+
+          <div>
+            <textarea
+              value={contenido}
+              onChange={(e) => setContenido(e.target.value)}
+              required
+              maxLength={300}
+              placeholder="Escribe tu comentario o nota técnica aquí (máx. 300 caracteres)..."
+              rows={3}
+              style={{
+                display: 'block',
+                resize: 'vertical',
+                fontSize: '13px',
+                fontFamily: 'inherit',
+              }}
+            />
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginTop: '4px',
+                fontSize: '11px',
+                color: contenido.length > 280 ? '#f87171' : '#94a3b8',
+              }}
+            >
+              <span>TV-CMT-06: Máximo 300 caracteres</span>
+              <span>{contenido.length} / 300</span>
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            className="btn-save"
+            disabled={enviando || !contenido.trim()}
+            style={{
+              padding: '12px',
+              marginTop: 0,
+              cursor: enviando || !contenido.trim() ? 'not-allowed' : 'pointer',
+              opacity: enviando || !contenido.trim() ? 0.6 : 1,
+            }}
+          >
+            {enviando ? 'Guardando...' : '➕ Publicar Comentario'}
+          </button>
+        </form>
+
+        {/* Historial de Comentarios */}
+        <h3 style={{ color: '#fff', fontSize: '15px', margin: '0 0 12px 0' }}>
+          Historial de Comentarios ({listaComentarios.length})
+        </h3>
+
+        {cargando ? (
+          <div className="empty-msg" style={{ padding: '20px', fontSize: '13px' }}>
+            Cargando comentarios desde la base de datos...
+          </div>
+        ) : listaComentarios.length === 0 ? (
+          <div
+            className="empty-msg"
+            style={{
+              padding: '20px',
+              backgroundColor: 'rgba(8, 11, 17, .6)',
+              borderRadius: '8px',
+              border: '1px dashed rgba(255, 255, 255, .18)',
+              color: '#94a3b8',
+              fontSize: '13px',
+            }}
+          >
+            No hay comentarios aún para esta tarea. Sé el primero en comentar.
+          </div>
+        ) : (
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '10px',
+              maxHeight: '380px',
+              overflowY: 'auto',
+              paddingRight: '4px',
+            }}
+          >
+            {listaComentarios.map((c) => (
+              <div
+                key={c.id}
+                style={{
+                  padding: '12px',
+                  backgroundColor: 'rgba(8, 11, 17, .72)',
+                  border: '1px solid rgba(255, 255, 255, .12)',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                  gap: '12px',
+                }}
+              >
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                    <span
+                      style={{
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        color: '#ffd60a',
+                        backgroundColor: 'rgba(255, 214, 10, .12)',
+                        padding: '2px 6px',
+                        borderRadius: '4px',
+                      }}
+                    >
+                      Usuario #{c.usuario_id}
+                    </span>
+                    {c.fecha_comentario && (
+                      <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+                        {formatearFecha(c.fecha_comentario)}
+                      </span>
+                    )}
+                  </div>
+                  <p style={{ color: '#e2e8f0', fontSize: '13px', margin: 0, whiteSpace: 'pre-wrap' }}>
+                    {c.contenido}
+                  </p>
+                </div>
+
+                <button
+                  onClick={() => manejarEliminarComentario(c.id)}
+                  className="btn-delete"
+                  style={{
+                    borderRadius: '4px',
+                    padding: '4px 8px',
+                    cursor: 'pointer',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    flexShrink: 0,
+                  }}
+                  title="Eliminar comentario"
+                >
+                  🗑 Eliminar
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+>>>>>>> test
     </div>
   );
 };
 
+<<<<<<< HEAD
 export default Comentarios;
+=======
+export default Comentarios;
+>>>>>>> test

@@ -3,11 +3,19 @@ import { BrowserRouter, Navigate, Route, Routes, useNavigate } from 'react-route
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
+<<<<<<< HEAD
 import './App.css';
 
 // Componente interno para manejar la redirección DESPUÉS de que el estado cambie
 function AppRoutes() {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+=======
+import AceptarInvitacionPage from './pages/AceptarInvitacionPage';
+import './App.css';
+
+function AppRoutes() {
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => !!localStorage.getItem('token'));
+>>>>>>> test
   const navigate = useNavigate();
 
   const handleLoginSuccess = () => {
@@ -19,6 +27,7 @@ function AppRoutes() {
     localStorage.removeItem('token');
     localStorage.removeItem('usuario_id');
     localStorage.removeItem('usuario_nombre');
+<<<<<<< HEAD
   };
 
   // Cuando isLoggedIn cambia a true, navega al dashboard
@@ -27,6 +36,16 @@ function AppRoutes() {
       navigate('/dashboard', { replace: true });
     }
   }, [isLoggedIn]);
+=======
+    
+  };
+
+  useEffect(() => {
+    if (isLoggedIn && !sessionStorage.getItem('invitacion_pendiente')) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [isLoggedIn, navigate]);
+>>>>>>> test
 
   return (
     <Routes>
@@ -51,6 +70,13 @@ function AppRoutes() {
           )
         }
       />
+<<<<<<< HEAD
+=======
+      <Route
+        path="/invitacion/:token"
+        element={<AceptarInvitacionPage isLoggedIn={isLoggedIn} onLoginSuccess={handleLoginSuccess} />}
+      />
+>>>>>>> test
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
@@ -65,4 +91,7 @@ function App() {
 }
 
 export default App;
+<<<<<<< HEAD
 
+=======
+>>>>>>> test

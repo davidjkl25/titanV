@@ -2,8 +2,13 @@ from typing import List, Optional
 
 from sqlalchemy.orm import Session
 
+<<<<<<< HEAD
 from app.models import ProyectoColaborador, RolProyecto, Usuario
 from app.schemas import ColaboradorInvitar, ColaboradorUpdate
+=======
+from app.models import ProyectoColaborador, RolProyecto
+from app.schemas import ColaboradorUpdate
+>>>>>>> test
 
 
 def _adaptar(colaborador: ProyectoColaborador) -> ProyectoColaborador:
@@ -14,6 +19,20 @@ def _adaptar(colaborador: ProyectoColaborador) -> ProyectoColaborador:
     return colaborador
 
 
+<<<<<<< HEAD
+=======
+def proyectos_de_usuario(db: Session, usuario_id: int) -> List[int]:
+    """Ids de los proyectos donde el usuario participa como colaborador. Un
+    usuario SOLO debe ver y tocar datos de estos proyectos."""
+    filas = (
+        db.query(ProyectoColaborador.proyecto_id)
+        .filter(ProyectoColaborador.usuario_id == usuario_id)
+        .all()
+    )
+    return [fila[0] for fila in filas]
+
+
+>>>>>>> test
 def listar_colaboradores(db: Session, proyecto_id: int) -> List[ProyectoColaborador]:
     colaboradores = (
         db.query(ProyectoColaborador).filter(ProyectoColaborador.proyecto_id == proyecto_id).all()
@@ -49,6 +68,7 @@ def agregar_arquitecto(db: Session, proyecto_id: int, usuario_id: int) -> Proyec
     return _adaptar(nuevo)
 
 
+<<<<<<< HEAD
 def invitar_colaborador(db: Session, proyecto_id: int, datos: ColaboradorInvitar) -> ProyectoColaborador:
     usuario = db.query(Usuario).filter(Usuario.correo_electronico == datos.correo_electronico).first()
     if not usuario:
@@ -73,6 +93,8 @@ def invitar_colaborador(db: Session, proyecto_id: int, datos: ColaboradorInvitar
     return _adaptar(nuevo)
 
 
+=======
+>>>>>>> test
 def actualizar_rol(
     db: Session, proyecto_id: int, colaborador_id: int, datos: ColaboradorUpdate
 ) -> Optional[ProyectoColaborador]:

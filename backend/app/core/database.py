@@ -11,7 +11,11 @@ load_dotenv()
 # Si no existe, cae en un valor por defecto solo para desarrollo local.
 SQLALCHEMY_DATABASE_URL = os.getenv(
     "DATABASE_URL",
+<<<<<<< HEAD
     "postgresql://postgres:1234@localhost:5432/titanv_db",
+=======
+    "postgresql://postgres:1234@localhost:5433/titanv_db",
+>>>>>>> test
 )
 
 # El motor encargado de procesar las consultas

@@ -8,11 +8,27 @@ from app.schemas import TurnoCreate, TurnoUpdate
 
 
 def listar_turnos(
+<<<<<<< HEAD
     db: Session, proyecto_id: Optional[int] = None, incluir_eliminados: bool = False, skip: int = 0, limit: int = 100
+=======
+    db: Session,
+    proyecto_id: Optional[int] = None,
+    incluir_eliminados: bool = False,
+    skip: int = 0,
+    limit: int = 100,
+    proyectos_permitidos: Optional[list] = None,
+>>>>>>> test
 ):
     query = db.query(TurnoRelevo)
     if proyecto_id is not None:
         query = query.filter(TurnoRelevo.proyecto_id == proyecto_id)
+<<<<<<< HEAD
+=======
+    elif proyectos_permitidos is not None:
+        if not proyectos_permitidos:
+            return []
+        query = query.filter(TurnoRelevo.proyecto_id.in_(proyectos_permitidos))
+>>>>>>> test
     if not incluir_eliminados:
         query = sin_eliminados(query, TurnoRelevo)
     return query.offset(skip).limit(limit).all()
