@@ -7,7 +7,6 @@ interface RegistroProps {
     apellido: string;
     correo: string;
     telefono: string;
-    usuario: string;
     contrasena: string;
   }) => void;
   onVolver?: () => void;
@@ -28,34 +27,18 @@ const validarContrasena = (valor: string): string | null => {
   return null;
 };
 
-const validarUsuario = (valor: string): string | null => {
-  if (!/[A-Z]/.test(valor)) {
-    return 'El nombre de usuario debe tener al menos una letra mayúscula.';
-  }
-  if (!/[0-9]/.test(valor)) {
-    return 'El nombre de usuario debe tener al menos un número.';
-  }
-  return null;
-};
-
 const Registro: React.FC<RegistroProps> = ({ onRegistrar, onVolver }) => {
 
   const [nombre, setNombre] = useState('');
   const [apellido, setApellido] = useState('');
   const [correo, setCorreo] = useState('');
   const [telefono, setTelefono] = useState('');
-  const [usuario, setUsuario] = useState('');
   const [contrasena, setContrasena] = useState('');
   const [cargando, setCargando] = useState(false);
+  const [verContrasena, setVerContrasena] = useState(false);
 
   const manejarRegistro = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
-    const errorUsuario = validarUsuario(usuario);
-    if (errorUsuario) {
-      alert(errorUsuario);
-      return;
-    }
 
     const errorContrasena = validarContrasena(contrasena);
     if (errorContrasena) {
@@ -84,7 +67,7 @@ const Registro: React.FC<RegistroProps> = ({ onRegistrar, onVolver }) => {
       );
 
       if (onRegistrar) {
-        onRegistrar({ nombre, apellido, correo, telefono, usuario, contrasena });
+        onRegistrar({ nombre, apellido, correo, telefono, contrasena });
       } else if (onVolver) {
         onVolver();
       }
@@ -178,43 +161,52 @@ const Registro: React.FC<RegistroProps> = ({ onRegistrar, onVolver }) => {
 
           <div style={estilos.grupo}>
             <label style={estilos.label}>
-              Nombre de usuario
-            </label>
-
-            <input
-              type="text"
-              placeholder="Elige un usuario"
-              value={usuario}
-              onChange={(e) => setUsuario(e.target.value)}
-              required
-              style={estilos.input}
-            />
-
-            {usuario.length > 0 && (
-              <ul style={estilos.listaRequisitos}>
-                <li style={/[A-Z]/.test(usuario) ? estilos.requisitoOk : estilos.requisitoFalta}>
-                  {/[A-Z]/.test(usuario) ? '✓' : '○'} Al menos una mayúscula
-                </li>
-                <li style={/[0-9]/.test(usuario) ? estilos.requisitoOk : estilos.requisitoFalta}>
-                  {/[0-9]/.test(usuario) ? '✓' : '○'} Al menos un número
-                </li>
-              </ul>
-            )}
-          </div>
-
-          <div style={estilos.grupo}>
-            <label style={estilos.label}>
               Contraseña
             </label>
 
-            <input
-              type="password"
-              placeholder="Crea una contraseña"
-              value={contrasena}
-              onChange={(e) => setContrasena(e.target.value)}
-              required
-              style={estilos.input}
-            />
+            <div style={{ position: 'relative' }}>
+              <input
+                type={verContrasena ? 'text' : 'password'}
+                placeholder="Crea una contraseña"
+                value={contrasena}
+                onChange={(e) => setContrasena(e.target.value)}
+                required
+                style={{ ...estilos.input, paddingRight: '40px' }}
+              />
+
+              <button
+                type="button"
+                onClick={() => setVerContrasena(!verContrasena)}
+                aria-label={verContrasena ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                style={{
+                  position: 'absolute',
+                  right: '8px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  color: '#aaa',
+                  cursor: 'pointer',
+                  padding: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                }}
+              >
+                {verContrasena ? (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+                    <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+                    <path d="M14.12 14.12a3 3 0 1 1-4.24-4.24" />
+                    <line x1="1" y1="1" x2="23" y2="23" />
+                  </svg>
+                ) : (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                )}
+              </button>
+            </div>
 
             {contrasena.length > 0 && (
               <ul style={estilos.listaRequisitos}>

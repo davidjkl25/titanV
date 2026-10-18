@@ -1,7 +1,9 @@
 import os
 
 from fastapi import FastAPI
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import inspect, text
 
@@ -37,12 +39,43 @@ try:
                 WHERE inventario.material_id = material.id
                   AND inventario.proyecto_id = material.proyecto_id
             """))
+
+    # Columnas nuevas en usuarios (recuperación de contraseña por PIN).
+    # create_all no agrega columnas a tablas ya existentes, así que se sincronizan a mano.
+    columnas_usuarios = {columna["name"] for columna in inspect(engine).get_columns("usuarios")}
+    columnas_a_agregar = [
+        ("reset_pin", "ALTER TABLE usuarios ADD COLUMN reset_pin VARCHAR(4)"),
+        ("reset_pin_expira", "ALTER TABLE usuarios ADD COLUMN reset_pin_expira TIMESTAMP"),
+        ("bloqueado_hasta", "ALTER TABLE usuarios ADD COLUMN bloqueado_hasta TIMESTAMP"),
+    ]
+    columnas_nuevas = [sentencia for nombre, sentencia in columnas_a_agregar if nombre not in columnas_usuarios]
+    if columnas_nuevas:
+        with engine.begin() as conexion:
+            for sentencia in columnas_nuevas:
+                conexion.execute(text(sentencia))
+        print(f"[Titan V OK] Columnas agregadas a usuarios: {len(columnas_nuevas)}")
+
     print("[Titan V OK] Tablas de base de datos conectadas y sincronizadas exitosamente.")
 except Exception as e:
     print(f"[Titan V WARN] Advertencia al conectar con la base de datos: {e}")
     print("[Titan V WARN] Asegurate de que el servicio de PostgreSQL este iniciado y revisa la variable DATABASE_URL en tu archivo backend/.env")
 
 app = FastAPI(title="Titan V API")
+
+
+@app.exception_handler(RequestValidationError)
+async def validacion_amigable(request, exc: RequestValidationError):
+    """Devuelve los errores de validación de Pydantic como texto legible.
+
+    Por defecto FastAPI responde con una lista técnica que el frontend termina
+    mostrando como "[object Object]" en las alertas.
+    """
+    mensajes = []
+    for error in exc.errors():
+        campo = ".".join(str(parte) for parte in error["loc"][1:]) or "cuerpo"
+        mensajes.append(f"{campo}: {error['msg']}")
+    return JSONResponse(status_code=422, content={"detail": "; ".join(mensajes)})
+
 
 # Configuración de CORS (necesaria para que el frontend, servido desde otro origen, pueda llamar a la API)
 app.add_middleware(

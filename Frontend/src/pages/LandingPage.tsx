@@ -1,7 +1,8 @@
 import { useNavigate } from 'react-router-dom';
 import QuienesSomos from '../components/QuienesSomos';
+import CookieBanner from '../components/CookieBanner';
 // IMPORTACIÓN CON EL NOMBRE DE TU VIDEO
-import videoFondo from '../assets/video_landing.mp4'; 
+import videoFondo from '../assets/video_landing.mp4';
 import logoImg from '../assets/logo.png';
 
 const caracteristicas = [
@@ -222,6 +223,7 @@ const LandingPage = () => {
       <footer style={{ padding: '30px 8%', textAlign: 'center', color: '#777', fontSize: '13px' }}>
         © 2026 Titan V — Todos los derechos reservados
       </footer>
+      <CookieBanner />
     </div>
   );
 };

@@ -33,7 +33,6 @@ export const Login: React.FC<LoginProps> = ({
     apellido: string;
     correo: string;
     telefono: string;
-    usuario: string;
     contrasena: string;
   }) => {
     console.log('Módulo Login - Registro recibido:', datos);

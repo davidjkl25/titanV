@@ -224,13 +224,11 @@ const TareasTab: React.FC<TareasTabProps> = ({ proyectoId: proyectoFijo }) => {
   });
 
   return (
-    <div className="task-panel" style={{ padding: '30px', width: '100%', boxSizing: 'border-box' }}>
+    <div className="tab-content active" style={{ width: '100%', boxSizing: 'border-box' }}>
       {/* Encabezado */}
-      <div className="section-header" style={{ marginBottom: '25px' }}>
-        <h1 style={{ color: '#0f172a', margin: '0 0 6px 0', fontSize: '26px' }}>
-          Gestión de Tareas y Comentarios
-        </h1>
-        <p style={{ color: '#64748b', margin: 0, fontSize: '14px' }}>
+      <div className="section-header">
+        <h2><i className="fas fa-tasks"></i> Gestión de Tareas y Comentarios</h2>
+        <p className="muted-text" style={{ margin: '6px 0 0', fontSize: '14px' }}>
           Crea, supervisa estados y gestiona el historial de notas técnicas de cada tarea en tiempo real.
         </p>
       </div>
@@ -238,16 +236,15 @@ const TareasTab: React.FC<TareasTabProps> = ({ proyectoId: proyectoFijo }) => {
       {/* Banner de Notificación */}
       {notificacion && (
         <div
-          className="task-surface"
           style={{
             padding: '12px 18px',
             borderRadius: '8px',
             marginBottom: '20px',
             fontSize: '14px',
             fontWeight: 500,
-            backgroundColor: notificacion.tipo === 'exito' ? '#dcfce7' : '#fee2e2',
-            color: notificacion.tipo === 'exito' ? '#15803d' : '#b91c1c',
-            border: `1px solid ${notificacion.tipo === 'exito' ? '#86efac' : '#fca5a5'}`,
+            backgroundColor: notificacion.tipo === 'exito' ? 'rgba(34, 197, 94, .14)' : 'rgba(239, 68, 68, .14)',
+            color: notificacion.tipo === 'exito' ? '#86efac' : '#fca5a5',
+            border: `1px solid ${notificacion.tipo === 'exito' ? 'rgba(134, 239, 172, .4)' : 'rgba(252, 165, 165, .4)'}`,
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
@@ -256,7 +253,7 @@ const TareasTab: React.FC<TareasTabProps> = ({ proyectoId: proyectoFijo }) => {
           <span>{notificacion.texto}</span>
           <button
             onClick={() => setNotificacion(null)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontWeight: 'bold', color: 'inherit' }}
           >
             ✕
           </button>
@@ -267,26 +264,14 @@ const TareasTab: React.FC<TareasTabProps> = ({ proyectoId: proyectoFijo }) => {
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(320px, 380px) 1fr', gap: '24px', alignItems: 'start' }}>
         
         {/* Columna Izquierda: Formulario de Creación */}
-        <div
-          style={{
-            backgroundColor: '#ffffff',
-            padding: '24px',
-            borderRadius: '12px',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
-            border: '1px solid #e2e8f0',
-          }}
-        >
-          <div style={{ borderBottom: '1px solid #f1f5f9', paddingBottom: '12px', marginBottom: '16px' }}>
-            <h2 style={{ color: '#0f172a', margin: 0, fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span>➕</span> Nueva Tarea
-            </h2>
+        <div className="card">
+          <div className="card-header">
+            <h3><i className="fas fa-plus-circle"></i> Nueva Tarea</h3>
           </div>
 
-          <form onSubmit={crearTarea} style={{ display: 'flex', flexDirection: 'column', gap: '14px', padding: 0 }}>
-            <div>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '4px', textTransform: 'uppercase' }}>
-                Nombre de la Tarea *
-              </label>
+          <form onSubmit={crearTarea}>
+            <div className="input-group">
+              <label>Nombre de la tarea *</label>
               <input
                 type="text"
                 placeholder="Ej: Fundición de losa piso 2"
@@ -294,57 +279,27 @@ const TareasTab: React.FC<TareasTabProps> = ({ proyectoId: proyectoFijo }) => {
                 onChange={(e) => setNombreTarea(e.target.value)}
                 required
                 maxLength={150}
-                style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  borderRadius: '6px',
-                  border: '1px solid #cbd5e1',
-                  fontSize: '14px',
-                  boxSizing: 'border-box',
-                }}
               />
             </div>
 
-            <div>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '4px', textTransform: 'uppercase' }}>
-                Descripción Detallada
-              </label>
+            <div className="input-group">
+              <label>Descripción detallada</label>
               <textarea
                 placeholder="Detalla las especificaciones técnicas o instrucciones para el operario..."
                 value={descripcion}
                 onChange={(e) => setDescripcion(e.target.value)}
                 rows={3}
                 style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  borderRadius: '6px',
-                  border: '1px solid #cbd5e1',
-                  fontSize: '14px',
                   resize: 'vertical',
-                  boxSizing: 'border-box',
                   fontFamily: 'inherit',
                 }}
               />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '4px', textTransform: 'uppercase' }}>
-                  Estado Inicial
-                </label>
-                <select
-                  value={estado}
-                  onChange={(e) => setEstado(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    borderRadius: '6px',
-                    border: '1px solid #cbd5e1',
-                    fontSize: '13px',
-                    backgroundColor: '#fff',
-                    boxSizing: 'border-box',
-                  }}
-                >
+            <div className="date-row">
+              <div className="input-group">
+                <label>Estado inicial</label>
+                <select value={estado} onChange={(e) => setEstado(e.target.value)}>
                   {ESTADOS_DISPONIBLES.map((est) => (
                     <option key={est} value={est}>
                       {est}
@@ -353,24 +308,10 @@ const TareasTab: React.FC<TareasTabProps> = ({ proyectoId: proyectoFijo }) => {
                 </select>
               </div>
 
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '4px', textTransform: 'uppercase' }}>
-                  Proyecto
-                </label>
+              <div className="input-group">
+                <label>Proyecto</label>
                 {proyectos.length > 0 ? (
-                  <select
-                    value={proyectoId}
-                    onChange={(e) => setProyectoId(Number(e.target.value))}
-                    style={{
-                      width: '100%',
-                      padding: '10px',
-                      borderRadius: '6px',
-                      border: '1px solid #cbd5e1',
-                      fontSize: '13px',
-                      backgroundColor: '#fff',
-                      boxSizing: 'border-box',
-                    }}
-                  >
+                  <select value={proyectoId} onChange={(e) => setProyectoId(Number(e.target.value))}>
                     {proyectos.map((p) => (
                       <option key={p.id} value={p.id}>
                         #{p.id} - {p.nombre_proyecto}
@@ -383,35 +324,17 @@ const TareasTab: React.FC<TareasTabProps> = ({ proyectoId: proyectoFijo }) => {
                     min="1"
                     value={proyectoId}
                     onChange={(e) => setProyectoId(Number(e.target.value) || 1)}
-                    style={{
-                      width: '100%',
-                      padding: '10px',
-                      borderRadius: '6px',
-                      border: '1px solid #cbd5e1',
-                      fontSize: '13px',
-                      boxSizing: 'border-box',
-                    }}
                     required
                   />
                 )}
               </div>
             </div>
 
-            <div>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '4px', textTransform: 'uppercase' }}>
-                Asignar a
-              </label>
+            <div className="input-group">
+              <label>Asignar a</label>
               <select
                 value={usuarioId}
                 onChange={(e) => setUsuarioId(Number(e.target.value))}
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  borderRadius: '6px',
-                  border: '1px solid #cbd5e1',
-                  fontSize: '13px',
-                  boxSizing: 'border-box',
-                }}
                 required
               >
                 <option value="" disabled>Selecciona un operario</option>
@@ -421,22 +344,7 @@ const TareasTab: React.FC<TareasTabProps> = ({ proyectoId: proyectoFijo }) => {
               </select>
             </div>
 
-            <button
-              type="submit"
-              disabled={guardando}
-              style={{
-                backgroundColor: guardando ? '#94a3b8' : '#000000',
-                color: '#ffd60a',
-                border: 'none',
-                padding: '12px',
-                borderRadius: '8px',
-                cursor: guardando ? 'not-allowed' : 'pointer',
-                fontWeight: 700,
-                fontSize: '14px',
-                marginTop: '6px',
-                transition: 'background 0.2s',
-              }}
-            >
+            <button type="submit" className="btn-save" disabled={guardando}>
               {guardando ? 'Guardando en BD...' : 'Guardar Tarea'}
             </button>
           </form>
@@ -446,46 +354,23 @@ const TareasTab: React.FC<TareasTabProps> = ({ proyectoId: proyectoFijo }) => {
         <div style={{ display: 'grid', gridTemplateColumns: tareaSeleccionada ? '1fr 1fr' : '1fr', gap: '20px', alignItems: 'start' }}>
           
           {/* Tarjeta de Lista de Tareas */}
-          <div
-            className="task-surface"
-            style={{
-              backgroundColor: '#ffffff',
-              padding: '24px',
-              borderRadius: '12px',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
-              border: '1px solid #e2e8f0',
-            }}
-          >
+          <div className="card">
             <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                flexWrap: 'wrap',
-                gap: '10px',
-                borderBottom: '1px solid #f1f5f9',
-                paddingBottom: '14px',
-                marginBottom: '16px',
-              }}
+              className="card-header"
+              style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}
             >
-              <div>
-                <h2 style={{ color: '#0f172a', margin: 0, fontSize: '18px' }}>
-                  Listado de Tareas ({tareasFiltradas.length})
-                </h2>
-              </div>
+              <h3><i className="fas fa-list"></i> Listado de Tareas ({tareasFiltradas.length})</h3>
 
               {/* Filtro por estado */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>Filtrar:</span>
+                <span className="muted-text" style={{ fontSize: '12px', fontWeight: 600 }}>Filtrar:</span>
                 <select
                   value={filtroEstado}
                   onChange={(e) => setFiltroEstado(e.target.value)}
                   style={{
                     padding: '6px 10px',
                     borderRadius: '6px',
-                    border: '1px solid #cbd5e1',
                     fontSize: '12px',
-                    backgroundColor: '#f8fafc',
                   }}
                 >
                   <option value="Todos">Todos los estados</option>
@@ -499,12 +384,13 @@ const TareasTab: React.FC<TareasTabProps> = ({ proyectoId: proyectoFijo }) => {
                   onClick={() => obtenerTareas(Number(proyectoId))}
                   title="Recargar tareas"
                   style={{
-                    backgroundColor: '#f1f5f9',
-                    border: '1px solid #cbd5e1',
+                    backgroundColor: 'rgba(255, 214, 10, .12)',
+                    border: '1px solid rgba(255, 214, 10, .45)',
                     borderRadius: '6px',
                     padding: '6px 10px',
                     cursor: 'pointer',
                     fontSize: '12px',
+                    color: '#ffd60a',
                   }}
                 >
                   🔄
@@ -512,19 +398,20 @@ const TareasTab: React.FC<TareasTabProps> = ({ proyectoId: proyectoFijo }) => {
               </div>
             </div>
 
+            <div style={{ padding: '20px 24px 24px' }}>
             {cargando ? (
-              <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
+              <div className="empty-msg" style={{ padding: '40px' }}>
                 Cargando tareas desde PostgreSQL...
               </div>
             ) : tareasFiltradas.length === 0 ? (
               <div
+                className="empty-msg"
                 style={{
-                  textAlign: 'center',
                   padding: '40px 20px',
-                  backgroundColor: '#f8fafc',
+                  backgroundColor: 'rgba(8, 11, 17, .6)',
                   borderRadius: '8px',
-                  border: '1px dashed #cbd5e1',
-                  color: '#64748b',
+                  border: '1px dashed rgba(255, 255, 255, .18)',
+                  color: '#94a3b8',
                 }}
               >
                 <p style={{ margin: '0 0 8px 0', fontWeight: 600 }}>No hay tareas registradas con este filtro.</p>
@@ -542,24 +429,24 @@ const TareasTab: React.FC<TareasTabProps> = ({ proyectoId: proyectoFijo }) => {
                       key={t.id}
                       style={{
                         padding: '16px',
-                        border: estaSeleccionada ? '2px solid #ffd60a' : '1px solid #e2e8f0',
-                        backgroundColor: estaSeleccionada ? '#fffdf0' : '#ffffff',
+                        border: estaSeleccionada ? '1px solid rgba(255, 214, 10, .65)' : '1px solid rgba(255, 255, 255, .12)',
+                        backgroundColor: estaSeleccionada ? 'rgba(255, 214, 10, .07)' : 'rgba(8, 11, 17, .72)',
                         borderRadius: '10px',
                         display: 'flex',
                         flexDirection: 'column',
                         gap: '10px',
-                        boxShadow: estaSeleccionada ? '0 4px 12px rgba(255, 214, 10, 0.2)' : 'none',
+                        boxShadow: estaSeleccionada ? '0 4px 12px rgba(255, 214, 10, .18)' : 'none',
                         transition: 'all 0.2s',
                       }}
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '10px' }}>
                         <div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                            <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 700 }}>#{t.id}</span>
-                            <strong style={{ color: '#0f172a', fontSize: '15px' }}>{t.nombre_tarea}</strong>
+                            <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 700 }}>#{t.id}</span>
+                            <strong style={{ color: '#fff', fontSize: '15px' }}>{t.nombre_tarea}</strong>
                           </div>
                           {t.descripcion && (
-                            <p style={{ fontSize: '13px', color: '#475569', margin: '4px 0 0', lineHeight: '1.4' }}>
+                            <p style={{ fontSize: '13px', color: '#cbd5e1', margin: '4px 0 0', lineHeight: '1.4' }}>
                               {t.descripcion}
                             </p>
                           )}
@@ -600,9 +487,9 @@ const TareasTab: React.FC<TareasTabProps> = ({ proyectoId: proyectoFijo }) => {
                           flexWrap: 'wrap',
                           gap: '8px',
                           paddingTop: '8px',
-                          borderTop: '1px solid #f1f5f9',
+                          borderTop: '1px solid rgba(255, 255, 255, .08)',
                           fontSize: '12px',
-                          color: '#64748b',
+                          color: '#94a3b8',
                         }}
                       >
                         <div style={{ display: 'flex', gap: '12px' }}>
@@ -615,9 +502,9 @@ const TareasTab: React.FC<TareasTabProps> = ({ proyectoId: proyectoFijo }) => {
                           <button
                             onClick={() => setTareaSeleccionada(estaSeleccionada ? null : t)}
                             style={{
-                              backgroundColor: estaSeleccionada ? '#000000' : '#ffd60a',
+                              backgroundColor: estaSeleccionada ? 'rgba(255, 214, 10, .15)' : '#ffd60a',
                               color: estaSeleccionada ? '#ffd60a' : '#000000',
-                              border: 'none',
+                              border: estaSeleccionada ? '1px solid rgba(255, 214, 10, .65)' : 'none',
                               padding: '6px 12px',
                               borderRadius: '6px',
                               cursor: 'pointer',
@@ -633,10 +520,8 @@ const TareasTab: React.FC<TareasTabProps> = ({ proyectoId: proyectoFijo }) => {
 
                           <button
                             onClick={() => eliminarTarea(t.id, t.nombre_tarea)}
+                            className="btn-delete"
                             style={{
-                              backgroundColor: '#fee2e2',
-                              color: '#dc2626',
-                              border: '1px solid #fca5a5',
                               padding: '6px 10px',
                               borderRadius: '6px',
                               cursor: 'pointer',
@@ -654,6 +539,7 @@ const TareasTab: React.FC<TareasTabProps> = ({ proyectoId: proyectoFijo }) => {
                 })}
               </div>
             )}
+            </div>
           </div>
 
           {/* Panel Lateral Reubicado para Comentarios */}

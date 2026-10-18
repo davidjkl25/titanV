@@ -34,17 +34,9 @@ def verificar_contrasena(contrasena_plana: str, contrasena_hasheada: str) -> boo
 
 
 # --- Autenticación (login) ---
-
-def autenticar_usuario(db: Session, credenciales: UsuarioLogin) -> Optional[Usuario]:
-    """Busca al usuario y valida la contraseña. Devuelve None si las credenciales no son válidas."""
-    usuario = db.query(Usuario).filter(Usuario.correo_electronico == credenciales.correo_electronico).first()
-    if not usuario:
-        return None
-
-    if not verificar_contrasena(credenciales.contrasena, usuario.contrasena_encriptada):
-        return None
-
-    return usuario
+# La validación de credenciales vive en el router /api/auth/login, que además
+# aplica límite de intentos por IP y bloqueo temporal de la cuenta
+# (ver app.services.proteccion_service). No duplicarla aquí.
 
 
 # --- JWT ---

@@ -474,30 +474,8 @@ body {
 .tab-content td { color: #e2e8f0; border-bottom-color: rgba(255, 255, 255, .08); }
 .tab-content tr:hover td { background: rgba(255, 214, 10, .05); }
 
-/* Los formularios que antes usaban superficies blancas conservan contraste en el tema oscuro. */
-.task-panel .section-header h1 { color: #fff !important; }
-.task-panel .section-header p { color: #cbd5e1 !important; }
-.task-surface, .comments-panel {
-    color: #e2e8f0 !important;
-    background: rgba(16, 21, 31, .94) !important;
-    border-color: rgba(255, 214, 10, .2) !important;
-    box-shadow: 0 14px 34px rgba(0, 0, 0, .35) !important;
-}
-.task-surface h2, .task-surface label, .comments-panel h2, .comments-panel label { color: #f8fafc !important; }
-.task-surface p, .task-surface span, .comments-panel p, .comments-panel span { color: #cbd5e1; }
-.task-surface input, .task-surface select, .task-surface textarea,
-.comments-panel input, .comments-panel textarea {
-    color: #fff !important;
-    background: #0b1019 !important;
-    border-color: rgba(255, 255, 255, .18) !important;
-}
-.task-surface select option, .comments-panel select option { color: #fff; background: #111827; }
-.task-item {
-    background: rgba(8, 11, 17, .72) !important;
-    border-color: rgba(255, 255, 255, .12) !important;
-}
-.task-item strong { color: #fff !important; }
-.comments-form { background: rgba(8, 11, 17, .72) !important; border-color: rgba(255, 255, 255, .12) !important; }
+/* Las tarjetas de tareas/comentarios ahora usan el mismo tema que el resto
+   de formularios (.card, .card-header, .input-group, .btn-save). */
 
 @media (max-width: 768px) {
     .sidebar { width: 70px; padding: 15px 5px; }

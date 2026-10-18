@@ -57,7 +57,7 @@ const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
     flow: 'implicit',
     onSuccess: async (tokenResponse) => {
       try {
-        const respuesta = await axios.post(`${API_URL}/auth/google`, {
+        const respuesta = await axios.post(`${API_URL}/api/auth/google`, {
           credential: tokenResponse.access_token,
         });
 
