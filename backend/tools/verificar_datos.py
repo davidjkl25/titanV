@@ -91,7 +91,7 @@ def main() -> int:
 
         # 3. El stock debe cuadrar con el kardex
         for inventario in db.query(InventarioObra).all():
-            material = db.query(Material).get(inventario.material_id)
+            material = db.get(Material, inventario.material_id)
             movimientos = (
                 db.query(HistorialMovimiento)
                 .filter(
@@ -127,7 +127,7 @@ def main() -> int:
 
         # 5. Los comentarios y evidencias son de usuarios del proyecto
         for comentario in db.query(Comentario).all():
-            tarea = db.query(Tarea).get(comentario.tarea_id)
+            tarea = db.get(Tarea, comentario.tarea_id)
             if tarea is None:
                 fallar(f"comentario {comentario.id} sin tarea")
                 continue
@@ -144,7 +144,7 @@ def main() -> int:
         print("  [OK] todo comentario es de un colaborador del proyecto de la tarea")
 
         for evidencia in db.query(EvidenciaMultimedia).all():
-            tarea = db.query(Tarea).get(evidencia.tarea_id)
+            tarea = db.get(Tarea, evidencia.tarea_id)
             if tarea is None:
                 fallar(f"evidencia {evidencia.id} sin tarea")
                 continue
@@ -185,7 +185,7 @@ def main() -> int:
 
         # 8. Las solicitudes son coherentes
         for solicitud in db.query(SolicitudMaterial).all():
-            material = db.query(Material).get(solicitud.material_id)
+            material = db.get(Material, solicitud.material_id)
             if material is None or material.proyecto_id != solicitud.proyecto_id:
                 fallar(f"solicitud {solicitud.id}: el material no pertenece al proyecto")
         print("  [OK] toda solicitud referencia un material del mismo proyecto")
