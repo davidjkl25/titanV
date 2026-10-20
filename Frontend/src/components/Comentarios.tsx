@@ -15,7 +15,7 @@ interface ComentariosProps {
   onCerrar?: () => void;
 }
 
-const API_URL = 'http://localhost:8000';
+const API_URL = 'http://127.0.0.1:8000';
 
 const authHeaders = () => ({
   headers: { Authorization: `Bearer ${localStorage.getItem('token') || ''}` },
@@ -76,7 +76,7 @@ const Comentarios: React.FC<ComentariosProps> = ({ tareaId, tareaNombre, onCerra
     } catch (error: any) {
       console.error('Error al guardar el comentario:', error);
       if (error.code === 'ERR_NETWORK' || error.message === 'Network Error' || !error.response) {
-        setMensajeError('⚠️ Error de Red: No se pudo conectar con el backend (http://localhost:8000). Revisa que uvicorn esté corriendo.');
+        setMensajeError('⚠️ Error de Red: No se pudo conectar con el backend (http://127.0.0.1:8000). Revisa que uvicorn esté corriendo.');
       } else {
         const detalle = error.response?.data?.detail || error.message || 'Ocurrió un error al registrar el comentario en la base de datos.';
         setMensajeError(detalle);

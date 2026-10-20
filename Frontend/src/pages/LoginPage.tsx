@@ -9,7 +9,7 @@ interface LoginPageProps {
   onLoginSuccess: () => void;
 }
 
-const API_URL = 'http://localhost:8000';
+const API_URL = 'http://127.0.0.1:8000';
 
 const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
   const navigate = useNavigate();

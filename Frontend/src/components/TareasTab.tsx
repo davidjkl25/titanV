@@ -13,7 +13,7 @@ export interface Tarea {
   usuario_id: number;
 }
 
-const API_URL = 'http://localhost:8000';
+const API_URL = 'http://127.0.0.1:8000';
 
 const authHeaders = () => ({
   headers: { Authorization: `Bearer ${localStorage.getItem('token') || ''}` },
@@ -109,7 +109,7 @@ const TareasTab: React.FC<TareasTabProps> = ({ proyectoId: proyectoFijo }) => {
 
   const formatearError = (error: any, fallback: string) => {
     if (error.code === 'ERR_NETWORK' || error.message === 'Network Error' || !error.response) {
-      return '⚠️ Error de Red: No se pudo conectar con el servidor backend (http://localhost:8000). Asegúrate de tener uvicorn corriendo en la terminal: "cd backend" y luego "uvicorn app.main:app --reload --port 8000".';
+      return '⚠️ Error de Red: No se pudo conectar con el servidor backend (http://127.0.0.1:8000). Asegúrate de tener uvicorn corriendo en la terminal: "cd backend" y luego "uvicorn app.main:app --reload --port 8000".';
     }
     return error.response?.data?.detail || error.message || fallback;
   };

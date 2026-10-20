@@ -67,6 +67,20 @@ titanV/
   `Start-Process ...\backend\venv\Scripts\python.exe -m uvicorn app.main:app --reload --port 8000`
   (logs en `C:\Users\User\AppData\Local\Temp\opencode\*.log`). Swagger: http://localhost:8000/docs
 - Frontend: `npm run dev` → http://localhost:5173 (`Frontend/.env` ya tiene el Google Client ID).
+- El backend escucha **solo en IPv4 (127.0.0.1)**: por eso todo el frontend
+  apunta a `http://127.0.0.1:8000` y no a `localhost:8000` (en Windows
+  `localhost` resuelve primero a IPv6). `vite.config.ts` usa `host: true`
+  para que el dev server responda en IPv4 e IPv6.
+
+### Migración de base de datos (instalaciones existentes)
+`backend/sql/migration_rama_test.sql` alinea `titanv_db` con los modelos actuales
+(`materiales.proyecto_id`, `evidencias_multimedia.tarea_id` y backfill de datos).
+Es idempotente y no borra filas. Para ver qué falta:
+
+```bash
+cd backend
+venv\Scripts\python tools\comparar_esquema.py
+```
 
 ## Verificación obligatoria antes de terminar
 
