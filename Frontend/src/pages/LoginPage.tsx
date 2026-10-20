@@ -11,7 +11,14 @@ interface LoginPageProps {
 
 const API_URL = 'http://127.0.0.1:8000';
 
-const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
+// El botón de Google solo se habilita si hay un Client ID configurado.
+// Sin él, `initTokenClient` lanza "Missing required parameter client_id"
+// y React desmonta la página entera (queda solo el fondo negro).
+const GOOGLE_CLIENT_ID = (import.meta.env.VITE_GOOGLE_CLIENT_ID || '').trim();
+const HAY_GOOGLE = GOOGLE_CLIENT_ID.length > 0;
+
+/** Lógica de acceso con correo y contraseña (compartida por ambas variantes). */
+function useAccesoConCorreo(onLoginSuccess: () => void) {
   const navigate = useNavigate();
   const [correo, setCorreo] = useState('');
   const [contrasena, setContrasena] = useState('');
@@ -46,6 +53,44 @@ const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
       alert(`⚠️ ${detalle}`);
     }
   };
+
+  return { correo, contrasena, handleCorreoChange, handleContrasenaChange, handleEnviar, navigate };
+}
+
+// ── Variante SIN Google OAuth configurado ──
+// El botón de Google sigue visible: al pulsarlo explica que falta el
+// Client ID, en vez de dejar la página en negro.
+function LoginSinGoogle({ onLoginSuccess }: LoginPageProps) {
+  const { correo, contrasena, handleCorreoChange, handleContrasenaChange, handleEnviar, navigate } =
+    useAccesoConCorreo(onLoginSuccess);
+
+  const avisarGoogleNoConfigurado = () => {
+    alert(
+      '⚠️ El inicio de sesión con Google no está configurado en este equipo.\n\n' +
+      'Falta el Client ID de Google Cloud. Agrégalo en Frontend/.env:\n\n' +
+      '  VITE_GOOGLE_CLIENT_ID=tu-client-id.apps.googleusercontent.com\n\n' +
+      'y reinicia el servidor de Vite (npm run dev).\n\n' +
+      'Mientras tanto, usa el acceso con correo y contraseña.'
+    );
+  };
+
+  return (
+    <Login
+      correo={correo}
+      contrasena={contrasena}
+      onCorreoChange={handleCorreoChange}
+      onContrasenaChange={handleContrasenaChange}
+      onEnviar={handleEnviar}
+      onGoogleLogin={avisarGoogleNoConfigurado}
+      onVolverPrincipal={() => navigate('/')}
+    />
+  );
+}
+
+// ── Variante CON Google OAuth ──
+function LoginConGoogle({ onLoginSuccess }: LoginPageProps) {
+  const { correo, contrasena, handleCorreoChange, handleContrasenaChange, handleEnviar, navigate } =
+    useAccesoConCorreo(onLoginSuccess);
 
   // ── GOOGLE OAUTH REAL ────────────────────────────────────────────────────────
   // Abre la ventana emergente ORIGINAL de Google (selector de cuenta).
@@ -90,6 +135,9 @@ const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
       onVolverPrincipal={() => navigate('/')}
     />
   );
-};
+}
+
+const LoginPage = (props: LoginPageProps) =>
+  HAY_GOOGLE ? <LoginConGoogle {...props} /> : <LoginSinGoogle {...props} />;
 
 export default LoginPage;
