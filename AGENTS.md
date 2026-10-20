@@ -82,6 +82,24 @@ cd backend
 venv\Scripts\python tools\comparar_esquema.py
 ```
 
+### Datos de demostración
+`backend/tools/sembrar_datos_demo.py` llena la base con un juego de datos
+coherente: equipo de obra con rol global, proyectos con colaboradores
+(Arquitecto/Trabajador/Visualizador), inventario por obra con kardex, tareas
+con comentarios y evidencias, turnos, actas, solicitudes y enlaces de invitación.
+
+```bash
+cd backend
+venv\Scripts\python tools\sembrar_datos_demo.py           # siembra o completa
+venv\Scripts\python tools\sembrar_datos_demo.py --reset   # regenera los proyectos demo
+venv\Scripts\python tools\verificar_datos.py               # revisa la integridad
+```
+
+Usuarios de demostración: `*@demo.titanv.co` con contraseña `TitanV2026`.
+El script respeta el trigger `validar_stock_antes_de_movimiento`: el inventario
+se fija antes de insertar los movimientos y el saldo final siempre coincide con
+`cantidad_inicial + entradas - salidas`.
+
 ## Verificación obligatoria antes de terminar
 
 - Frontend: `npm run build` en `Frontend/` (tsc + vite).
