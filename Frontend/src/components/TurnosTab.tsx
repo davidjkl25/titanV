@@ -72,6 +72,14 @@ export const TurnosTab = ({ proyectoId: proyectoFijo }: TurnosTabProps) => {
   const nombreProyecto = (id: number) => proyectos.find((p) => p.id === id)?.nombre_proyecto || `Proyecto #${id}`;
   const nombreUsuario = (id: number) => usuarios.find((u) => u.id === id)?.nombre_completo || `Usuario #${id}`;
 
+  // Los turnos se muestran del más reciente al más antiguo para que un turno
+  // recién agendado aparezca primero en la lista.
+  const turnosOrdenados = [...turnos].sort((a, b) => {
+    const fechaA = `${a.fecha_turno || ''} ${a.hora_inicio || ''}`;
+    const fechaB = `${b.fecha_turno || ''} ${b.hora_inicio || ''}`;
+    return fechaB.localeCompare(fechaA);
+  });
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!proyectoId || !usuarioId || !fechaTurno || !horaInicio || !horaFin) return;
@@ -186,18 +194,18 @@ export const TurnosTab = ({ proyectoId: proyectoFijo }: TurnosTabProps) => {
             {!cargando && !error && turnos.length === 0 && (
               <div className="empty-msg">No hay turnos registrados todavía.</div>
             )}
-            {!cargando && turnos.map((t) => (
+            {!cargando && turnosOrdenados.map((t) => (
               <div key={t.id} className="project-item">
                 <div>
                   <h4>{nombreUsuario(t.usuario_id)}</h4>
-                  <span style={{ fontSize: '12px', color: '#666' }}>
+                  <span style={{ fontSize: '12px', color: '#94a3b8' }}>
                     {nombreProyecto(t.proyecto_id)} — {t.fecha_turno} · {t.hora_inicio}–{t.hora_fin}
                   </span>
                   <div style={{ marginTop: '6px' }}>
                     <select
                       value={t.estado_asistencia}
                       onChange={(e) => cambiarEstado(t.id, e.target.value)}
-                      style={{ fontSize: '12px', padding: '4px 8px' }}
+                      style={{ fontSize: '12px', padding: '4px 8px', backgroundColor: 'rgba(8, 11, 17, .85)', color: '#fff', border: '1px solid rgba(255, 214, 10, .45)', borderRadius: '6px' }}
                     >
                       {ESTADOS.map((e) => <option key={e} value={e}>{e}</option>)}
                     </select>

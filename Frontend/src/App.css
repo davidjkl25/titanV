@@ -176,8 +176,8 @@ form input {
 }
 
 .project-item {
-    background: #fff;
-    border-bottom: 1px solid #eee;
+    background: rgba(16, 21, 31, .88);
+    border-bottom: 1px solid rgba(255, 255, 255, .08);
     padding: 15px 25px;
     display: flex;
     justify-content: space-between;
@@ -185,7 +185,7 @@ form input {
 }
 
 .project-item h4 {
-    color: var(--dark);
+    color: #fff;
 }
 
 .empty-msg {
