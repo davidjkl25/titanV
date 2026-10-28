@@ -286,12 +286,12 @@ th {
 }
 
 .materiales-page table th {
-    background: #f7f8fa;
+    background: rgba(24, 31, 46, .95);
     font-weight: 600;
 }
 
 .materiales-page table tr:hover td {
-    background: #fafbfc;
+    background: rgba(255, 214, 10, .05);
 }
 
 .materiales-page .btn-edit,
