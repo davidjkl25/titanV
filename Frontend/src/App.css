@@ -97,6 +97,12 @@ body {
     padding-left: 15px;
 }
 
+/* Iconos de encabezados (tareas, turnos, calendarios, relojes, etc.) en dorado
+   Titan V para que no queden en blanco llamativo sobre el fondo oscuro. */
+h1 i, h2 i, h3 i, h4 i, h5 i, h6 i {
+    color: var(--primary);
+}
+
 .grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
@@ -473,6 +479,16 @@ body {
 .tab-content th { color: var(--primary); background: rgba(24, 31, 46, .95); }
 .tab-content td { color: #e2e8f0; border-bottom-color: rgba(255, 255, 255, .08); }
 .tab-content tr:hover td { background: rgba(255, 214, 10, .05); }
+
+/* Calendario y reloj (selectores nativos de fecha y hora) con color dorado y
+   tema oscuro, para que el icono del calendario/reloj sea visible y encaje
+   con la paleta de Titan V sobre el fondo oscuro. */
+.tab-content input[type='date'],
+.tab-content input[type='time'],
+.tab-content input[type='datetime-local'] {
+    color: var(--primary);
+    color-scheme: dark;
+}
 
 /* Las tarjetas de tareas/comentarios ahora usan el mismo tema que el resto
    de formularios (.card, .card-header, .input-group, .btn-save). */
