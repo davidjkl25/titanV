@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { fetchConToken } from '../api';
+import { AvisoSoloLectura, BadgeBloqueado, Obligatorio } from './IndicadoresAcceso';
 
 interface Turno {
   id: number;
@@ -25,9 +26,11 @@ const ESTADOS = ['Programado', 'Presente', 'Ausente'];
 
 interface TurnosTabProps {
   proyectoId?: number;
+  rolProyecto?: string;
 }
 
-export const TurnosTab = ({ proyectoId: proyectoFijo }: TurnosTabProps) => {
+export const TurnosTab = ({ proyectoId: proyectoFijo, rolProyecto }: TurnosTabProps) => {
+  const soloLectura = rolProyecto === 'Visualizador';
   const [turnos, setTurnos] = useState<Turno[]>([]);
   const [proyectos, setProyectos] = useState<Proyecto[]>([]);
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
@@ -82,7 +85,7 @@ export const TurnosTab = ({ proyectoId: proyectoFijo }: TurnosTabProps) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!proyectoId || !usuarioId || !fechaTurno || !horaInicio || !horaFin) return;
+    if (soloLectura || !proyectoId || !usuarioId || !fechaTurno || !horaInicio || !horaFin) return;
 
     setGuardando(true);
     try {
@@ -114,6 +117,7 @@ export const TurnosTab = ({ proyectoId: proyectoFijo }: TurnosTabProps) => {
   };
 
   const cambiarEstado = async (id: number, nuevoEstado: string) => {
+    if (soloLectura) return;
     try {
       const respuesta = await fetchConToken(`/turnos/${id}`, {
         method: 'PUT',
@@ -127,6 +131,7 @@ export const TurnosTab = ({ proyectoId: proyectoFijo }: TurnosTabProps) => {
   };
 
   const eliminarTurno = async (id: number) => {
+    if (soloLectura) return;
     if (!window.confirm('¿Eliminar este turno?')) return;
     try {
       const respuesta = await fetchConToken(`/turnos/${id}`, { method: 'DELETE' });
@@ -142,46 +147,47 @@ export const TurnosTab = ({ proyectoId: proyectoFijo }: TurnosTabProps) => {
       <div className="section-header">
         <h2><i className="fas fa-clock"></i> Turnos y Asistencia</h2>
       </div>
+      {soloLectura && <AvisoSoloLectura texto="Tu rol Visualizador solo permite consultar turnos. No puedes programarlos ni cambiar la asistencia." />}
       <div className="grid">
         <div className="card">
           <div className="card-header"><h3><i className="fas fa-plus-circle"></i> Programar Turno</h3></div>
           <form onSubmit={handleSubmit}>
             <div className="input-group">
-              <label>Proyecto</label>
-              <select value={proyectoId} onChange={(e) => setProyectoId(e.target.value ? Number(e.target.value) : '')} required>
+              <label>Proyecto <Obligatorio /></label>
+              <select value={proyectoId} onChange={(e) => setProyectoId(e.target.value ? Number(e.target.value) : '')} required disabled={soloLectura}>
                 <option value="">Selecciona un proyecto</option>
                 {proyectos.map((p) => <option key={p.id} value={p.id}>{p.nombre_proyecto}</option>)}
               </select>
             </div>
             <div className="input-group">
-              <label>Operario</label>
-              <select value={usuarioId} onChange={(e) => setUsuarioId(e.target.value ? Number(e.target.value) : '')} required>
+              <label>Operario <Obligatorio /></label>
+              <select value={usuarioId} onChange={(e) => setUsuarioId(e.target.value ? Number(e.target.value) : '')} required disabled={soloLectura}>
                 <option value="">Selecciona un operario</option>
                 {usuarios.map((u) => <option key={u.id} value={u.id}>{u.nombre_completo}</option>)}
               </select>
             </div>
             <div className="input-group">
-              <label>Fecha del turno</label>
-              <input type="date" value={fechaTurno} onChange={(e) => setFechaTurno(e.target.value)} required />
+              <label>Fecha del turno <Obligatorio /></label>
+              <input type="date" value={fechaTurno} onChange={(e) => setFechaTurno(e.target.value)} required disabled={soloLectura} />
             </div>
             <div className="date-row">
               <div className="input-group">
-                <label>Hora inicio</label>
-                <input type="time" value={horaInicio} onChange={(e) => setHoraInicio(e.target.value)} required />
+                <label>Hora inicio <Obligatorio /></label>
+                <input type="time" value={horaInicio} onChange={(e) => setHoraInicio(e.target.value)} required disabled={soloLectura} />
               </div>
               <div className="input-group">
-                <label>Hora fin</label>
-                <input type="time" value={horaFin} onChange={(e) => setHoraFin(e.target.value)} required />
+                <label>Hora fin <Obligatorio /></label>
+                <input type="time" value={horaFin} onChange={(e) => setHoraFin(e.target.value)} required disabled={soloLectura} />
               </div>
             </div>
             <div className="input-group">
               <label>Asistencia</label>
-              <select value={estadoAsistencia} onChange={(e) => setEstadoAsistencia(e.target.value)}>
+              <select value={estadoAsistencia} onChange={(e) => setEstadoAsistencia(e.target.value)} disabled={soloLectura}>
                 {ESTADOS.map((e) => <option key={e} value={e}>{e}</option>)}
               </select>
             </div>
-            <button type="submit" className="btn-save" disabled={guardando}>
-              {guardando ? 'Guardando...' : 'Programar turno'}
+            <button type="submit" className="btn-save" disabled={guardando || soloLectura} title={soloLectura ? 'Acción no disponible para tu rol' : undefined}>
+              {soloLectura ? <><i className="fas fa-lock"></i> Solo lectura</> : guardando ? 'Guardando...' : 'Programar turno'}
             </button>
           </form>
         </div>
@@ -189,7 +195,7 @@ export const TurnosTab = ({ proyectoId: proyectoFijo }: TurnosTabProps) => {
         <div className="card">
           <div className="card-header"><h3><i className="fas fa-list"></i> Turnos registrados</h3></div>
           <div className="project-container">
-            {error && <div className="empty-msg" style={{ color: '#dc2626' }}>{error}</div>}
+            {error && <div className="empty-msg" style={{ color: '#fca5a5' }}>{error}</div>}
             {cargando && <div className="empty-msg">Cargando turnos...</div>}
             {!cargando && !error && turnos.length === 0 && (
               <div className="empty-msg">No hay turnos registrados todavía.</div>
@@ -199,20 +205,28 @@ export const TurnosTab = ({ proyectoId: proyectoFijo }: TurnosTabProps) => {
                 <div>
                   <h4>{nombreUsuario(t.usuario_id)}</h4>
                   <span style={{ fontSize: '12px', color: '#94a3b8' }}>
-                    {nombreProyecto(t.proyecto_id)} — {t.fecha_turno} · {t.hora_inicio}–{t.hora_fin}
+                    #{t.id} · {nombreProyecto(t.proyecto_id)} — {t.fecha_turno} · {t.hora_inicio}–{t.hora_fin}
                   </span>
                   <div style={{ marginTop: '6px' }}>
                     <select
                       value={t.estado_asistencia}
                       onChange={(e) => cambiarEstado(t.id, e.target.value)}
+                      disabled={soloLectura}
+                      title={soloLectura ? 'Tu rol no puede cambiar la asistencia' : undefined}
                       style={{ fontSize: '12px', padding: '4px 8px', backgroundColor: 'rgba(8, 11, 17, .85)', color: '#fff', border: '1px solid rgba(255, 214, 10, .45)', borderRadius: '6px' }}
                     >
                       {ESTADOS.map((e) => <option key={e} value={e}>{e}</option>)}
                     </select>
                   </div>
                 </div>
-                <button onClick={() => eliminarTurno(t.id)} className="btn-delete">
-                  <i className="fas fa-trash"></i>
+                {soloLectura && <BadgeBloqueado texto="Solo lectura" />}
+                <button
+                  onClick={() => eliminarTurno(t.id)}
+                  className="btn-delete"
+                  disabled={soloLectura}
+                  title={soloLectura ? 'Tu rol no puede eliminar turnos' : undefined}
+                >
+                  <i className={soloLectura ? 'fas fa-lock' : 'fas fa-trash'}></i>
                 </button>
               </div>
             ))}

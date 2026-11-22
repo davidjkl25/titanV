@@ -4,13 +4,14 @@ interface SidebarProps {
   onLogout: () => void;
   proyecto: { id: number; nombre_proyecto: string } | null;
   onSalirProyecto: () => void;
+  rolProyecto?: string;
 }
 
-const ITEMS_MODULO = ['colaboradores', 'materiales', 'inventario', 'tareas', 'turnos', 'evidencias'];
+const ITEMS_MODULO = ['colaboradores', 'materiales', 'inventario', 'tareas', 'turnos', 'evidencias', 'bitacora'];
 
-export const Sidebar = ({ activeTab, onSelectTab, onLogout, proyecto, onSalirProyecto }: SidebarProps) => {
+export const Sidebar = ({ activeTab, onSelectTab, onLogout, proyecto, onSalirProyecto, rolProyecto }: SidebarProps) => {
   const sinProyecto = !proyecto;
-  const puedeVer = (_tab: string) => true;
+  const puedeVer = (tab: string) => !(tab === 'bitacora' && rolProyecto === 'Trabajador');
 
   const manejarClick = (tab: string) => {
     if (sinProyecto && ITEMS_MODULO.includes(tab)) {
@@ -91,6 +92,9 @@ export const Sidebar = ({ activeTab, onSelectTab, onLogout, proyecto, onSalirPro
         </a>}
         {puedeVer('evidencias') && <a className={claseItem('evidencias')} onClick={() => manejarClick('evidencias')}>
           <i className="fas fa-camera"></i><span>Evidencias {icono('evidencias')}</span>
+        </a>}
+        {puedeVer('bitacora') && <a className={claseItem('bitacora')} onClick={() => manejarClick('bitacora')}>
+          <i className="fas fa-file-lines"></i><span>Bitácora / Reportes {icono('bitacora')}</span>
         </a>}
       </div>
 

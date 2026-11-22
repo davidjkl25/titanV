@@ -10,6 +10,7 @@ import { InventarioTab } from '../components/InventarioTab';
 import TareasTab from '../components/TareasTab';
 import { TurnosTab } from '../components/TurnosTab';
 import { EvidenciasTab } from '../components/EvidenciasTab';
+import { BitacoraReportesTab } from '../components/BitacoraReportesTab';
 import videoFondo from '../assets/video_landing.mp4';
 
 export interface ProyectoResumen {
@@ -23,7 +24,7 @@ interface DashboardPageProps {
   onLogout: () => void;
 }
 
-const MODULOS_PROYECTO = ['colaboradores', 'materiales', 'inventario', 'tareas', 'turnos', 'evidencias'];
+const MODULOS_PROYECTO = ['colaboradores', 'materiales', 'inventario', 'tareas', 'turnos', 'evidencias', 'bitacora'];
 
 const DashboardPage = ({ onLogout }: DashboardPageProps) => {
   const navigate = useNavigate();
@@ -67,7 +68,10 @@ const DashboardPage = ({ onLogout }: DashboardPageProps) => {
     setTabActual('inicio');
   };
 
-  const puedeAccederTab = (_tab: string) => {
+  const puedeAccederTab = (tab: string) => {
+    // El backend también lo valida con el JWT; este filtro evita mostrar el
+    // módulo a quien no podrá exportar nada.
+    if (tab === 'bitacora' && rolProyecto === 'Trabajador') return false;
     return true;
   };
 
@@ -162,6 +166,7 @@ const DashboardPage = ({ onLogout }: DashboardPageProps) => {
         onLogout={handleLogout}
         proyecto={proyectoSeleccionado}
         onSalirProyecto={salirProyecto}
+        rolProyecto={rolProyecto}
       />
 
       <div className="main-content">
@@ -176,6 +181,7 @@ const DashboardPage = ({ onLogout }: DashboardPageProps) => {
             onCrearProyecto={crearProyecto}
             puedeCrearProyecto={true}
             puedeVerModulo={puedeAccederTab}
+            rolProyecto={rolProyecto}
             onCambiarEstadoProyecto={cambiarEstadoProyecto}
             onEliminarProyecto={eliminarProyectoSeleccionado}
           />
@@ -194,13 +200,20 @@ const DashboardPage = ({ onLogout }: DashboardPageProps) => {
           <InventarioTab proyectoId={proyectoSeleccionado.id} proyectoNombre={proyectoSeleccionado.nombre_proyecto} rolProyecto={rolProyecto} />
         )}
         {proyectoSeleccionado && tabActual === 'tareas' && (
-          <TareasTab proyectoId={proyectoSeleccionado.id} />
+          <TareasTab proyectoId={proyectoSeleccionado.id} rolProyecto={rolProyecto} />
         )}
         {proyectoSeleccionado && tabActual === 'turnos' && (
-          <TurnosTab proyectoId={proyectoSeleccionado.id} />
+          <TurnosTab proyectoId={proyectoSeleccionado.id} rolProyecto={rolProyecto} />
         )}
         {proyectoSeleccionado && tabActual === 'evidencias' && (
-          <EvidenciasTab proyectoId={proyectoSeleccionado.id} />
+          <EvidenciasTab proyectoId={proyectoSeleccionado.id} rolProyecto={rolProyecto} />
+        )}
+        {proyectoSeleccionado && tabActual === 'bitacora' && rolProyecto !== 'Trabajador' && (
+          <BitacoraReportesTab
+            proyectoId={proyectoSeleccionado.id}
+            proyectoNombre={proyectoSeleccionado.nombre_proyecto}
+            rolProyecto={rolProyecto}
+          />
         )}
       </div>
     </div>

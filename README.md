@@ -32,6 +32,7 @@ cliente contratante sobre el avance de su proyecto, sin costos de licenciamiento
 - [x] Evidencias multimedia vinculadas a proyectos (subida de archivos con vista previa)
 - [x] Flujo de "proyecto activo": los módulos operativos requieren entrar a un proyecto
 - [x] Permisos por rol: el Visualizador solo lee; Arquitecto/Trabajador escriben
+- [x] Bitácora / Reportes de Obra: cortes por rango de fechas y módulos, PDF ejecutivo o Excel (.xlsx)
 - [x] Verificación de sesión activa
 
 ## 🛠️ Stack tecnológico
@@ -43,6 +44,7 @@ cliente contratante sobre el avance de su proyecto, sin costos de licenciamiento
 - **Validación:** Pydantic
 - **Autenticación:** JWT (PyJWT) + Google OAuth 2.0
 - **Seguridad:** bcrypt (hash de contraseñas)
+- **Reportes:** ReportLab (PDF ejecutivo) + openpyxl (Excel .xlsx)
 
 ## 📂 Estructura del proyecto
 
@@ -55,7 +57,7 @@ titanV/
 │   │   ├── api.ts             # Helper fetchConToken (JWT automático)
 │   │   ├── components/        # Sidebar, Inicio, Proyectos, Colaboradores,
 │   │   │                      # Materiales, Usuarios, Tareas, Comentarios, Turnos,
-│   │   │                      # Evidencias, Login, Registro, QuienesSomos
+│   │   │                      # Evidencias, BitacoraReportesTab, Login, Registro, QuienesSomos
 │   │   └── pages/             # LandingPage, LoginPage, DashboardPage,
 │   │                          # AceptarInvitacionPage
 │   ├── package.json
@@ -87,10 +89,12 @@ titanV/
         │   ├── subcontratista_router.py
         │   ├── movimiento_router.py    # kardex + stock por proyecto
         │   ├── evidencia_router.py     # evidencias multimedia por proyecto
-        │   └── invitacion_router.py    # enlaces y aceptación de invitación
+        │   ├── invitacion_router.py    # enlaces y aceptación de invitación
+        │   └── bitacora_router.py      # exportación de reportes PDF/Excel por proyecto
         │
         └── services/         # Lógica de negocio (independiente de FastAPI)
             ├── email_service.py   # envío de correos SMTP (invitaciones)
+            ├── bitacora_*_service.py  # datos, PDF y Excel de reportes de obra
             └── ...                # auth, colaborador, invitacion, material, reporte, …
 ```
 
@@ -115,13 +119,23 @@ leer/escribir en PostgreSQL a través de `core/database.py`.
 
 | Rol          | Puede                                                                  | No puede                                                  |
 |--------------|------------------------------------------------------------------------|-----------------------------------------------------------|
-| Arquitecto   | Control total: invitar, cambiar roles, quitar colaboradores, CRUD       | —                                                         |
-| Trabajador   | Crear/editar tareas y turnos, subir evidencias, registrar movimientos   | Invitar ni administrar colaboradores                      |
-| Visualizador | Leer tareas, turnos, evidencias e inventario                            | Crear, editar, eliminar o subir registros                 |
+| Arquitecto   | Control total: invitar, cambiar roles, quitar colaboradores, CRUD y reportes PDF/Excel | —                                      |
+| Trabajador   | Crear/editar tareas y turnos, subir evidencias, registrar movimientos   | Invitar, administrar colaboradores ni exportar reportes   |
+| Visualizador | Leer tareas, turnos, evidencias e inventario; exportar avance/evidencias en PDF | Crear, editar, eliminar, subir registros ni exportar Excel |
 
-Los módulos operativos (Colaboradores, Insumos, Tareas, Turnos, Evidencias)
+Los módulos operativos (Colaboradores, Insumos, Tareas, Turnos, Evidencias, Bitácora/Reportes)
 solo se desbloquean al **entrar a un proyecto** desde Inicio o desde la barra
 lateral, que muestra el proyecto activo y permite cambiarlo en cualquier momento.
+
+### 📑 Bitácora / Reportes de Obra
+
+La vista **Bitácora / Reportes** permite elegir rangos rápidos (Hoy, Esta semana,
+Este mes, Todo el proyecto) o fechas personalizadas, y marcar los módulos a
+incluir: tareas, evidencias, turnos/asistencia y consumo de materiales.
+El endpoint genera un **PDF ejecutivo** con logo, datos del proyecto/usuario y
+fotos en cuadrícula, o un **Excel** con una pestaña por módulo seleccionado.
+El Visualizador solo puede exportar tareas y evidencias en PDF; el Trabajador
+no tiene acceso al módulo.
 
 ## 📡 Endpoints principales
 
@@ -152,6 +166,7 @@ lateral, que muestra el proyecto activo y permite cambiarlo en cualquier momento
 | DELETE | `/proyectos/{id}/enlaces/{enlace_id}` | Revocar enlace de invitación   |
 | POST | `/invitaciones/{token}/aceptar` | Aceptar invitación (vincular a proyecto) |
 | CRUD | `/subcontratistas/`     | Gestión de subcontratistas                |
+| GET | `/api/proyectos/{id}/reportes/exportar` | Exportar bitácora (PDF/Excel por módulos y rango) |
 
 La documentación interactiva (Swagger) está disponible en `http://localhost:8000/docs`.
 

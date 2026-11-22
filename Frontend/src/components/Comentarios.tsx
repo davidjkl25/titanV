@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { BadgeBloqueado, Obligatorio } from './IndicadoresAcceso';
 
 export interface Comentario {
   id: number;
@@ -13,6 +14,7 @@ interface ComentariosProps {
   tareaId: number;
   tareaNombre?: string;
   onCerrar?: () => void;
+  soloLectura?: boolean;
 }
 
 const API_URL = 'http://127.0.0.1:8000';
@@ -21,7 +23,7 @@ const authHeaders = () => ({
   headers: { Authorization: `Bearer ${localStorage.getItem('token') || ''}` },
 });
 
-const Comentarios: React.FC<ComentariosProps> = ({ tareaId, tareaNombre, onCerrar }) => {
+const Comentarios: React.FC<ComentariosProps> = ({ tareaId, tareaNombre, onCerrar, soloLectura = false }) => {
   const [listaComentarios, setListaComentarios] = useState<Comentario[]>([]);
   const [cargando, setCargando] = useState<boolean>(false);
   const [contenido, setContenido] = useState<string>('');
@@ -51,7 +53,7 @@ const Comentarios: React.FC<ComentariosProps> = ({ tareaId, tareaNombre, onCerra
 
   const manejarEnvioComentario = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!contenido.trim()) return;
+    if (soloLectura || !contenido.trim()) return;
 
     if (contenido.length > 300) {
       alert('El comentario no puede superar los 300 caracteres (regla TV-CMT-06).');
@@ -139,6 +141,7 @@ const Comentarios: React.FC<ComentariosProps> = ({ tareaId, tareaNombre, onCerra
               {tareaNombre}
             </span>
           )}
+          {soloLectura && <BadgeBloqueado texto="Solo lectura" />}
         </div>
 
         {onCerrar && (
@@ -199,13 +202,14 @@ const Comentarios: React.FC<ComentariosProps> = ({ tareaId, tareaNombre, onCerra
                 margin: 0,
               }}
             >
-              Publicar como usuario
+              Publicar como usuario <Obligatorio />
             </label>
             <input
               type="number"
               min="1"
               value={usuarioId}
               onChange={(e) => setUsuarioId(Number(e.target.value) || 1)}
+              disabled={soloLectura}
               style={{
                 width: '80px',
                 padding: '6px 8px',
@@ -218,9 +222,13 @@ const Comentarios: React.FC<ComentariosProps> = ({ tareaId, tareaNombre, onCerra
           </div>
 
           <div>
+            <label style={{ display: 'block', color: '#ffd60a', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', marginBottom: '6px' }}>
+              Comentario <Obligatorio />
+            </label>
             <textarea
               value={contenido}
               onChange={(e) => setContenido(e.target.value)}
+              disabled={soloLectura}
               required
               maxLength={300}
               placeholder="Escribe tu comentario o nota técnica aquí (máx. 300 caracteres)..."
@@ -250,15 +258,16 @@ const Comentarios: React.FC<ComentariosProps> = ({ tareaId, tareaNombre, onCerra
           <button
             type="submit"
             className="btn-save"
-            disabled={enviando || !contenido.trim()}
+            disabled={enviando || !contenido.trim() || soloLectura}
             style={{
               padding: '12px',
               marginTop: 0,
-              cursor: enviando || !contenido.trim() ? 'not-allowed' : 'pointer',
-              opacity: enviando || !contenido.trim() ? 0.6 : 1,
+              cursor: enviando || !contenido.trim() || soloLectura ? 'not-allowed' : 'pointer',
+              opacity: enviando || !contenido.trim() || soloLectura ? 0.6 : 1,
             }}
+            title={soloLectura ? 'Tu rol no puede publicar comentarios' : undefined}
           >
-            {enviando ? 'Guardando...' : '➕ Publicar Comentario'}
+            {soloLectura ? '🔒 Solo lectura' : enviando ? 'Guardando...' : '➕ Publicar Comentario'}
           </button>
         </form>
 

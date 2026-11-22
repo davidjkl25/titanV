@@ -24,6 +24,7 @@ from app.routers.movimiento_router import router as movimiento_router
 from app.routers.evidencia_router import router as evidencia_router
 from app.routers.invitacion_router import router as invitacion_router
 from app.routers.solicitud_router import router as solicitud_router
+from app.routers.bitacora_router import router as bitacora_router
 
 # Crear tablas automáticamente si la base de datos está disponible
 try:
@@ -101,6 +102,7 @@ app.include_router(movimiento_router)
 app.include_router(evidencia_router)
 app.include_router(invitacion_router)
 app.include_router(solicitud_router)
+app.include_router(bitacora_router)
 
 # Sirve los archivos subidos (fotos/PDF de evidencias) en /uploads/...
 CARPETA_UPLOADS = os.path.join(os.path.dirname(os.path.dirname(__file__)), "uploads")

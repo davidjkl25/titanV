@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { fetchConToken } from '../api';
+import { BadgeBloqueado, Obligatorio } from './IndicadoresAcceso';
 
 interface Proyecto {
   id: number;
@@ -42,9 +43,9 @@ const RESTRICCIONES: Record<Colaborador['rol'], string[]> = {
 };
 
 const COLOR_ROL: Record<Colaborador['rol'], { bg: string; color: string }> = {
-  Arquitecto: { bg: '#fef3c7', color: '#b45309' },
-  Trabajador: { bg: '#e0f2fe', color: '#0369a1' },
-  Visualizador: { bg: '#f1f5f9', color: '#475569' },
+  Arquitecto: { bg: 'rgba(255, 214, 10, .14)', color: '#ffd60a' },
+  Trabajador: { bg: 'rgba(56, 189, 248, .12)', color: '#7dd3fc' },
+  Visualizador: { bg: 'rgba(148, 163, 184, .14)', color: '#cbd5e1' },
 };
 
 interface ColaboradoresTabProps {
@@ -222,8 +223,8 @@ export const ColaboradoresTab = ({ proyectoId: proyectoFijo }: ColaboradoresTabP
         <h2><i className="fas fa-user-group"></i> Colaboradores del Proyecto</h2>
       </div>
 
-      {error && <div className="empty-msg" style={{ color: '#dc2626', padding: '15px' }}>{error}</div>}
-      {mensaje && <div className="empty-msg" style={{ color: '#16a34a', padding: '15px' }}>{mensaje}</div>}
+      {error && <div className="empty-msg" style={{ color: '#fca5a5', padding: '15px' }}>{error}</div>}
+      {mensaje && <div className="empty-msg" style={{ color: '#86efac', padding: '15px' }}>{mensaje}</div>}
 
       <div className="grid">
         <div className="card">
@@ -240,12 +241,12 @@ export const ColaboradoresTab = ({ proyectoId: proyectoFijo }: ColaboradoresTabP
             <>
               <form onSubmit={invitarPorCorreo}>
                 <div className="input-group">
-                  <label>Proyecto</label>
+                  <label>Proyecto <Obligatorio /></label>
                   {proyectoFijo ? (
                     <div
                       style={{
                         display: 'flex', alignItems: 'center', gap: '8px',
-                        backgroundColor: '#fef9c3', color: '#854d0e',
+                        backgroundColor: 'rgba(255, 214, 10, .09)', color: '#ffd60a',
                         padding: '10px 14px', borderRadius: '8px', fontWeight: 700, fontSize: '14px',
                       }}
                     >
@@ -256,7 +257,7 @@ export const ColaboradoresTab = ({ proyectoId: proyectoFijo }: ColaboradoresTabP
                     <select
                       value={proyectoId}
                       onChange={(e) => setProyectoId(e.target.value === '' ? '' : Number(e.target.value))}
-                      style={{ width: '100%', padding: '12px', border: '1px solid #ddd', borderRadius: '8px', background: '#fafafa' }}
+                      style={{ width: '100%', padding: '12px', border: '1px solid rgba(255, 214, 10, .35)', borderRadius: '8px', background: 'rgba(8, 11, 17, .85)', color: '#fff' }}
                     >
                       <option value="" disabled>Selecciona un proyecto</option>
                       {proyectosVisibles.map((p) => (
@@ -266,7 +267,7 @@ export const ColaboradoresTab = ({ proyectoId: proyectoFijo }: ColaboradoresTabP
                   )}
                 </div>
                 <div className="input-group">
-                  <label>Correo electrónico de la persona</label>
+                  <label>Correo electrónico de la persona <Obligatorio /></label>
                   <input
                     type="email"
                     value={correo}
@@ -277,11 +278,11 @@ export const ColaboradoresTab = ({ proyectoId: proyectoFijo }: ColaboradoresTabP
                   />
                 </div>
                 <div className="input-group">
-                  <label>Rol al unirse</label>
+                  <label>Rol al unirse <Obligatorio /></label>
                   <select
                     value={rolInvitacion}
                     onChange={(e) => setRolInvitacion(e.target.value as Exclude<Colaborador['rol'], 'Arquitecto'>)}
-                    style={{ width: '100%', padding: '12px', border: '1px solid #ddd', borderRadius: '8px', background: '#fafafa' }}
+                    style={{ width: '100%', padding: '12px', border: '1px solid rgba(255, 214, 10, .35)', borderRadius: '8px', background: 'rgba(8, 11, 17, .85)', color: '#fff' }}
                     disabled={!esArquitecto}
                   >
                     <option value="Trabajador">Trabajador — participa y sube avances</option>
@@ -292,20 +293,20 @@ export const ColaboradoresTab = ({ proyectoId: proyectoFijo }: ColaboradoresTabP
                   {invitando ? 'Invitando...' : 'Invitar por correo'}
                 </button>
                 {!esArquitecto && proyectoSeleccionado && (
-                  <p style={{ fontSize: '12px', color: '#888', marginTop: '10px', textAlign: 'center' }}>
+                  <p style={{ fontSize: '12px', color: '#94a3b8', marginTop: '10px', textAlign: 'center' }}>
                     Solo el Arquitecto del proyecto puede invitar colaboradores.
                   </p>
                 )}
               </form>
               {enlaceInvitacion && (
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '16px' }}>
-                  <input readOnly value={enlaceInvitacion} style={{ flex: 1, padding: '8px', fontSize: '12px', border: '1px solid #cbd5e1', borderRadius: '6px' }} />
+                  <input readOnly value={enlaceInvitacion} style={{ flex: 1, padding: '8px', fontSize: '12px', border: '1px solid rgba(255, 214, 10, .35)', borderRadius: '6px', background: 'rgba(8, 11, 17, .85)', color: '#fff' }} />
                   <button onClick={copiarEnlaceInvitacion} style={{ background: '#ffd60a', border: 'none', borderRadius: '6px', padding: '8px 12px', fontWeight: 700, cursor: 'pointer' }}>
                     Copiar enlace
                   </button>
                 </div>
               )}
-              <p style={{ padding: '0 25px 20px', fontSize: '12px', color: '#888' }}>
+              <p style={{ padding: '0 25px 20px', fontSize: '12px', color: '#94a3b8' }}>
                 Se enviará un correo con un enlace de invitación. La persona no necesita tener cuenta:
                 al abrirlo puede registrarse y queda vinculada al proyecto con el rol elegido. El enlace expira en 7 días.
               </p>
@@ -326,7 +327,7 @@ export const ColaboradoresTab = ({ proyectoId: proyectoFijo }: ColaboradoresTabP
                   <div
                     style={{
                       display: 'flex', alignItems: 'center', gap: '8px',
-                      backgroundColor: '#fef9c3', color: '#854d0e',
+                      backgroundColor: 'rgba(255, 214, 10, .09)', color: '#ffd60a',
                       padding: '10px 14px', borderRadius: '8px', fontWeight: 700, fontSize: '14px',
                     }}
                   >
@@ -337,7 +338,7 @@ export const ColaboradoresTab = ({ proyectoId: proyectoFijo }: ColaboradoresTabP
                   <select
                     value={proyectoId}
                     onChange={(e) => setProyectoId(e.target.value === '' ? '' : Number(e.target.value))}
-                    style={{ width: '100%', padding: '12px', border: '1px solid #ddd', borderRadius: '8px', background: '#fafafa' }}
+                    style={{ width: '100%', padding: '12px', border: '1px solid rgba(255, 214, 10, .35)', borderRadius: '8px', background: 'rgba(8, 11, 17, .85)', color: '#fff' }}
                   >
                     <option value="" disabled>Selecciona un proyecto</option>
                     {proyectosVisibles.map((p) => (
@@ -361,26 +362,27 @@ export const ColaboradoresTab = ({ proyectoId: proyectoFijo }: ColaboradoresTabP
                         <th>Nombre</th>
                         <th>Correo</th>
                         <th>Rol</th>
-                        {esArquitecto && <th>Acciones</th>}
+                        <th>Vinculación</th>
+                        <th>Acciones</th>
                       </tr>
                     </thead>
                     <tbody>
                       {colaboradores.map((c) => (
                         <tr key={c.id}>
-                          <td style={{ fontWeight: 600, color: '#0f172a' }}>
+                          <td style={{ fontWeight: 600, color: '#ffffff' }}>
                             {c.usuario_nombre}
                             {c.usuario_id === usuarioId && (
-                              <span style={{ fontSize: '11px', color: '#888', marginLeft: '6px' }}>(tú)</span>
+                              <span style={{ fontSize: '11px', color: '#cbd5e1', marginLeft: '6px' }}>(tú)</span>
                             )}
                           </td>
-                          <td style={{ color: '#475569' }}>{c.usuario_correo}</td>
+                          <td style={{ color: '#cbd5e1' }}>{c.usuario_correo}</td>
                           <td>
                             {esArquitecto ? (
                               <select
                                 value={c.rol}
                                 onChange={(e) => cambiarRol(c, e.target.value as Colaborador['rol'])}
                                 disabled={cambiandoRol === c.id}
-                                style={{ padding: '6px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                                style={{ padding: '6px', borderRadius: '6px', border: '1px solid rgba(255, 214, 10, .35)', background: 'rgba(8, 11, 17, .85)', color: '#fff' }}
                               >
                                 {ROLES.map((r) => (
                                   <option key={r} value={r}>{r}</option>
@@ -401,8 +403,11 @@ export const ColaboradoresTab = ({ proyectoId: proyectoFijo }: ColaboradoresTabP
                               </span>
                             )}
                           </td>
-                          {esArquitecto && (
-                            <td>
+                          <td style={{ color: '#cbd5e1' }}>
+                            {c.fecha_vinculacion ? new Date(c.fecha_vinculacion).toLocaleDateString() : '—'}
+                          </td>
+                          <td>
+                            {esArquitecto ? (
                               <button
                                 onClick={() => eliminarColaborador(c)}
                                 disabled={eliminando === c.id}
@@ -411,8 +416,10 @@ export const ColaboradoresTab = ({ proyectoId: proyectoFijo }: ColaboradoresTabP
                               >
                                 <i className="fas fa-user-minus"></i> Quitar
                               </button>
-                            </td>
-                          )}
+                            ) : (
+                              <BadgeBloqueado texto="Solo Arquitecto" titulo="Solo el Arquitecto puede cambiar o quitar colaboradores" />
+                            )}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -445,7 +452,7 @@ export const ColaboradoresTab = ({ proyectoId: proyectoFijo }: ColaboradoresTabP
               >
                 {rol}
               </span>
-              <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '13px', color: '#475569', lineHeight: '1.6' }}>
+              <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '13px', color: '#cbd5e1', lineHeight: '1.6' }}>
                 {RESTRICCIONES[rol].map((r, i) => (
                   <li key={i}>{r}</li>
                 ))}

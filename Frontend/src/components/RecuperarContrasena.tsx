@@ -1,5 +1,7 @@
 import React, { useState, useRef } from 'react';
 
+const API_URL = 'http://127.0.0.1:8000';
+
 interface RecuperarContrasenaProps {
   onClose: () => void;
 }
@@ -51,7 +53,7 @@ const RecuperarContrasena: React.FC<RecuperarContrasenaProps> = ({ onClose }) =>
     setResetMessage('');
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/forgot-password', {
+      const response = await fetch(`${API_URL}/api/auth/forgot-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: resetEmail }),
@@ -62,7 +64,7 @@ const RecuperarContrasena: React.FC<RecuperarContrasenaProps> = ({ onClose }) =>
         setResetStep(2);
         setResetMessage('Código PIN enviado. Revisa tu correo.');
       } else {
-        setResetMessage(data.message || 'Ocurrió un error al enviar el código.');
+        setResetMessage(data.detail || data.message || 'Ocurrió un error al enviar el código.');
       }
     } catch (error) {
       setResetMessage('Error al conectar con el servidor.');
@@ -85,7 +87,7 @@ const RecuperarContrasena: React.FC<RecuperarContrasenaProps> = ({ onClose }) =>
     setResetMessage('');
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/verify-pin', {
+      const response = await fetch(`${API_URL}/api/auth/verify-pin`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: resetEmail, pin }),
@@ -96,7 +98,7 @@ const RecuperarContrasena: React.FC<RecuperarContrasenaProps> = ({ onClose }) =>
         setResetStep(3);
         setResetMessage('PIN verificado correctamente. Ingresa tu nueva contraseña.');
       } else {
-        setResetMessage(data.message || 'Código PIN incorrecto o expirado.');
+        setResetMessage(data.detail || data.message || 'Código PIN incorrecto o expirado.');
       }
     } catch (error) {
       setResetMessage('Error al conectar con el servidor.');
@@ -112,7 +114,7 @@ const RecuperarContrasena: React.FC<RecuperarContrasenaProps> = ({ onClose }) =>
     setResetMessage('');
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/reset-password', {
+      const response = await fetch(`${API_URL}/api/auth/reset-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -127,7 +129,7 @@ const RecuperarContrasena: React.FC<RecuperarContrasenaProps> = ({ onClose }) =>
         alert('¡Contraseña actualizada exitosamente! Ya puedes iniciar sesión.');
         handleClose();
       } else {
-        setResetMessage(data.message || 'Error al actualizar la contraseña.');
+        setResetMessage(data.detail || data.message || 'Error al actualizar la contraseña.');
       }
     } catch (error) {
       setResetMessage('Error al conectar con el servidor.');

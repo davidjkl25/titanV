@@ -182,16 +182,21 @@ form input {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
+    gap: 14px;
 }
+
+.project-item > div { min-width: 0; }
 
 .project-item h4 {
     color: #fff;
+    overflow-wrap: anywhere;
 }
 
 .empty-msg {
     text-align: center;
     padding: 40px;
-    color: #999;
+    color: #cbd5e1;
 }
 
 .btn-delete {
@@ -212,25 +217,32 @@ form input {
     margin-top: 20px;
     padding: 0;
     overflow-x: auto;
+    border-radius: 12px;
 }
 
+/* Las tablas deben caber completas: se redujo el padding y se eliminó el
+   min-width que empujaba las últimas columnas fuera de la vista. */
 table {
     width: 100%;
     border-collapse: collapse;
-    min-width: 500px;
+    min-width: 0;
+    font-size: 13px;
 }
 
 th, td {
     text-align: left;
-    padding: 15px 25px;
-    border-bottom: 1px solid #eee;
+    padding: 11px 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, .08);
+    vertical-align: top;
+    overflow-wrap: anywhere;
 }
 
 th {
-    background-color: #fcfcfc;
-    font-size: 13px;
+    background-color: rgba(24, 31, 46, .95);
+    font-size: 12px;
     text-transform: uppercase;
-    color: #888;
+    color: var(--primary);
+    white-space: normal;
 }
 
 .form-horizontal {
@@ -281,8 +293,8 @@ th {
 
 .materiales-page .input-group input:focus {
     outline: none;
-    border-color: #2563eb;
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(255, 214, 10, .12);
 }
 
 .materiales-page table th {
@@ -318,7 +330,8 @@ th {
 
 .materiales-page .input-group select,
 .tab-content .input-group select {
-  background: #fff;
+  background: rgba(8, 11, 17, .85);
+  color: #fff;
   cursor: pointer;
 }
 
@@ -363,16 +376,29 @@ body {
 
 .sidebar {
     width: 270px;
-    padding: 22px 16px;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 100;
+    padding: 18px 14px;
     background: rgba(10, 14, 22, .96);
     border-right: 2px solid var(--primary);
     box-shadow: 4px 0 28px rgba(0, 0, 0, .5);
     backdrop-filter: blur(18px);
     display: flex;
     flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 214, 10, .4) transparent;
 }
 
-.sidebar-header { margin-bottom: 20px; }
+.sidebar::-webkit-scrollbar { width: 6px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb { background: rgba(255, 214, 10, .4); border-radius: 999px; }
+
+.sidebar-header { margin-bottom: 14px; flex-shrink: 0; }
 
 .sidebar-brand {
     display: flex;
@@ -399,31 +425,32 @@ body {
 .sidebar-caption { margin: 10px 0 0; color: #94a3b8; font-size: 11px; text-align: center; text-transform: uppercase; letter-spacing: 1.2px; }
 
 .sidebar-project-card {
-    margin: 0 0 16px;
-    padding: 12px 14px;
+    margin: 0 0 12px;
+    padding: 10px 12px;
     border: 1px solid rgba(255, 214, 10, .38);
     border-radius: 10px;
     background: rgba(255, 214, 10, .09);
+    flex-shrink: 0;
 }
 .sidebar-project-label { margin-bottom: 5px; color: var(--primary); font-size: 10px; font-weight: 800; letter-spacing: .7px; text-transform: uppercase; }
 .sidebar-project-name { margin-bottom: 10px; color: #fff; font-size: 14px; font-weight: 700; overflow-wrap: anywhere; }
 .sidebar-change-project { width: 100%; padding: 7px 10px; border: 1px solid var(--primary); border-radius: 6px; color: var(--primary); background: transparent; font-size: 12px; font-weight: 700; cursor: pointer; }
 .sidebar-change-project:hover { color: #000; background: var(--primary); }
 
-.sidebar-menu { gap: 7px; }
-.sidebar-menu a { color: #cbd5e1; padding: 12px 14px; }
+.sidebar-menu { gap: 5px; flex-shrink: 0; }
+.sidebar-menu a { color: #cbd5e1; padding: 9px 12px; }
 .sidebar-menu a i { width: 18px; color: var(--primary); text-align: center; }
 .sidebar-menu a:hover, .sidebar-menu a.active { color: #000; background: var(--primary); box-shadow: 0 5px 14px rgba(255, 214, 10, .2); }
 .sidebar-menu a:hover i, .sidebar-menu a.active i { color: #000; }
 
-.sidebar-footer { margin-top: auto; padding-top: 16px; border-top: 1px solid rgba(255, 255, 255, .1); }
-.sidebar-user-card { display: flex; align-items: center; gap: 10px; padding: 10px; border: 1px solid rgba(255, 255, 255, .1); border-radius: 10px; background: rgba(255, 255, 255, .05); }
+.sidebar-footer { margin-top: auto; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, .1); flex-shrink: 0; }
+.sidebar-user-card { display: flex; align-items: center; gap: 10px; padding: 8px; border: 1px solid rgba(255, 255, 255, .1); border-radius: 10px; background: rgba(255, 255, 255, .05); }
 .user-icon-circle { color: var(--primary); font-size: 25px; }
 .user-text-info { display: flex; min-width: 0; flex-direction: column; }
 .user-session-label { color: #94a3b8; font-size: 10px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase; }
 .user-session-name, .user-session-email { overflow: hidden; color: #fff; font-size: 12px; font-weight: 700; white-space: nowrap; text-overflow: ellipsis; }
 .user-session-email { color: #94a3b8; font-size: 11px; font-weight: 400; }
-.sidebar-logout-btn { width: 100%; margin-top: 10px; padding: 10px; border: 1px solid rgba(248, 113, 113, .35); border-radius: 8px; color: #fca5a5; background: rgba(239, 68, 68, .1); font-weight: 700; cursor: pointer; }
+.sidebar-logout-btn { width: 100%; margin-top: 8px; padding: 9px; border: 1px solid rgba(248, 113, 113, .35); border-radius: 8px; color: #fca5a5; background: rgba(239, 68, 68, .1); font-weight: 700; cursor: pointer; }
 .sidebar-logout-btn:hover { color: #fff; background: #ef4444; }
 
 .main-content {
@@ -480,6 +507,101 @@ body {
 .tab-content td { color: #e2e8f0; border-bottom-color: rgba(255, 255, 255, .08); }
 .tab-content tr:hover td { background: rgba(255, 214, 10, .05); }
 
+/* Badges y botones compactos usados dentro de las tablas. Antes estas clases
+   no existían y quedaban con el estilo nativo claro, rompiendo el tema. */
+.estado {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.3;
+    white-space: nowrap;
+}
+.estado-pendiente {
+    color: var(--primary);
+    background: rgba(255, 214, 10, .12);
+    border: 1px solid rgba(255, 214, 10, .38);
+}
+.estado-aprobada, .estado-entregada, .estado-completada, .estado-entrada {
+    color: #86efac;
+    background: rgba(34, 197, 94, .12);
+    border: 1px solid rgba(134, 239, 172, .35);
+}
+.estado-rechazada, .estado-salida {
+    color: #fca5a5;
+    background: rgba(239, 68, 68, .12);
+    border: 1px solid rgba(252, 165, 165, .35);
+}
+.estado-en-proceso {
+    color: #7dd3fc;
+    background: rgba(56, 189, 248, .12);
+    border: 1px solid rgba(125, 211, 252, .35);
+}
+
+.btn-small, .btn-edit, .btn-secondary, .search-input {
+    padding: 7px 11px;
+    border: 1px solid rgba(255, 214, 10, .45);
+    border-radius: 7px;
+    color: var(--primary);
+    background: rgba(8, 11, 17, .85);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+.btn-small.danger { color: #fca5a5; border-color: rgba(252, 165, 165, .45); }
+.search-input { width: 100%; font-weight: 400; }
+.actions-cell { white-space: nowrap; }
+
+/* Señales de campos obligatorios y de acciones bloqueadas por rol. */
+.campo-obligatorio {
+    margin-left: 3px;
+    color: #fca5a5;
+    font-weight: 900;
+    cursor: help;
+}
+.campo-opcional {
+    margin-left: 4px;
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 500;
+}
+.badge-bloqueado {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 8px;
+    border: 1px solid rgba(148, 163, 184, .3);
+    border-radius: 999px;
+    color: #94a3b8;
+    background: rgba(148, 163, 184, .1);
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: help;
+}
+.aviso-solo-lectura {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 18px;
+    padding: 10px 14px;
+    border: 1px solid rgba(255, 214, 10, .3);
+    border-radius: 8px;
+    color: #cbd5e1;
+    background: rgba(255, 214, 10, .07);
+    font-size: 12px;
+    line-height: 1.5;
+}
+.aviso-solo-lectura i { color: var(--primary); }
+.tab-content button:disabled,
+.tab-content input:disabled,
+.tab-content select:disabled,
+.tab-content textarea:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+}
+
 /* Calendario y reloj (selectores nativos de fecha y hora) con color dorado y
    tema oscuro, para que el icono del calendario/reloj sea visible y encaje
    con la paleta de Titan V sobre el fondo oscuro. */
@@ -493,12 +615,159 @@ body {
 /* Las tarjetas de tareas/comentarios ahora usan el mismo tema que el resto
    de formularios (.card, .card-header, .input-group, .btn-save). */
 
+/* ===== Bitácora / Reportes de Obra =====
+   Reutiliza la paleta Titan V: fondo #080b11, tarjetas translúcidas y dorado
+   #ffd60a para acentos, controles activos y mensajes. */
+.reporte-grid { grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); }
+
+.reporte-hero {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 24px;
+    padding: 24px 28px;
+    border: 1px solid rgba(255, 214, 10, .32);
+    background: linear-gradient(110deg, rgba(16, 21, 31, .96), rgba(8, 11, 17, .88));
+}
+.reporte-hero-contenido { display: flex; flex-direction: column; align-items: flex-start; }
+.reporte-hero-titulo { margin: 0 0 6px; color: #fff; font-size: 24px; line-height: 1.25; }
+.reporte-hero-detalle { margin: 0; color: #cbd5e1; font-size: 13px; }
+.reporte-hero-detalle strong { color: var(--primary); }
+.reporte-hero-icono {
+    display: grid;
+    flex: 0 0 auto;
+    width: 64px;
+    height: 64px;
+    place-items: center;
+    border: 1px solid rgba(255, 214, 10, .45);
+    border-radius: 14px;
+    color: var(--primary);
+    background: rgba(255, 214, 10, .09);
+    font-size: 28px;
+}
+
+.reporte-cuerpo { padding: 22px 25px; }
+.reporte-presets { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 22px; }
+.reporte-preset {
+    padding: 9px 14px;
+    border: 1px solid rgba(255, 214, 10, .35);
+    border-radius: 999px;
+    color: var(--primary);
+    background: rgba(255, 214, 10, .08);
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 800;
+    transition: all .2s ease;
+}
+.reporte-preset:hover { border-color: var(--primary); background: rgba(255, 214, 10, .18); }
+.reporte-preset.activo { color: #000; border-color: var(--primary); background: var(--primary); }
+.reporte-fechas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.reporte-nota { margin: 14px 0 0; color: #94a3b8; font-size: 11px; line-height: 1.55; }
+
+.reporte-check,
+.reporte-formato {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px;
+    border: 1px solid rgba(255, 255, 255, .12);
+    border-radius: 10px;
+    background: rgba(8, 11, 17, .6);
+    cursor: pointer;
+    transition: border-color .2s ease, background .2s ease;
+}
+.reporte-check { margin-bottom: 10px; }
+.reporte-check:last-child { margin-bottom: 0; }
+.reporte-check:hover,
+.reporte-formato:hover { border-color: rgba(255, 214, 10, .45); }
+.reporte-check.bloqueado,
+.reporte-formato.bloqueado { opacity: .45; cursor: not-allowed; }
+.reporte-check input[type='checkbox'],
+.reporte-formato input[type='radio'] {
+    width: 16px;
+    height: 16px;
+    margin-top: 2px;
+    accent-color: var(--primary);
+    background: transparent !important;
+}
+.reporte-check-texto { display: flex; flex: 1; flex-direction: column; gap: 4px; }
+.reporte-check-texto strong { color: #fff; font-size: 13px; }
+.reporte-check-texto small { color: #94a3b8; font-size: 11px; line-height: 1.45; }
+.reporte-check > i,
+.reporte-formato > i { color: var(--primary); }
+.reporte-formato.activo { border-color: var(--primary); background: rgba(255, 214, 10, .09); }
+
+.reporte-resumen { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+.reporte-resumen-fila {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, .08);
+    font-size: 12px;
+}
+.reporte-resumen-fila span:first-child { color: #94a3b8; }
+.reporte-resumen-fila span:last-child { color: #fff; font-weight: 700; text-align: right; }
+
+.reporte-accion { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+.reporte-accion .btn-save {
+    padding: 12px 18px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 800;
+    cursor: pointer;
+}
+.reporte-accion .btn-save:disabled { opacity: .65; cursor: wait; }
+.reporte-accion .reporte-nota { margin: 0; }
+
+.reporte-error,
+.reporte-exito,
+.reporte-acceso-denegado {
+    margin-top: 14px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 12px;
+    line-height: 1.5;
+}
+.reporte-error {
+    border: 1px solid rgba(252, 165, 165, .4);
+    color: #fca5a5;
+    background: rgba(239, 68, 68, .12);
+}
+.reporte-exito {
+    border: 1px solid rgba(134, 239, 172, .4);
+    color: #86efac;
+    background: rgba(34, 197, 94, .12);
+}
+.reporte-acceso-denegado {
+    max-width: 620px;
+    text-align: center;
+    border-color: rgba(255, 214, 10, .35);
+}
+.reporte-acceso-denegado i { color: var(--primary); font-size: 34px; }
+.reporte-acceso-denegado h3 { margin: 10px 0 6px; color: var(--primary); }
+.reporte-acceso-denegado p { margin: 0; color: #cbd5e1; }
+
 @media (max-width: 768px) {
     .sidebar { width: 70px; padding: 15px 5px; }
-    .sidebar-brand, .sidebar-caption, .sidebar-project-card, .sidebar-menu a span, .sidebar-footer { display: none; }
+    .sidebar-header, .sidebar-brand, .sidebar-caption, .sidebar-project-card, .sidebar-menu a span, .sidebar-user-card { display: none; }
     .sidebar-menu a { justify-content: center; padding: 13px 6px; }
     .sidebar-menu a i { width: auto; }
+    .sidebar-footer { margin-top: 12px; padding-top: 10px; }
+    .sidebar-logout-btn { width: 44px; margin: 0 auto; padding: 10px 0; font-size: 0; }
+    .sidebar-logout-btn i { font-size: 16px; }
     .main-content { margin-left: 70px; width: calc(100% - 70px); padding: 24px 18px; }
     .panel-hero-banner { min-height: 200px; padding: 28px 24px; }
     .panel-hero-title { font-size: 25px; }
+    .reporte-hero-icono { display: none; }
+    .reporte-fechas { grid-template-columns: 1fr; }
+    .reporte-grid { grid-template-columns: 1fr; }
+}
+
+/* En pantallas angostas las tablas siguen completas: solo se compactan. */
+@media (max-width: 900px) {
+    .grid { grid-template-columns: 1fr; }
+    .tab-content th, .tab-content td { padding: 10px 11px; font-size: 12px; }
+    .project-item { padding: 14px 18px; }
 }

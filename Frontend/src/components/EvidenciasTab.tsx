@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { fetchConToken } from '../api';
+import { AvisoSoloLectura, BadgeBloqueado, Obligatorio, Opcional } from './IndicadoresAcceso';
 
 interface Evidencia {
   id: number;
@@ -21,9 +22,11 @@ const API_URL = 'http://127.0.0.1:8000';
 
 interface EvidenciasTabProps {
   proyectoId?: number;
+  rolProyecto?: string;
 }
 
-export const EvidenciasTab = ({ proyectoId: proyectoFijo }: EvidenciasTabProps) => {
+export const EvidenciasTab = ({ proyectoId: proyectoFijo, rolProyecto }: EvidenciasTabProps) => {
+  const soloLectura = rolProyecto === 'Visualizador';
   const [tareas, setTareas] = useState<Tarea[]>([]);
   const [tareaId, setTareaId] = useState<number | ''>('');
   const [evidencias, setEvidencias] = useState<Evidencia[]>([]);
@@ -35,6 +38,7 @@ export const EvidenciasTab = ({ proyectoId: proyectoFijo }: EvidenciasTabProps) 
   const [descripcion, setDescripcion] = useState('');
 
   const usuarioId = localStorage.getItem('usuario_id') || '1';
+  const nombreTarea = (id: number) => tareas.find((t) => t.id === id)?.nombre_tarea || `Tarea #${id}`;
 
   const cargarTareas = async () => {
     const query = proyectoFijo ? `/?proyecto_id=${proyectoFijo}` : '';
@@ -70,7 +74,7 @@ export const EvidenciasTab = ({ proyectoId: proyectoFijo }: EvidenciasTabProps) 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!archivo || !tareaId) return;
+    if (soloLectura || !archivo || !tareaId) return;
 
     setSubiendo(true);
     setError('');
@@ -106,6 +110,7 @@ export const EvidenciasTab = ({ proyectoId: proyectoFijo }: EvidenciasTabProps) 
   };
 
   const eliminarEvidencia = async (id: number) => {
+    if (soloLectura) return;
     if (!window.confirm('¿Eliminar esta evidencia?')) return;
     try {
       const respuesta = await fetchConToken(`/tareas/${tareaId}/evidencias/${id}`, { method: 'DELETE' });
@@ -123,6 +128,7 @@ export const EvidenciasTab = ({ proyectoId: proyectoFijo }: EvidenciasTabProps) 
       <div className="section-header">
         <h2><i className="fas fa-camera"></i> Evidencias de Tareas</h2>
       </div>
+      {soloLectura && <AvisoSoloLectura texto="Tu rol Visualizador puede consultar las evidencias, pero no subir archivos ni eliminarlos." />}
 
       <div className="input-group" style={{ maxWidth: '360px', marginBottom: '20px' }}>
         <label>Tarea</label>
@@ -134,24 +140,25 @@ export const EvidenciasTab = ({ proyectoId: proyectoFijo }: EvidenciasTabProps) 
 
       <div className="grid">
         <div className="card">
-          <div className="card-header"><h3><i className="fas fa-upload"></i> Subir evidencia</h3></div>
+          <div className="card-header"><h3><i className="fas fa-upload"></i> Subir evidencia</h3>{soloLectura && <BadgeBloqueado texto="Solo lectura" />}</div>
           <form onSubmit={handleSubmit}>
             <div className="input-group">
-              <label>Archivo (foto, PDF o video)</label>
+              <label>Archivo (foto, PDF o video) <Obligatorio /></label>
               <input
                 id="input-archivo-evidencia"
                 type="file"
                 accept=".jpg,.jpeg,.png,.webp,.pdf,.mp4"
                 onChange={(e) => setArchivo(e.target.files?.[0] || null)}
                 required
+                disabled={soloLectura}
               />
             </div>
             <div className="input-group">
-              <label>Descripción (opcional)</label>
-              <input type="text" value={descripcion} onChange={(e) => setDescripcion(e.target.value)} placeholder="Ej: Vaciado de placa nivel 2" maxLength={300} />
+              <label>Descripción <Opcional /></label>
+              <input type="text" value={descripcion} onChange={(e) => setDescripcion(e.target.value)} placeholder="Ej: Vaciado de placa nivel 2" maxLength={300} disabled={soloLectura} />
             </div>
-            <button type="submit" className="btn-save" disabled={subiendo || !tareaId}>
-              {subiendo ? 'Subiendo...' : 'Subir evidencia'}
+            <button type="submit" className="btn-save" disabled={subiendo || !tareaId || soloLectura} title={soloLectura ? 'Acción no disponible para tu rol' : undefined}>
+              {soloLectura ? <><i className="fas fa-lock"></i> Solo lectura</> : subiendo ? 'Subiendo...' : 'Subir evidencia'}
             </button>
           </form>
         </div>
@@ -159,7 +166,7 @@ export const EvidenciasTab = ({ proyectoId: proyectoFijo }: EvidenciasTabProps) 
         <div className="card">
           <div className="card-header"><h3><i className="fas fa-images"></i> Evidencias de la tarea</h3></div>
           <div className="project-container">
-            {error && <div className="empty-msg" style={{ color: '#dc2626' }}>{error}</div>}
+            {error && <div className="empty-msg" style={{ color: '#fca5a5' }}>{error}</div>}
             {cargando && <div className="empty-msg">Cargando evidencias...</div>}
             {!cargando && !error && evidencias.length === 0 && (
               <div className="empty-msg">Todavía no hay evidencias para esta tarea.</div>
@@ -174,20 +181,28 @@ export const EvidenciasTab = ({ proyectoId: proyectoFijo }: EvidenciasTabProps) 
                       style={{ width: '56px', height: '56px', objectFit: 'cover', borderRadius: '6px' }}
                     />
                   ) : (
-                    <div style={{ width: '56px', height: '56px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f1f1f1', borderRadius: '6px' }}>
-                      <i className="fas fa-file" style={{ fontSize: '20px', color: '#888' }}></i>
+                    <div style={{ width: '56px', height: '56px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255, 214, 10, .09)', border: '1px solid rgba(255, 214, 10, .35)', borderRadius: '6px' }}>
+                      <i className="fas fa-file" style={{ fontSize: '20px', color: '#ffd60a' }}></i>
                     </div>
                   )}
-                  <div>
+                  <div style={{ minWidth: 0 }}>
                     <a href={`${API_URL}${ev.ruta_archivo}`} target="_blank" rel="noreferrer">
                       <h4 style={{ margin: 0 }}>{ev.nombre_archivo}</h4>
                     </a>
-                    {ev.descripcion && <span style={{ fontSize: '12px', color: '#666' }}>{ev.descripcion}</span>}
-                    <div style={{ fontSize: '11px', color: '#999' }}>{new Date(ev.fecha_subida).toLocaleString()}</div>
+                    {ev.descripcion && <span style={{ fontSize: '12px', color: '#cbd5e1' }}>{ev.descripcion}</span>}
+                    <div style={{ fontSize: '11px', color: '#94a3b8' }}>
+                      {new Date(ev.fecha_subida).toLocaleString()} · {nombreTarea(ev.tarea_id)} · Usuario #{ev.usuario_id}
+                    </div>
                   </div>
                 </div>
-                <button onClick={() => eliminarEvidencia(ev.id)} className="btn-delete">
-                  <i className="fas fa-trash"></i>
+                {soloLectura && <BadgeBloqueado texto="Solo lectura" />}
+                <button
+                  onClick={() => eliminarEvidencia(ev.id)}
+                  className="btn-delete"
+                  disabled={soloLectura}
+                  title={soloLectura ? 'Tu rol no puede eliminar evidencias' : undefined}
+                >
+                  <i className={soloLectura ? 'fas fa-lock' : 'fas fa-trash'}></i>
                 </button>
               </div>
             ))}

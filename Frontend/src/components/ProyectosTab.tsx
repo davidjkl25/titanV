@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { fetchConToken } from '../api';
+import { Obligatorio, Opcional } from './IndicadoresAcceso';
 
 interface Proyecto {
   id: number;
@@ -146,26 +147,26 @@ export const ProyectosTab = ({ onProyectoCreado }: ProyectosTabProps = {}) => {
           <div className="card-header"><h3><i className="fas fa-plus-circle"></i> Crear Nuevo Proyecto</h3></div>
           <form onSubmit={handleSubmit}>
             <div className="input-group">
-              <label>Nombre de la Obra</label>
+              <label>Nombre de la Obra <Obligatorio /></label>
               <input type="text" value={nombreProyecto} onChange={(e) => setNombreProyecto(e.target.value)} placeholder="Ej: Edificio Calle 100" required />
             </div>
             <div className="input-group">
-              <label>Ubicación</label>
+              <label>Ubicación <Obligatorio /></label>
               <input type="text" value={ubicacion} onChange={(e) => setUbicacion(e.target.value)} placeholder="Ej: Calle 100 #15-30, Bogotá" required />
             </div>
             <div className="input-group">
-              <label>Estado</label>
+              <label>Estado <Opcional /></label>
               <select value={estado} onChange={(e) => setEstado(e.target.value as Proyecto['estado'])}>
                 {ESTADOS.map((e) => <option key={e} value={e}>{e}</option>)}
               </select>
             </div>
             <div className="date-row">
               <div className="input-group">
-                <label>Fecha Inicio</label>
+                <label>Fecha Inicio <Obligatorio /></label>
                 <input type="date" value={fechaInicio} onChange={(e) => setFechaInicio(e.target.value)} required />
               </div>
               <div className="input-group">
-                <label>Fin Estimado</label>
+                <label>Fin Estimado <Obligatorio /></label>
                 <input type="date" value={fechaFin} onChange={(e) => setFechaFin(e.target.value)} required />
               </div>
             </div>
@@ -178,7 +179,7 @@ export const ProyectosTab = ({ onProyectoCreado }: ProyectosTabProps = {}) => {
         <div className="card">
           <div className="card-header"><h3><i className="fas fa-list"></i> Obras Registradas</h3></div>
           <div className="project-container">
-            {error && <div className="empty-msg" style={{ color: '#dc2626' }}>{error}</div>}
+            {error && <div className="empty-msg" style={{ color: '#fca5a5' }}>{error}</div>}
             {cargando && <div className="empty-msg">Cargando proyectos...</div>}
             {!cargando && !error && proyectos.length === 0 && (
               <div className="empty-msg">No hay proyectos registrados actualmente.</div>
@@ -188,7 +189,10 @@ export const ProyectosTab = ({ onProyectoCreado }: ProyectosTabProps = {}) => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
                     <h4>{p.nombre_proyecto}</h4>
-                    <span style={{ fontSize: '12px', color: '#666' }}>{p.ubicacion_direccion} — {p.estado}</span>
+                    <span style={{ fontSize: '12px', color: '#cbd5e1' }}>{p.ubicacion_direccion} — {p.estado}</span>
+                    <span style={{ display: 'block', fontSize: '12px', color: '#94a3b8', marginTop: '4px' }}>
+                      {p.fecha_inicio} — {p.fecha_fin_estimada}
+                    </span>
                   </div>
                   <div style={{ display: 'flex', gap: '8px' }}>
                     <button
@@ -204,15 +208,15 @@ export const ProyectosTab = ({ onProyectoCreado }: ProyectosTabProps = {}) => {
                 </div>
 
                 {proyectoEnlaceId === p.id && (
-                  <div style={{ marginTop: '10px', padding: '12px', background: '#f8f9fa', borderRadius: '8px' }}>
-                    <label style={{ fontSize: '12px', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '6px' }}>
+                  <div style={{ marginTop: '10px', padding: '12px', background: 'rgba(8, 11, 17, .75)', border: '1px solid rgba(255, 214, 10, .25)', borderRadius: '8px' }}>
+                    <label style={{ fontSize: '12px', fontWeight: 700, color: '#ffd60a', display: 'block', marginBottom: '6px' }}>
                       Rol para quien entre con este enlace
                     </label>
                     <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
                       <select
                         value={rolEnlace}
                         onChange={(e) => setRolEnlace(e.target.value as 'Trabajador' | 'Visualizador')}
-                        style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                        style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid rgba(255, 214, 10, .35)', background: 'rgba(8, 11, 17, .85)', color: '#fff' }}
                       >
                         <option value="Trabajador">Trabajador (puede subir avances)</option>
                         <option value="Visualizador">Visualizador (solo puede ver)</option>
@@ -227,13 +231,13 @@ export const ProyectosTab = ({ onProyectoCreado }: ProyectosTabProps = {}) => {
                     </div>
                     {enlaceGenerado && (
                       <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                        <input readOnly value={enlaceGenerado} style={{ flex: 1, padding: '8px', fontSize: '12px', borderRadius: '6px', border: '1px solid #cbd5e1' }} />
+                        <input readOnly value={enlaceGenerado} style={{ flex: 1, padding: '8px', fontSize: '12px', borderRadius: '6px', border: '1px solid rgba(255, 214, 10, .35)', background: 'rgba(8, 11, 17, .85)', color: '#fff' }} />
                         <button onClick={copiarEnlace} style={{ background: '#ffd60a', border: 'none', borderRadius: '6px', padding: '8px 12px', fontWeight: 700, cursor: 'pointer' }}>
                           Copiar
                         </button>
                       </div>
                     )}
-                    <p style={{ fontSize: '11px', color: '#888', marginTop: '8px', marginBottom: 0 }}>
+                    <p style={{ fontSize: '11px', color: '#cbd5e1', marginTop: '8px', marginBottom: 0 }}>
                       El enlace expira en 7 días. Cualquiera que entre a Titan V con este link queda vinculado
                       con el rol que elegiste arriba — no necesitas saber su correo de antemano.
                     </p>

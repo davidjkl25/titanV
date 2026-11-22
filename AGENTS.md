@@ -114,6 +114,9 @@ inventario, JWT + Google OAuth, invitaciones por correo/enlace, permisos por rol
 materiales por proyecto, aislamiento de datos por usuario, flujo de proyecto
 activo, panel con estado editable (solo Arquitecto), fechas y rol por proyecto,
 y asignación de tareas/turnos limitada a los colaboradores del proyecto.
+También quedó implementada la bitácora/reportes de obra: exportación PDF
+(ReportLab) y Excel (openpyxl) por módulos y rango de fechas, con acceso
+Arquitecto/Visualizador y bloqueo para Trabajador.
 
 Al retomar, revisa `git log --oneline -15` y `git status` para saber dónde quedó
 el trabajo. Todo se trabaja sobre `test`; no tocar `main` sin pedir confirmación.

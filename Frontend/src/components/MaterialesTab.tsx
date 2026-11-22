@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { fetchConToken } from '../api';
+import { AvisoSoloLectura, BadgeBloqueado, Obligatorio } from './IndicadoresAcceso';
 
 interface Material {
   id: number;
@@ -18,9 +19,11 @@ interface Solicitud {
   cantidad: number;
   estado: 'Pendiente' | 'Aprobada' | 'Rechazada' | 'Entregada';
   fecha_solicitud: string;
+  fecha_actualizacion?: string;
   material_nombre?: string;
   unidad_medida?: string;
   usuario_nombre?: string;
+  proyecto_nombre?: string;
 }
 
 interface MaterialesTabProps {
@@ -195,21 +198,22 @@ export const MaterialesTab = ({ proyectoId, proyectoNombre, rolProyecto }: Mater
     <div className="tab-content active materiales-page">
       <div className="section-header">
         <h2><i className="fas fa-boxes-stacked"></i> Materiales</h2>
-        {proyectoNombre && <p style={{ color: '#666' }}>Proyecto activo: <strong>{proyectoNombre}</strong></p>}
+        {proyectoNombre && <p style={{ color: '#cbd5e1' }}>Proyecto activo: <strong style={{ color: '#ffd60a' }}>{proyectoNombre}</strong></p>}
       </div>
 
-      {error && <div className="empty-msg" style={{ color: '#dc2626', background: '#fff', borderRadius: 10, marginBottom: 20 }}>{error}</div>}
+      {error && <div className="empty-msg" style={{ color: '#fca5a5', background: 'rgba(239, 68, 68, .12)', border: '1px solid rgba(252, 165, 165, .4)', borderRadius: 10, marginBottom: 20 }}>{error}</div>}
+      {rolProyecto === 'Visualizador' && <AvisoSoloLectura texto="Tu rol Visualizador solo permite consultar materiales y solicitudes. No puedes crear, editar ni solicitar insumos." />}
 
       <div className="grid">
         {esAdministrador && <div className="card">
           <div className="card-header"><h3><i className={editando ? 'fas fa-pen' : 'fas fa-plus-circle'}></i> {editando ? 'Editar material' : 'Crear material'}</h3></div>
           <form onSubmit={handleSubmit}>
             <div className="input-group">
-              <label>Nombre del material</label>
+              <label>Nombre del material <Obligatorio /></label>
               <input value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Ej: Cemento Gris ARGOS" required />
             </div>
             <div className="input-group">
-              <label>Unidad de medida</label>
+              <label>Unidad de medida <Obligatorio /></label>
               <select value={unidad} onChange={(e) => setUnidad(e.target.value)} required>
                 <option value="">Selecciona una unidad</option>
                 {editando && unidad && !UNIDADES_MEDIDA.includes(unidad) && <option value={unidad}>{unidad}</option>}
@@ -217,9 +221,9 @@ export const MaterialesTab = ({ proyectoId, proyectoNombre, rolProyecto }: Mater
               </select>
             </div>
             {!editando && <div className="input-group">
-              <label>Cantidad inicial</label>
+              <label>Cantidad inicial <Obligatorio /></label>
               <input type="number" min="0" step="0.01" value={cantidadInicial} onChange={(e) => setCantidadInicial(e.target.value)} placeholder="Ej: 50" required />
-              <small style={{ color: '#666' }}>La cantidad se registra en el inventario usando la unidad indicada.</small>
+              <small style={{ color: '#94a3b8' }}>La cantidad se registra en el inventario usando la unidad indicada.</small>
             </div>}
             <button type="submit" className="btn-save" disabled={guardando}>
               {guardando ? 'Guardando...' : editando ? 'Guardar cambios' : 'Crear material'}
@@ -229,18 +233,19 @@ export const MaterialesTab = ({ proyectoId, proyectoNombre, rolProyecto }: Mater
         </div>}
 
         <div className="card">
-          <div className="card-header"><h3><i className="fas fa-search"></i> Buscar en catálogo</h3></div>
+          <div className="card-header"><h3><i className="fas fa-search"></i> Buscar en catálogo</h3>{rolProyecto === 'Visualizador' && <BadgeBloqueado texto="Solo lectura" />}</div>
           <div style={{ padding: 20 }}>
             <input className="search-input" value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Buscar por material o unidad..." />
           </div>
           {cargando ? <div className="empty-msg">Cargando catálogo...</div> : materialesFiltrados.length === 0 ? <div className="empty-msg">No hay materiales que coincidan.</div> : (
             <div className="table-card" style={{ marginTop: 0 }}>
               <table>
-                <thead><tr><th>Material</th><th>Cantidad inicial</th><th>Unidad</th>{esAdministrador && <th>Acciones</th>}</tr></thead>
+                <thead><tr><th>Material</th><th>Cantidad inicial</th><th>Disponible</th><th>Unidad</th>{esAdministrador && <th>Acciones</th>}</tr></thead>
                 <tbody>{materialesFiltrados.map((m) => (
                   <tr key={m.id}>
                     <td><strong>{m.nombre_material}</strong></td>
                     <td>{m.cantidad_inicial}</td>
+                    <td><strong style={{ color: '#86efac' }}>{m.cantidad_disponible}</strong></td>
                     <td>{m.unidad_medida}</td>
                     {esAdministrador && <td className="actions-cell">
                       <button className="btn-edit" onClick={() => iniciarEdicion(m)}><i className="fas fa-pen"></i></button>
@@ -257,22 +262,26 @@ export const MaterialesTab = ({ proyectoId, proyectoNombre, rolProyecto }: Mater
       <div className="card" style={{ marginTop: 30 }}>
         <div className="card-header"><h3><i className="fas fa-file-circle-plus"></i> Solicitudes de materiales</h3></div>
         {puedeCrearSolicitud && <form onSubmit={crearSolicitud} className="form-horizontal request-form">
-          <div className="input-group"><label>Material</label><select value={materialSolicitud} onChange={(e) => setMaterialSolicitud(e.target.value)} required><option value="">Selecciona un material</option>{materiales.map((m) => <option key={m.id} value={m.id}>{m.nombre_material} ({m.unidad_medida})</option>)}</select></div>
-          <div className="input-group"><label>Cantidad</label><input type="number" min="0.01" step="0.01" value={cantidadSolicitud} onChange={(e) => setCantidadSolicitud(e.target.value)} required /></div>
+          <div className="input-group"><label>Material <Obligatorio /></label><select value={materialSolicitud} onChange={(e) => setMaterialSolicitud(e.target.value)} required><option value="">Selecciona un material</option>{materiales.map((m) => <option key={m.id} value={m.id}>{m.nombre_material} ({m.unidad_medida})</option>)}</select></div>
+          <div className="input-group"><label>Cantidad <Obligatorio /></label><input type="number" min="0.01" step="0.01" value={cantidadSolicitud} onChange={(e) => setCantidadSolicitud(e.target.value)} required /></div>
           <button type="submit" className="btn-save" disabled={guardandoSolicitud}>{guardandoSolicitud ? 'Enviando...' : 'Crear solicitud'}</button>
         </form>}
 
         <div className="table-card" style={{ marginTop: 0 }}>
           {solicitudes.length === 0 ? <div className="empty-msg">Todavía no hay solicitudes registradas.</div> : (
             <table>
-              <thead><tr><th>Proyecto</th><th>Material</th><th>Cantidad</th><th>Estado</th><th>Historial / fecha</th>{esAdministrador && <th>Acciones</th>}</tr></thead>
+              <thead><tr><th>Proyecto</th><th>Material</th><th>Cantidad</th><th>Estado</th><th>Solicitante</th><th>Historial / fecha</th>{esAdministrador && <th>Acciones</th>}</tr></thead>
               <tbody>{solicitudes.map((s) => (
                 <tr key={s.id}>
-                  <td>{proyectoNombre || `#${s.proyecto_id}`}</td>
+                  <td>{s.proyecto_nombre || proyectoNombre || `#${s.proyecto_id}`}</td>
                   <td>{s.material_nombre || `#${s.material_id}`}</td>
                   <td>{s.cantidad} {s.unidad_medida || ''}</td>
                   <td><span className={estadoClass(s.estado)}>{s.estado}</span></td>
-                  <td>{new Date(s.fecha_solicitud).toLocaleString()}</td>
+                  <td>{s.usuario_nombre || `#${s.usuario_id}`}</td>
+                  <td>
+                    Solicitud: {new Date(s.fecha_solicitud).toLocaleString()}
+                    {s.fecha_actualizacion && <><br />Actualización: {new Date(s.fecha_actualizacion).toLocaleString()}</>}
+                  </td>
                   {esAdministrador && <td className="actions-cell">
                     {s.estado === 'Pendiente' && <><button className="btn-small" onClick={() => cambiarEstado(s, 'Aprobada')}>Aprobar</button><button className="btn-small danger" onClick={() => cambiarEstado(s, 'Rechazada')}>Rechazar</button></>}
                     {s.estado === 'Aprobada' && <button className="btn-small" onClick={() => cambiarEstado(s, 'Entregada')}>Entregar</button>}
