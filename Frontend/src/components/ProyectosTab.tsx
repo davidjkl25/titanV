@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { fetchConToken } from '../api';
 import { Obligatorio, Opcional } from './IndicadoresAcceso';
+import NotaCamposObligatorios from './ui/NotaCamposObligatorios';
 
 interface Proyecto {
   id: number;
@@ -28,6 +29,7 @@ export const ProyectosTab = ({ onProyectoCreado }: ProyectosTabProps = {}) => {
   const [fechaInicio, setFechaInicio] = useState('');
   const [fechaFin, setFechaFin] = useState('');
   const [guardando, setGuardando] = useState(false);
+  const [errores, setErrores] = useState<Record<string, string>>({});
 
   const [proyectoEnlaceId, setProyectoEnlaceId] = useState<number | null>(null);
   const [rolEnlace, setRolEnlace] = useState<'Trabajador' | 'Visualizador'>('Trabajador');
@@ -57,7 +59,14 @@ export const ProyectosTab = ({ onProyectoCreado }: ProyectosTabProps = {}) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!nombreProyecto || !ubicacion || !fechaInicio || !fechaFin) return;
+    const next: Record<string, string> = {};
+    if (!nombreProyecto.trim()) next.nombre = 'El nombre de la obra es obligatorio.';
+    if (!ubicacion.trim()) next.ubicacion = 'La ubicación es obligatoria.';
+    if (!fechaInicio) next.fechaInicio = 'La fecha de inicio es obligatoria.';
+    if (!fechaFin) next.fechaFin = 'La fecha de fin estimada es obligatoria.';
+    if (fechaInicio && fechaFin && fechaFin < fechaInicio) next.fechaFin = 'La fecha de fin no puede ser anterior a la fecha de inicio.';
+    setErrores(next);
+    if (Object.keys(next).length) return;
 
     setGuardando(true);
     try {
@@ -145,14 +154,17 @@ export const ProyectosTab = ({ onProyectoCreado }: ProyectosTabProps = {}) => {
       <div className="grid">
         <div className="card">
           <div className="card-header"><h3><i className="fas fa-plus-circle"></i> Crear Nuevo Proyecto</h3></div>
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} noValidate>
+            <NotaCamposObligatorios />
             <div className="input-group">
-              <label>Nombre de la Obra <Obligatorio /></label>
-              <input type="text" value={nombreProyecto} onChange={(e) => setNombreProyecto(e.target.value)} placeholder="Ej: Edificio Calle 100" required />
+              <label htmlFor="proy-nombre">Nombre de la Obra <Obligatorio /></label>
+              <input id="proy-nombre" type="text" value={nombreProyecto} onChange={(e) => { setNombreProyecto(e.target.value); setErrores((p) => ({...p, nombre: ''})); }} placeholder="Ej: Edificio Calle 100" required aria-required="true" aria-invalid={!!errores.nombre} />
+              {errores.nombre && <span className="field-error" role="alert">{errores.nombre}</span>}
             </div>
             <div className="input-group">
-              <label>Ubicación <Obligatorio /></label>
-              <input type="text" value={ubicacion} onChange={(e) => setUbicacion(e.target.value)} placeholder="Ej: Calle 100 #15-30, Bogotá" required />
+              <label htmlFor="proy-ubicacion">Ubicación <Obligatorio /></label>
+              <input id="proy-ubicacion" type="text" value={ubicacion} onChange={(e) => { setUbicacion(e.target.value); setErrores((p) => ({...p, ubicacion: ''})); }} placeholder="Ej: Calle 100 #15-30, Bogotá" required aria-required="true" aria-invalid={!!errores.ubicacion} />
+              {errores.ubicacion && <span className="field-error" role="alert">{errores.ubicacion}</span>}
             </div>
             <div className="input-group">
               <label>Estado <Opcional /></label>
@@ -162,12 +174,14 @@ export const ProyectosTab = ({ onProyectoCreado }: ProyectosTabProps = {}) => {
             </div>
             <div className="date-row">
               <div className="input-group">
-                <label>Fecha Inicio <Obligatorio /></label>
-                <input type="date" value={fechaInicio} onChange={(e) => setFechaInicio(e.target.value)} required />
+                <label htmlFor="proy-inicio">Fecha Inicio <Obligatorio /></label>
+                <input id="proy-inicio" type="date" value={fechaInicio} onChange={(e) => { setFechaInicio(e.target.value); setErrores((p) => ({...p, fechaInicio: ''})); }} required aria-required="true" aria-invalid={!!errores.fechaInicio} />
+                {errores.fechaInicio && <span className="field-error" role="alert">{errores.fechaInicio}</span>}
               </div>
               <div className="input-group">
-                <label>Fin Estimado <Obligatorio /></label>
-                <input type="date" value={fechaFin} onChange={(e) => setFechaFin(e.target.value)} required />
+                <label htmlFor="proy-fin">Fin Estimado <Obligatorio /></label>
+                <input id="proy-fin" type="date" value={fechaFin} onChange={(e) => { setFechaFin(e.target.value); setErrores((p) => ({...p, fechaFin: ''})); }} required aria-required="true" aria-invalid={!!errores.fechaFin} />
+                {errores.fechaFin && <span className="field-error" role="alert">{errores.fechaFin}</span>}
               </div>
             </div>
             <button type="submit" className="btn-save" disabled={guardando}>

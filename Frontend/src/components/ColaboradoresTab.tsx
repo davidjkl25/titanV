@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { fetchConToken } from '../api';
 import { BadgeBloqueado, Obligatorio } from './IndicadoresAcceso';
+import NotaCamposObligatorios from './ui/NotaCamposObligatorios';
 
 interface Proyecto {
   id: number;
@@ -64,6 +65,7 @@ export const ColaboradoresTab = ({ proyectoId: proyectoFijo }: ColaboradoresTabP
   const [correo, setCorreo] = useState('');
   const [rolInvitacion, setRolInvitacion] = useState<Exclude<Colaborador['rol'], 'Arquitecto'>>('Trabajador');
   const [invitando, setInvitando] = useState(false);
+  const [erroresInv, setErroresInv] = useState<Record<string,string>>({});
   const [enlaceInvitacion, setEnlaceInvitacion] = useState('');
   const [cambiandoRol, setCambiandoRol] = useState<number | null>(null);
   const [eliminando, setEliminando] = useState<number | null>(null);
@@ -135,7 +137,12 @@ export const ColaboradoresTab = ({ proyectoId: proyectoFijo }: ColaboradoresTabP
 
   const invitarPorCorreo = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (proyectoId === '' || !correo.trim()) return;
+    const next: Record<string,string> = {};
+    if (proyectoId === '') next.proyecto = 'Selecciona un proyecto.';
+    if (!correo.trim()) next.correo = 'El correo electrónico es obligatorio.';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo.trim())) next.correo = 'Ingresa un correo electrónico válido.';
+    setErroresInv(next);
+    if (Object.keys(next).length) return;
 
     setInvitando(true);
     setError('');
@@ -239,7 +246,8 @@ export const ColaboradoresTab = ({ proyectoId: proyectoFijo }: ColaboradoresTabP
             </p>
           ) : (
             <>
-              <form onSubmit={invitarPorCorreo}>
+              <form onSubmit={invitarPorCorreo} noValidate>
+                <NotaCamposObligatorios />
                 <div className="input-group">
                   <label>Proyecto <Obligatorio /></label>
                   {proyectoFijo ? (
@@ -267,15 +275,19 @@ export const ColaboradoresTab = ({ proyectoId: proyectoFijo }: ColaboradoresTabP
                   )}
                 </div>
                 <div className="input-group">
-                  <label>Correo electrónico de la persona <Obligatorio /></label>
+                  <label htmlFor="colab-correo">Correo electrónico de la persona <Obligatorio /></label>
                   <input
+                    id="colab-correo"
                     type="email"
                     value={correo}
-                    onChange={(e) => setCorreo(e.target.value)}
+                    onChange={(e) => { setCorreo(e.target.value); setErroresInv((p)=>({...p, correo:''})); }}
                     placeholder="ej: colaborador@correo.com"
                     required
+                    aria-required="true"
+                    aria-invalid={!!erroresInv.correo}
                     disabled={!esArquitecto}
                   />
+                  {erroresInv.correo && <span className="field-error" role="alert">{erroresInv.correo}</span>}
                 </div>
                 <div className="input-group">
                   <label>Rol al unirse <Obligatorio /></label>
@@ -289,12 +301,14 @@ export const ColaboradoresTab = ({ proyectoId: proyectoFijo }: ColaboradoresTabP
                     <option value="Visualizador">Visualizador — solo lectura</option>
                   </select>
                 </div>
-                <button type="submit" className="btn-save" disabled={invitando || !esArquitecto}>
-                  {invitando ? 'Invitando...' : 'Invitar por correo'}
-                </button>
+                <div className="ui-tooltip-wrap" data-tooltip={!esArquitecto ? 'Tu rol no permite invitar colaboradores. Solo el Arquitecto puede hacerlo.' : undefined} style={{ width: '100%' }}>
+                  <button type="submit" className="btn-save" disabled={invitando || !esArquitecto} aria-disabled={invitando || !esArquitecto} style={{ width: '100%' }}>
+                    {invitando ? 'Invitando...' : 'Invitar por correo'}
+                  </button>
+                </div>
                 {!esArquitecto && proyectoSeleccionado && (
-                  <p style={{ fontSize: '12px', color: '#94a3b8', marginTop: '10px', textAlign: 'center' }}>
-                    Solo el Arquitecto del proyecto puede invitar colaboradores.
+                  <p style={{ fontSize: '12px', color: '#cbd5e1', marginTop: '10px', textAlign: 'center' }} role="status">
+                    <i className="fas fa-lock" aria-hidden="true"></i> Solo el Arquitecto del proyecto puede invitar colaboradores.
                   </p>
                 )}
               </form>

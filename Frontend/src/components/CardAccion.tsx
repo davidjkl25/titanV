@@ -5,6 +5,14 @@ export interface CardAccionProps {
   placeholder?: string;
   valor: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  required?: boolean;
+  error?: string;
+  id?: string;
+  name?: string;
+  autoComplete?: string;
+  disabled?: boolean;
+  minLength?: number;
+  maxLength?: number;
 }
 
 const iconoOjo = (
@@ -23,25 +31,38 @@ const iconoOjoCerrado = (
   </svg>
 );
 
-export const CardAccion: React.FC<CardAccionProps> = ({ label, tipo = 'text', placeholder, valor, onChange }) => {
+export const CardAccion: React.FC<CardAccionProps> = ({ label, tipo = 'text', placeholder, valor, onChange, required, error, id, name, autoComplete, disabled, minLength, maxLength }) => {
   const esContrasena = tipo === 'password';
   const [visible, setVisible] = useState(false);
+  const inputId = id || name || label.toLowerCase().replace(/\s+/g, '-');
 
   return (
     <div style={{ marginBottom: '15px', display: 'flex', flexDirection: 'column' }}>
-      <label style={{ color: '#ccc', fontSize: '14px', marginBottom: '5px' }}>{label}</label>
+      <label htmlFor={inputId} style={{ color: '#e5e7eb', fontSize: '14px', marginBottom: '5px' }}>
+        {label}{required && <span className="required-mark" aria-hidden="true"> *</span>}
+      </label>
       <div style={{ position: 'relative' }}>
         <input
+          id={inputId}
+          name={name}
           type={esContrasena && visible ? 'text' : tipo}
           placeholder={placeholder}
           value={valor}
           onChange={onChange}
+          required={required}
+          aria-required={required}
+          aria-invalid={!!error}
+          aria-describedby={error ? `${inputId}-error` : undefined}
+          autoComplete={autoComplete}
+          disabled={disabled}
+          minLength={minLength}
+          maxLength={maxLength}
           style={{
             padding: '10px',
             paddingRight: esContrasena ? '40px' : '10px',
             borderRadius: '6px',
-            border: '1px solid #444',
-            backgroundColor: '#222',
+            border: error ? '1px solid #ef4444' : '1px solid #555',
+            backgroundColor: disabled ? '#1a1a1a' : '#222',
             color: '#fff',
             outline: 'none',
             width: '100%',
@@ -60,7 +81,7 @@ export const CardAccion: React.FC<CardAccionProps> = ({ label, tipo = 'text', pl
               transform: 'translateY(-50%)',
               background: 'none',
               border: 'none',
-              color: '#aaa',
+              color: '#d1d5db',
               cursor: 'pointer',
               padding: 0,
               display: 'flex',
@@ -71,6 +92,7 @@ export const CardAccion: React.FC<CardAccionProps> = ({ label, tipo = 'text', pl
           </button>
         )}
       </div>
+      {error && <span id={`${inputId}-error`} className="field-error" role="alert">{error}</span>}
     </div>
   );
 };

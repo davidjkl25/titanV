@@ -1,11 +1,11 @@
 /** Señales visuales reutilizables para campos obligatorios y acciones bloqueadas. */
 
 export const Obligatorio = () => (
-  <span className="campo-obligatorio" title="Campo obligatorio" aria-label="Campo obligatorio">*</span>
+  <span className="required-mark" title="Campo obligatorio" aria-hidden="true"> *</span>
 );
 
 export const Opcional = () => (
-  <span className="campo-opcional" title="Campo opcional">(opcional)</span>
+  <span style={{ color: '#94a3b8', fontWeight: 400 }} title="Campo opcional"> (opcional)</span>
 );
 
 interface BadgeBloqueadoProps {

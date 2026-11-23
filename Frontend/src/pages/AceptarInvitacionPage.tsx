@@ -32,6 +32,8 @@ const AceptarInvitacionPage = ({ isLoggedIn, onLoginSuccess }: AceptarInvitacion
   // Login controlado, igual que en LoginPage, para reutilizar el componente Login
   const [correo, setCorreo] = useState('');
   const [contrasena, setContrasena] = useState('');
+  const [cargandoLogin, setCargandoLogin] = useState(false);
+  const [errorLogin, setErrorLogin] = useState('');
 
   useEffect(() => {
     // Deja una marca de "hay una invitación pendiente" para que App.tsx no
@@ -71,6 +73,8 @@ const AceptarInvitacionPage = ({ isLoggedIn, onLoginSuccess }: AceptarInvitacion
 
   const handleEnviarLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setCargandoLogin(true);
+    setErrorLogin('');
     try {
       const respuesta = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
@@ -84,9 +88,10 @@ const AceptarInvitacionPage = ({ isLoggedIn, onLoginSuccess }: AceptarInvitacion
       localStorage.setItem('usuario_id', String(data.usuario_id));
       localStorage.setItem('usuario_nombre', data.nombre || correo);
       onLoginSuccess();
-      // El useEffect de arriba corre de nuevo (isLoggedIn ahora true) y acepta la invitación.
     } catch (err: any) {
-      alert(err.message || 'No se pudo iniciar sesión.');
+      setErrorLogin(err.message || 'No se pudo iniciar sesión.');
+    } finally {
+      setCargandoLogin(false);
     }
   };
 
@@ -107,10 +112,12 @@ const AceptarInvitacionPage = ({ isLoggedIn, onLoginSuccess }: AceptarInvitacion
         <Login
           correo={correo}
           contrasena={contrasena}
-          onCorreoChange={(e) => setCorreo(e.target.value)}
-          onContrasenaChange={(e) => setContrasena(e.target.value)}
+          onCorreoChange={(e) => { setCorreo(e.target.value); if (errorLogin) setErrorLogin(''); }}
+          onContrasenaChange={(e) => { setContrasena(e.target.value); if (errorLogin) setErrorLogin(''); }}
           onEnviar={handleEnviarLogin}
           onVolverPrincipal={() => navigate('/')}
+          cargando={cargandoLogin}
+          errorGeneral={errorLogin}
         />
         <p style={{ textAlign: 'center', marginTop: '-10px', paddingBottom: '20px' }}>
           ¿No tienes cuenta?{' '}
@@ -131,9 +138,13 @@ const AceptarInvitacionPage = ({ isLoggedIn, onLoginSuccess }: AceptarInvitacion
   }
 
   if (estado === 'error') {
+    const msgLower = (mensaje || '').toLowerCase();
+    const badge = msgLower.includes('expir') ? 'Expirado' : msgLower.includes('revoc') ? 'Revocado' : msgLower.includes('cancel') ? 'Cancelado' : null;
+    const badgeClass = badge === 'Expirado' ? 'badge-expirado' : badge === 'Revocado' ? 'badge-revocado' : badge === 'Cancelado' ? 'badge-cancelado' : '';
     return (
       <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#121212', color: 'white', gap: '16px' }}>
-        <p style={{ color: '#ff4757' }}>{mensaje}</p>
+        {badge && <span className={`estado-badge ${badgeClass}`}>{badge}</span>}
+        <p style={{ color: '#fca5a5', textAlign: 'center', maxWidth: '520px' }} role="alert">{mensaje}</p>
         <button onClick={() => navigate('/dashboard')} style={{ background: '#ffd60a', border: 'none', padding: '10px 20px', borderRadius: '999px', fontWeight: 700, cursor: 'pointer' }}>
           Ir al panel
         </button>

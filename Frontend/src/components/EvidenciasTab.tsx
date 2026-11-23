@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { fetchConToken } from '../api';
 import { AvisoSoloLectura, BadgeBloqueado, Obligatorio, Opcional } from './IndicadoresAcceso';
+import NotaCamposObligatorios from './ui/NotaCamposObligatorios';
 
 interface Evidencia {
   id: number;
@@ -36,6 +37,7 @@ export const EvidenciasTab = ({ proyectoId: proyectoFijo, rolProyecto }: Evidenc
 
   const [archivo, setArchivo] = useState<File | null>(null);
   const [descripcion, setDescripcion] = useState('');
+  const [errores, setErrores] = useState<Record<string,string>>({});
 
   const usuarioId = localStorage.getItem('usuario_id') || '1';
   const nombreTarea = (id: number) => tareas.find((t) => t.id === id)?.nombre_tarea || `Tarea #${id}`;
@@ -74,7 +76,12 @@ export const EvidenciasTab = ({ proyectoId: proyectoFijo, rolProyecto }: Evidenc
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (soloLectura || !archivo || !tareaId) return;
+    if (soloLectura) return;
+    const next: Record<string,string> = {};
+    if (!tareaId) next.tareaId = 'Selecciona una tarea.';
+    if (!archivo) next.archivo = 'Debes seleccionar un archivo de evidencia.';
+    setErrores(next);
+    if (Object.keys(next).length || !archivo || !tareaId) return;
 
     setSubiendo(true);
     setError('');
@@ -141,25 +148,31 @@ export const EvidenciasTab = ({ proyectoId: proyectoFijo, rolProyecto }: Evidenc
       <div className="grid">
         <div className="card">
           <div className="card-header"><h3><i className="fas fa-upload"></i> Subir evidencia</h3>{soloLectura && <BadgeBloqueado texto="Solo lectura" />}</div>
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} noValidate>
+            <NotaCamposObligatorios />
             <div className="input-group">
-              <label>Archivo (foto, PDF o video) <Obligatorio /></label>
+              <label htmlFor="input-archivo-evidencia">Archivo (foto, PDF o video) <Obligatorio /></label>
               <input
                 id="input-archivo-evidencia"
                 type="file"
                 accept=".jpg,.jpeg,.png,.webp,.pdf,.mp4"
-                onChange={(e) => setArchivo(e.target.files?.[0] || null)}
+                onChange={(e) => { setArchivo(e.target.files?.[0] || null); setErrores(p=>({...p,archivo:''})); }}
                 required
+                aria-required="true"
+                aria-invalid={!!errores.archivo}
                 disabled={soloLectura}
               />
+              {errores.archivo && <span className="field-error" role="alert">{errores.archivo}</span>}
             </div>
             <div className="input-group">
               <label>Descripción <Opcional /></label>
               <input type="text" value={descripcion} onChange={(e) => setDescripcion(e.target.value)} placeholder="Ej: Vaciado de placa nivel 2" maxLength={300} disabled={soloLectura} />
             </div>
-            <button type="submit" className="btn-save" disabled={subiendo || !tareaId || soloLectura} title={soloLectura ? 'Acción no disponible para tu rol' : undefined}>
-              {soloLectura ? <><i className="fas fa-lock"></i> Solo lectura</> : subiendo ? 'Subiendo...' : 'Subir evidencia'}
-            </button>
+            <div className="ui-tooltip-wrap" data-tooltip={soloLectura ? 'Tu rol (Visualizador) solo permite consultar' : undefined} style={{ width: '100%' }}>
+              <button type="submit" className="btn-save" disabled={subiendo || soloLectura} aria-disabled={subiendo || soloLectura} style={{ width: '100%' }}>
+                {soloLectura ? <><i className="fas fa-lock"></i> Solo lectura</> : subiendo ? 'Subiendo...' : 'Subir evidencia'}
+              </button>
+            </div>
           </form>
         </div>
 
