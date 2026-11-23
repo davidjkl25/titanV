@@ -15,12 +15,11 @@ export const Sidebar = ({ activeTab, onSelectTab, onLogout, proyecto, onSalirPro
 
   const manejarClick = (tab: string) => {
     if (sinProyecto && ITEMS_MODULO.includes(tab)) {
-      alert('Primero entra a un proyecto desde "Inicio" para desbloquear estas secciones.');
+      alert('Selecciona un proyecto para usar este módulo.');
       return;
     }
     onSelectTab(tab);
   };
-  
 
   const claseItem = (tab: string) => {
     let clase = activeTab === tab ? 'active' : '';
@@ -28,9 +27,11 @@ export const Sidebar = ({ activeTab, onSelectTab, onLogout, proyecto, onSalirPro
     return clase.trim();
   };
 
+  const bloqueado = (tab: string) => sinProyecto && ITEMS_MODULO.includes(tab);
+
   const icono = (tab: string) =>
-    sinProyecto && ITEMS_MODULO.includes(tab) ? (
-      <i className="fas fa-lock" style={{ fontSize: '11px', marginLeft: '6px' }}></i>
+    bloqueado(tab) ? (
+      <i className="fas fa-lock" aria-hidden="true" style={{ fontSize: '11px', marginLeft: '6px' }}></i>
     ) : null;
 
   const nombreUsuario = localStorage.getItem('usuario_nombre') || 'Usuario';
@@ -69,31 +70,31 @@ export const Sidebar = ({ activeTab, onSelectTab, onLogout, proyecto, onSalirPro
       )}
 
       <div className="sidebar-menu">
-        <a className={claseItem('inicio')} onClick={() => manejarClick('inicio')}>
+        <a className={claseItem('inicio')} onClick={() => manejarClick('inicio')} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); manejarClick('inicio'); } }}>
           <i className="fas fa-house"></i><span>Inicio</span>
         </a>
-        <a className={claseItem('proyectos')} onClick={() => manejarClick('proyectos')}>
+        <a className={claseItem('proyectos')} onClick={() => manejarClick('proyectos')} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); manejarClick('proyectos'); } }}>
           <i className="fas fa-diagram-project"></i><span>Proyectos de Obra</span>
         </a>
-        {puedeVer('colaboradores') && <a className={claseItem('colaboradores')} onClick={() => manejarClick('colaboradores')}>
+        {puedeVer('colaboradores') && <a className={claseItem('colaboradores')} onClick={() => manejarClick('colaboradores')} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); manejarClick('colaboradores'); } }} aria-disabled={bloqueado('colaboradores')} title={bloqueado('colaboradores') ? 'Selecciona un proyecto para usar este módulo' : undefined}>
           <i className="fas fa-user-group"></i><span>Colaboradores {icono('colaboradores')}</span>
         </a>}
-        {puedeVer('materiales') && <a className={claseItem('materiales')} onClick={() => manejarClick('materiales')}>
+        {puedeVer('materiales') && <a className={claseItem('materiales')} onClick={() => manejarClick('materiales')} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); manejarClick('materiales'); } }} aria-disabled={bloqueado('materiales')} title={bloqueado('materiales') ? 'Selecciona un proyecto para usar este módulo' : undefined}>
           <i className="fas fa-boxes-stacked"></i><span>Materiales {icono('materiales')}</span>
         </a>}
-        {puedeVer('inventario') && <a className={claseItem('inventario')} onClick={() => manejarClick('inventario')}>
+        {puedeVer('inventario') && <a className={claseItem('inventario')} onClick={() => manejarClick('inventario')} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); manejarClick('inventario'); } }} aria-disabled={bloqueado('inventario')} title={bloqueado('inventario') ? 'Selecciona un proyecto para usar este módulo' : undefined}>
           <i className="fas fa-warehouse"></i><span>Inventario Insumos {icono('inventario')}</span>
         </a>}
-        {puedeVer('tareas') && <a className={claseItem('tareas')} onClick={() => manejarClick('tareas')}>
+        {puedeVer('tareas') && <a className={claseItem('tareas')} onClick={() => manejarClick('tareas')} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); manejarClick('tareas'); } }} aria-disabled={bloqueado('tareas')} title={bloqueado('tareas') ? 'Selecciona un proyecto para usar este módulo' : undefined}>
           <i className="fas fa-list-check"></i><span>Gestión de Tareas {icono('tareas')}</span>
         </a>}
-        {puedeVer('turnos') && <a className={claseItem('turnos')} onClick={() => manejarClick('turnos')}>
+        {puedeVer('turnos') && <a className={claseItem('turnos')} onClick={() => manejarClick('turnos')} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); manejarClick('turnos'); } }} aria-disabled={bloqueado('turnos')} title={bloqueado('turnos') ? 'Selecciona un proyecto para usar este módulo' : undefined}>
           <i className="fas fa-clock"></i><span>Turnos y Asistencia {icono('turnos')}</span>
         </a>}
-        {puedeVer('evidencias') && <a className={claseItem('evidencias')} onClick={() => manejarClick('evidencias')}>
+        {puedeVer('evidencias') && <a className={claseItem('evidencias')} onClick={() => manejarClick('evidencias')} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); manejarClick('evidencias'); } }} aria-disabled={bloqueado('evidencias')} title={bloqueado('evidencias') ? 'Selecciona un proyecto para usar este módulo' : undefined}>
           <i className="fas fa-camera"></i><span>Evidencias {icono('evidencias')}</span>
         </a>}
-        {puedeVer('bitacora') && <a className={claseItem('bitacora')} onClick={() => manejarClick('bitacora')}>
+        {puedeVer('bitacora') && <a className={claseItem('bitacora')} onClick={() => manejarClick('bitacora')} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); manejarClick('bitacora'); } }} aria-disabled={bloqueado('bitacora')} title={bloqueado('bitacora') ? 'Selecciona un proyecto para usar este módulo' : undefined}>
           <i className="fas fa-file-lines"></i><span>Bitácora / Reportes {icono('bitacora')}</span>
         </a>}
       </div>

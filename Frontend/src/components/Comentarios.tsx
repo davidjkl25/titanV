@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { BadgeBloqueado, Obligatorio } from './IndicadoresAcceso';
+import NotaCamposObligatorios from './ui/NotaCamposObligatorios';
 
 export interface Comentario {
   id: number;
@@ -30,6 +31,7 @@ const Comentarios: React.FC<ComentariosProps> = ({ tareaId, tareaNombre, onCerra
   const [usuarioId, setUsuarioId] = useState<number>(1);
   const [enviando, setEnviando] = useState<boolean>(false);
   const [mensajeError, setMensajeError] = useState<string | null>(null);
+  const [errorContenido, setErrorContenido] = useState<string | null>(null);
 
   useEffect(() => {
     if (tareaId) {
@@ -53,12 +55,10 @@ const Comentarios: React.FC<ComentariosProps> = ({ tareaId, tareaNombre, onCerra
 
   const manejarEnvioComentario = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (soloLectura || !contenido.trim()) return;
-
-    if (contenido.length > 300) {
-      alert('El comentario no puede superar los 300 caracteres (regla TV-CMT-06).');
-      return;
-    }
+    if (soloLectura) return;
+    if (!contenido.trim()) { setErrorContenido('El comentario es obligatorio.'); return; }
+    if (contenido.length > 300) { setErrorContenido('El comentario no puede superar los 300 caracteres.'); return; }
+    setErrorContenido(null);
 
     try {
       setEnviando(true);
@@ -182,8 +182,10 @@ const Comentarios: React.FC<ComentariosProps> = ({ tareaId, tareaNombre, onCerra
         )}
 
         {/* Formulario de creación de comentario */}
+        <NotaCamposObligatorios />
         <form
           onSubmit={manejarEnvioComentario}
+          noValidate
           style={{
             display: 'flex',
             flexDirection: 'column',
@@ -227,9 +229,11 @@ const Comentarios: React.FC<ComentariosProps> = ({ tareaId, tareaNombre, onCerra
             </label>
             <textarea
               value={contenido}
-              onChange={(e) => setContenido(e.target.value)}
+              onChange={(e) => { setContenido(e.target.value); if (errorContenido) setErrorContenido(null); }}
               disabled={soloLectura}
               required
+              aria-required="true"
+              aria-invalid={!!errorContenido}
               maxLength={300}
               placeholder="Escribe tu comentario o nota técnica aquí (máx. 300 caracteres)..."
               rows={3}
@@ -238,8 +242,11 @@ const Comentarios: React.FC<ComentariosProps> = ({ tareaId, tareaNombre, onCerra
                 resize: 'vertical',
                 fontSize: '13px',
                 fontFamily: 'inherit',
+                width: '100%',
+                borderColor: errorContenido ? '#ef4444' : undefined,
               }}
             />
+            {errorContenido && <span className="field-error" role="alert">{errorContenido}</span>}
             <div
               style={{
                 display: 'flex',
@@ -250,7 +257,7 @@ const Comentarios: React.FC<ComentariosProps> = ({ tareaId, tareaNombre, onCerra
                 color: contenido.length > 280 ? '#f87171' : '#94a3b8',
               }}
             >
-              <span>TV-CMT-06: Máximo 300 caracteres</span>
+              <span>Máximo 300 caracteres</span>
               <span>{contenido.length} / 300</span>
             </div>
           </div>
