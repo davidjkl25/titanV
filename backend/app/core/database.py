@@ -1,11 +1,12 @@
 import os
-
+from pathlib import Path
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-load_dotenv()
+_ENV_PATH = Path(__file__).resolve().parent.parent.parent / ".env"
+load_dotenv(_ENV_PATH, override=True)
 
 # La URL ahora se lee de una variable de entorno (.env).
 # Si no existe, cae en un valor por defecto solo para desarrollo local.

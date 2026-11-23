@@ -14,6 +14,12 @@ import logging
 import os
 import smtplib
 from email.message import EmailMessage
+from pathlib import Path
+from dotenv import load_dotenv
+
+# Cargar siempre el archivo .env de la carpeta backend, sin importar desde dónde se inicie el servidor
+_ENV_PATH = Path(__file__).resolve().parent.parent.parent / ".env"
+load_dotenv(_ENV_PATH, override=True)
 
 logger = logging.getLogger(__name__)
 
