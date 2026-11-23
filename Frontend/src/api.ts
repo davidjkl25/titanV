@@ -19,12 +19,7 @@ export const fetchConToken = async (
 
   if (response.status === 401) {
     localStorage.removeItem("token");
-    alert("Tu sesión expiró o no es válida. Por favor, inicia sesión nuevamente.");
-    window.location.href = "/login";
-  }
-
-  if (response.status === 403) {
-    console.warn("Acceso denegado (403):", endpoint);
+    window.location.reload();
   }
 
   return response;

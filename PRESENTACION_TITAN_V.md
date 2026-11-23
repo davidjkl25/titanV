@@ -521,6 +521,59 @@ psql -U postgres -c "CREATE DATABASE titanv_db;"
 # Las tablas se crean automaticamente al iniciar el backend
 ```
 
+### 13.1 Solucion al problema de Pantalla Negra en Inicio de Sesion (Guia para otro computador)
+
+Si al clonar o copiar el proyecto a otro computador e ingresar a **Iniciar Sesion** la pantalla se queda negra o en blanco, la causa y su solucion son las siguientes:
+
+#### Causa 1: Falta de Client ID de Google OAuth en Frontend
+- **Diagnostico:** La libreria `@react-oauth/google` ejecutaba `useGoogleLogin` esperando un `client_id`. Al estar vacio en equipos nuevos que no tienen `.env`, Google SDK lanzaba `Error: Missing required parameter client_id` desmontando todo el arbol de React y dejando `#root` vacio sobre el fondo oscuro (pantalla negra).
+- **Solucion implementada:** Se configuro renderizado condicional inteligente en `src/main.tsx` y `src/pages/LoginPage.tsx`: si no hay `VITE_GOOGLE_CLIENT_ID` definido, el frontend entra en modo seguro, desactiva la inicializacion de Google SDK y permite ingresar con credenciales normales (correo y contrasena) de forma transparente. Ademas, se implemento un `ErrorBoundary` en `App.tsx` para evitar pantallas negras ante cualquier error de renderizado.
+
+#### Causa 2: Desincronizacion de columnas en PostgreSQL (Backend)
+- **Diagnostico:** Al crear o importar la base de datos en un PostgreSQL nuevo, si la tabla `usuarios` carecia de las columnas `reset_pin`, `reset_pin_expira` y `bloqueado_hasta`, o la tabla `materiales` no tenia `proyecto_id`, SQLAlchemy fallaba con error 500 al consultar el usuario en el login.
+- **Solucion implementada:** En `backend/app/main.py` se agrego la sincronizacion automatica con `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`, de modo que al arrancar el backend (`uvicorn app.main:app`), el sistema verifica y anade todas las columnas faltantes automaticamente sin requerir comandos SQL manuales.
+
+#### Pasos rapidos para levantar el proyecto en un computador nuevo:
+1. **Base de Datos:**
+   - Asegurarse de que el servicio PostgreSQL este corriendo.
+   - En `psql` o `pgAdmin`, crear la base:
+     ```sql
+     CREATE DATABASE titanv_db;
+     ```
+2. **Backend:**
+   - Crear el archivo `backend/.env` (basandote en `.env.example`):
+     ```env
+     DATABASE_URL=postgresql://postgres:TU_PASSWORD@localhost:5432/titanv_db
+     JWT_SECRET_KEY=clave-secreta-de-al-menos-32-caracteres-para-jwt
+     FRONTEND_URL=http://localhost:5173
+     ```
+     *(Nota: si tu PostgreSQL esta en el puerto 5433, ajustalo en la URL).*
+   - Activar entorno virtual y arrancar:
+     ```bash
+     cd backend
+     python -m uvicorn app.main:app --reload --port 8000
+     ```
+3. **Frontend:**
+   - Crear el archivo `Frontend/.env`:
+     ```env
+     VITE_API_URL=http://127.0.0.1:8000
+     VITE_GOOGLE_CLIENT_ID=
+     ```
+   - Instalar dependencias e iniciar:
+     ```bash
+     cd Frontend
+     npm install
+     npm run dev
+     ```
+4. **Credenciales iniciales de prueba:**
+   - **Correo:** `admin@titanv.com`
+   - **Contrasena:** `Admin123*`
+   - **Rol:** Administrador (Acceso completo a todos los proyectos y modulos).
+
+5. **Inicio de Sesion con Google (Soporte Dual):**
+   - **Modo Demostracion / Offline:** Al presionar "Continuar con Google", se despliega una ventana interactiva autentica de seleccion de cuentas de Google con las cuentas registradas (`davidcastro060407@gmail.com` con Rol Administrador, o `smarcelasofia2709@gmail.com` con Rol Supervisor), permitiendo simular e ingresar de inmediato sin depender de internet o configuraciones externas en Google Cloud.
+   - **Modo Real (Google Cloud):** Si se ingresa un Client ID en `Frontend/.env` (`VITE_GOOGLE_CLIENT_ID=tu_id.apps.googleusercontent.com`), el sistema activa automaticamente la ventana emergente real de Google OAuth conectada al servidor.
+
 ---
 
 ## 14. Conclusiones

@@ -1,7 +1,5 @@
 import { useEffect, useState } from 'react';
 import { fetchConToken } from '../api';
-import { AvisoSoloLectura, BadgeBloqueado, Obligatorio, Opcional } from './IndicadoresAcceso';
-import NotaCamposObligatorios from './ui/NotaCamposObligatorios';
 
 interface Evidencia {
   id: number;
@@ -19,7 +17,7 @@ interface Tarea {
   proyecto_id: number;
 }
 
-const API_URL = 'http://127.0.0.1:8000';
+const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://127.0.0.1:8000';
 
 interface EvidenciasTabProps {
   proyectoId?: number;
@@ -27,7 +25,11 @@ interface EvidenciasTabProps {
 }
 
 export const EvidenciasTab = ({ proyectoId: proyectoFijo, rolProyecto }: EvidenciasTabProps) => {
-  const soloLectura = rolProyecto === 'Visualizador';
+  const rolSistema = Number(localStorage.getItem('rol') || 3);
+  const esAdministrador = rolSistema === 1 || rolProyecto === 'Arquitecto';
+  const esTrabajador = rolSistema === 2 || rolProyecto === 'Trabajador';
+  const esVisualizador = rolProyecto === 'Visualizador' || (!esAdministrador && !esTrabajador);
+
   const [tareas, setTareas] = useState<Tarea[]>([]);
   const [tareaId, setTareaId] = useState<number | ''>('');
   const [evidencias, setEvidencias] = useState<Evidencia[]>([]);
@@ -37,10 +39,8 @@ export const EvidenciasTab = ({ proyectoId: proyectoFijo, rolProyecto }: Evidenc
 
   const [archivo, setArchivo] = useState<File | null>(null);
   const [descripcion, setDescripcion] = useState('');
-  const [errores, setErrores] = useState<Record<string,string>>({});
 
   const usuarioId = localStorage.getItem('usuario_id') || '1';
-  const nombreTarea = (id: number) => tareas.find((t) => t.id === id)?.nombre_tarea || `Tarea #${id}`;
 
   const cargarTareas = async () => {
     const query = proyectoFijo ? `/?proyecto_id=${proyectoFijo}` : '';
@@ -76,12 +76,7 @@ export const EvidenciasTab = ({ proyectoId: proyectoFijo, rolProyecto }: Evidenc
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (soloLectura) return;
-    const next: Record<string,string> = {};
-    if (!tareaId) next.tareaId = 'Selecciona una tarea.';
-    if (!archivo) next.archivo = 'Debes seleccionar un archivo de evidencia.';
-    setErrores(next);
-    if (Object.keys(next).length || !archivo || !tareaId) return;
+    if (!archivo || !tareaId) return;
 
     setSubiendo(true);
     setError('');
@@ -117,7 +112,6 @@ export const EvidenciasTab = ({ proyectoId: proyectoFijo, rolProyecto }: Evidenc
   };
 
   const eliminarEvidencia = async (id: number) => {
-    if (soloLectura) return;
     if (!window.confirm('¿Eliminar esta evidencia?')) return;
     try {
       const respuesta = await fetchConToken(`/tareas/${tareaId}/evidencias/${id}`, { method: 'DELETE' });
@@ -135,7 +129,24 @@ export const EvidenciasTab = ({ proyectoId: proyectoFijo, rolProyecto }: Evidenc
       <div className="section-header">
         <h2><i className="fas fa-camera"></i> Evidencias de Tareas</h2>
       </div>
-      {soloLectura && <AvisoSoloLectura texto="Tu rol Visualizador puede consultar las evidencias, pero no subir archivos ni eliminarlos." />}
+
+      {esVisualizador && (
+        <div style={{
+          backgroundColor: 'rgba(74, 222, 128, 0.12)',
+          border: '1px solid rgba(74, 222, 128, 0.35)',
+          color: '#4ade80',
+          padding: '12px 18px',
+          borderRadius: '10px',
+          marginBottom: '20px',
+          fontSize: '13px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+        }}>
+          <i className="fas fa-eye" style={{ fontSize: '16px' }}></i>
+          <span><strong>Modo Visualizador (Solo Lectura):</strong> Consulta fotos y archivos técnicos adjuntos sin modificar ni eliminar evidencias.</span>
+        </div>
+      )}
 
       <div className="input-group" style={{ maxWidth: '360px', marginBottom: '20px' }}>
         <label>Tarea</label>
@@ -145,41 +156,36 @@ export const EvidenciasTab = ({ proyectoId: proyectoFijo, rolProyecto }: Evidenc
         </select>
       </div>
 
-      <div className="grid">
-        <div className="card">
-          <div className="card-header"><h3><i className="fas fa-upload"></i> Subir evidencia</h3>{soloLectura && <BadgeBloqueado texto="Solo lectura" />}</div>
-          <form onSubmit={handleSubmit} noValidate>
-            <NotaCamposObligatorios />
-            <div className="input-group">
-              <label htmlFor="input-archivo-evidencia">Archivo (foto, PDF o video) <Obligatorio /></label>
-              <input
-                id="input-archivo-evidencia"
-                type="file"
-                accept=".jpg,.jpeg,.png,.webp,.pdf,.mp4"
-                onChange={(e) => { setArchivo(e.target.files?.[0] || null); setErrores(p=>({...p,archivo:''})); }}
-                required
-                aria-required="true"
-                aria-invalid={!!errores.archivo}
-                disabled={soloLectura}
-              />
-              {errores.archivo && <span className="field-error" role="alert">{errores.archivo}</span>}
-            </div>
-            <div className="input-group">
-              <label>Descripción <Opcional /></label>
-              <input type="text" value={descripcion} onChange={(e) => setDescripcion(e.target.value)} placeholder="Ej: Vaciado de placa nivel 2" maxLength={300} disabled={soloLectura} />
-            </div>
-            <div className="ui-tooltip-wrap" data-tooltip={soloLectura ? 'Tu rol (Visualizador) solo permite consultar' : undefined} style={{ width: '100%' }}>
-              <button type="submit" className="btn-save" disabled={subiendo || soloLectura} aria-disabled={subiendo || soloLectura} style={{ width: '100%' }}>
-                {soloLectura ? <><i className="fas fa-lock"></i> Solo lectura</> : subiendo ? 'Subiendo...' : 'Subir evidencia'}
+      <div className="grid" style={{ gridTemplateColumns: esVisualizador ? '1fr' : undefined }}>
+        {!esVisualizador && (
+          <div className="card">
+            <div className="card-header"><h3><i className="fas fa-upload"></i> Subir evidencia</h3></div>
+            <form onSubmit={handleSubmit}>
+              <div className="input-group">
+                <label>Archivo (foto, PDF o video)</label>
+                <input
+                  id="input-archivo-evidencia"
+                  type="file"
+                  accept=".jpg,.jpeg,.png,.webp,.pdf,.mp4"
+                  onChange={(e) => setArchivo(e.target.files?.[0] || null)}
+                  required
+                />
+              </div>
+              <div className="input-group">
+                <label>Descripción (opcional)</label>
+                <input type="text" value={descripcion} onChange={(e) => setDescripcion(e.target.value)} placeholder="Ej: Vaciado de placa nivel 2" maxLength={300} />
+              </div>
+              <button type="submit" className="btn-save" disabled={subiendo || !tareaId}>
+                {subiendo ? 'Subiendo...' : 'Subir evidencia'}
               </button>
-            </div>
-          </form>
-        </div>
+            </form>
+          </div>
+        )}
 
         <div className="card">
           <div className="card-header"><h3><i className="fas fa-images"></i> Evidencias de la tarea</h3></div>
           <div className="project-container">
-            {error && <div className="empty-msg" style={{ color: '#fca5a5' }}>{error}</div>}
+            {error && <div className="empty-msg" style={{ color: '#dc2626' }}>{error}</div>}
             {cargando && <div className="empty-msg">Cargando evidencias...</div>}
             {!cargando && !error && evidencias.length === 0 && (
               <div className="empty-msg">Todavía no hay evidencias para esta tarea.</div>
@@ -194,29 +200,23 @@ export const EvidenciasTab = ({ proyectoId: proyectoFijo, rolProyecto }: Evidenc
                       style={{ width: '56px', height: '56px', objectFit: 'cover', borderRadius: '6px' }}
                     />
                   ) : (
-                    <div style={{ width: '56px', height: '56px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255, 214, 10, .09)', border: '1px solid rgba(255, 214, 10, .35)', borderRadius: '6px' }}>
-                      <i className="fas fa-file" style={{ fontSize: '20px', color: '#ffd60a' }}></i>
+                    <div style={{ width: '56px', height: '56px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f1f1f1', borderRadius: '6px' }}>
+                      <i className="fas fa-file" style={{ fontSize: '20px', color: '#888' }}></i>
                     </div>
                   )}
-                  <div style={{ minWidth: 0 }}>
+                  <div>
                     <a href={`${API_URL}${ev.ruta_archivo}`} target="_blank" rel="noreferrer">
                       <h4 style={{ margin: 0 }}>{ev.nombre_archivo}</h4>
                     </a>
-                    {ev.descripcion && <span style={{ fontSize: '12px', color: '#cbd5e1' }}>{ev.descripcion}</span>}
-                    <div style={{ fontSize: '11px', color: '#94a3b8' }}>
-                      {new Date(ev.fecha_subida).toLocaleString()} · {nombreTarea(ev.tarea_id)} · Usuario #{ev.usuario_id}
-                    </div>
+                    {ev.descripcion && <span style={{ fontSize: '12px', color: '#666' }}>{ev.descripcion}</span>}
+                    <div style={{ fontSize: '11px', color: '#999' }}>{new Date(ev.fecha_subida).toLocaleString()}</div>
                   </div>
                 </div>
-                {soloLectura && <BadgeBloqueado texto="Solo lectura" />}
-                <button
-                  onClick={() => eliminarEvidencia(ev.id)}
-                  className="btn-delete"
-                  disabled={soloLectura}
-                  title={soloLectura ? 'Tu rol no puede eliminar evidencias' : undefined}
-                >
-                  <i className={soloLectura ? 'fas fa-lock' : 'fas fa-trash'}></i>
-                </button>
+                {esAdministrador && (
+                  <button onClick={() => eliminarEvidencia(ev.id)} className="btn-delete">
+                    <i className="fas fa-trash"></i>
+                  </button>
+                )}
               </div>
             ))}
           </div>

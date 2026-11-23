@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { fetchConToken } from '../api';
 import Comentarios from './Comentarios';
-import { AvisoSoloLectura, BadgeBloqueado, Obligatorio } from './IndicadoresAcceso';
-import NotaCamposObligatorios from './ui/NotaCamposObligatorios';
 
 export interface Tarea {
   id: number;
@@ -11,13 +9,11 @@ export interface Tarea {
   descripcion?: string;
   estado: string; // 'Pendiente' | 'En Proceso' | 'Completada'
   fecha_asignacion?: string;
-  fecha_inicio?: string;
-  fecha_fin_estimada?: string;
   proyecto_id: number;
   usuario_id: number;
 }
 
-const API_URL = 'http://127.0.0.1:8000';
+const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://127.0.0.1:8000';
 
 const authHeaders = () => ({
   headers: { Authorization: `Bearer ${localStorage.getItem('token') || ''}` },
@@ -41,13 +37,14 @@ interface TareasTabProps {
 }
 
 const TareasTab: React.FC<TareasTabProps> = ({ proyectoId: proyectoFijo, rolProyecto }) => {
-  const soloLectura = rolProyecto === 'Visualizador';
+  const rolSistema = Number(localStorage.getItem('rol') || 3);
+  const esVisualizador = rolProyecto === 'Visualizador' || (rolSistema === 3 && rolProyecto !== 'Arquitecto' && rolProyecto !== 'Trabajador');
+
   const [tareas, setTareas] = useState<Tarea[]>([]);
   const [proyectos, setProyectos] = useState<Proyecto[]>([]);
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [cargando, setCargando] = useState<boolean>(false);
   const [guardando, setGuardando] = useState<boolean>(false);
-  const [erroresForm, setErroresForm] = useState<Record<string,string>>({});
 
   // Campos del formulario
   const [nombreTarea, setNombreTarea] = useState<string>('');
@@ -113,11 +110,10 @@ const TareasTab: React.FC<TareasTabProps> = ({ proyectoId: proyectoFijo, rolProy
   };
 
   const nombreUsuario = (id: number) => usuarios.find((u) => u.id === id)?.nombre_completo || `Usuario #${id}`;
-  const nombreProyecto = (id: number) => proyectos.find((p) => p.id === id)?.nombre_proyecto || `Proyecto #${id}`;
 
   const formatearError = (error: any, fallback: string) => {
     if (error.code === 'ERR_NETWORK' || error.message === 'Network Error' || !error.response) {
-      return '⚠️ Error de Red: No se pudo conectar con el servidor backend (http://127.0.0.1:8000). Asegúrate de tener uvicorn corriendo en la terminal: "cd backend" y luego "uvicorn app.main:app --reload --port 8000".';
+      return '⚠️ Error de Red: No se pudo conectar con el servidor backend (http://localhost:8000). Asegúrate de tener uvicorn corriendo en la terminal: "cd backend" y luego "uvicorn app.main:app --reload --port 8000".';
     }
     return error.response?.data?.detail || error.message || fallback;
   };
@@ -139,13 +135,10 @@ const TareasTab: React.FC<TareasTabProps> = ({ proyectoId: proyectoFijo, rolProy
 
   const crearTarea = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (soloLectura) return;
-    const next: Record<string,string> = {};
-    if (!nombreTarea.trim()) next.nombre = 'El nombre de la tarea es obligatorio.';
-    if (!proyectoId) next.proyecto = 'Selecciona un proyecto.';
-    if (!usuarioId) next.usuario = 'Selecciona un operario.';
-    setErroresForm(next);
-    if (Object.keys(next).length) { mostrarNotificacion('error', 'Revisa los campos obligatorios.'); return; }
+    if (!nombreTarea.trim()) {
+      mostrarNotificacion('error', 'El nombre de la tarea es obligatorio.');
+      return;
+    }
 
     try {
       setGuardando(true);
@@ -219,21 +212,13 @@ const TareasTab: React.FC<TareasTabProps> = ({ proyectoId: proyectoFijo, rolProy
   const obtenerColorEstado = (est: string) => {
     switch (est) {
       case 'Pendiente':
-        return { bg: 'rgba(255, 214, 10, .12)', text: '#ffd60a', border: 'rgba(255, 214, 10, .4)' };
+        return { bg: '#fef3c7', text: '#b45309', border: '#fcd34d' };
       case 'En Proceso':
-        return { bg: 'rgba(56, 189, 248, .12)', text: '#7dd3fc', border: 'rgba(125, 211, 252, .4)' };
+        return { bg: '#e0f2fe', text: '#0369a1', border: '#7dd3fc' };
       case 'Completada':
-      case 'Finalizada':
-        return { bg: 'rgba(34, 197, 94, .12)', text: '#86efac', border: 'rgba(134, 239, 172, .4)' };
-      case 'Cancelada':
-      case 'Revocada':
-        return { bg: 'rgba(239, 68, 68, .14)', text: '#fca5a5', border: 'rgba(252, 165, 165, .4)' };
-      case 'Pausada':
-      case 'Vencida':
-      case 'Expirada':
-        return { bg: 'rgba(245, 158, 11, .16)', text: '#fcd34d', border: 'rgba(245, 158, 11, .4)' };
+        return { bg: '#dcfce7', text: '#15803d', border: '#86efac' };
       default:
-        return { bg: 'rgba(148, 163, 184, .12)', text: '#cbd5e1', border: 'rgba(148, 163, 184, .4)' };
+        return { bg: '#f1f5f9', text: '#475569', border: '#cbd5e1' };
     }
   };
 
@@ -251,8 +236,6 @@ const TareasTab: React.FC<TareasTabProps> = ({ proyectoId: proyectoFijo, rolProy
           Crea, supervisa estados y gestiona el historial de notas técnicas de cada tarea en tiempo real.
         </p>
       </div>
-
-      {soloLectura && <AvisoSoloLectura texto="Tu rol Visualizador solo permite consultar tareas y comentarios. No puedes crear tareas ni cambiar su estado." />}
 
       {/* Banner de Notificación */}
       {notificacion && (
@@ -281,32 +264,46 @@ const TareasTab: React.FC<TareasTabProps> = ({ proyectoId: proyectoFijo, rolProy
         </div>
       )}
 
-      {/* Contenido en Grilla: Formulario + Listado & Comentarios */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(320px, 380px) 1fr', gap: '24px', alignItems: 'start' }}>
-        
-        {/* Columna Izquierda: Formulario de Creación */}
-        <div className="card">
-          <div className="card-header">
-            <h3><i className="fas fa-plus-circle"></i> Nueva Tarea</h3>
-          </div>
+      {/* Aviso de Modo Visualizador */}
+      {esVisualizador && (
+        <div style={{
+          backgroundColor: 'rgba(74, 222, 128, 0.12)',
+          border: '1px solid rgba(74, 222, 128, 0.35)',
+          color: '#4ade80',
+          padding: '12px 18px',
+          borderRadius: '10px',
+          marginBottom: '20px',
+          fontSize: '13px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+        }}>
+          <i className="fas fa-eye" style={{ fontSize: '16px' }}></i>
+          <span><strong>Modo Visualizador (Solo Lectura):</strong> Tu rol te permite consultar tareas, descripciones y estados de la obra sin modificar registros.</span>
+        </div>
+      )}
 
-          <form onSubmit={crearTarea} noValidate>
-            <NotaCamposObligatorios />
+      {/* Contenido en Grilla: Formulario + Listado & Comentarios */}
+      <div style={{ display: 'grid', gridTemplateColumns: esVisualizador ? '1fr' : 'minmax(320px, 380px) 1fr', gap: '24px', alignItems: 'start' }}>
+        
+        {/* Columna Izquierda: Formulario de Creación (Solo Arquitecto o Trabajador) */}
+        {!esVisualizador && (
+          <div className="card">
+            <div className="card-header">
+              <h3><i className="fas fa-plus-circle"></i> Nueva Tarea</h3>
+            </div>
+
+            <form onSubmit={crearTarea}>
             <div className="input-group">
-              <label htmlFor="tarea-nombre">Nombre de la tarea <Obligatorio /></label>
+              <label>Nombre de la tarea *</label>
               <input
-                id="tarea-nombre"
                 type="text"
                 placeholder="Ej: Fundición de losa piso 2"
                 value={nombreTarea}
-                onChange={(e) => { setNombreTarea(e.target.value); setErroresForm(p=>({...p,nombre:''})); }}
+                onChange={(e) => setNombreTarea(e.target.value)}
                 required
-                aria-required="true"
-                aria-invalid={!!erroresForm.nombre}
                 maxLength={150}
-                disabled={soloLectura}
               />
-              {erroresForm.nombre && <span className="field-error" role="alert">{erroresForm.nombre}</span>}
             </div>
 
             <div className="input-group">
@@ -316,7 +313,6 @@ const TareasTab: React.FC<TareasTabProps> = ({ proyectoId: proyectoFijo, rolProy
                 value={descripcion}
                 onChange={(e) => setDescripcion(e.target.value)}
                 rows={3}
-                disabled={soloLectura}
                 style={{
                   resize: 'vertical',
                   fontFamily: 'inherit',
@@ -327,7 +323,7 @@ const TareasTab: React.FC<TareasTabProps> = ({ proyectoId: proyectoFijo, rolProy
             <div className="date-row">
               <div className="input-group">
                 <label>Estado inicial</label>
-                <select value={estado} onChange={(e) => setEstado(e.target.value)} disabled={soloLectura}>
+                <select value={estado} onChange={(e) => setEstado(e.target.value)}>
                   {ESTADOS_DISPONIBLES.map((est) => (
                     <option key={est} value={est}>
                       {est}
@@ -337,9 +333,9 @@ const TareasTab: React.FC<TareasTabProps> = ({ proyectoId: proyectoFijo, rolProy
               </div>
 
               <div className="input-group">
-                <label>Proyecto <Obligatorio /></label>
+                <label>Proyecto</label>
                 {proyectos.length > 0 ? (
-                  <select value={proyectoId} onChange={(e) => setProyectoId(Number(e.target.value))} disabled={soloLectura}>
+                  <select value={proyectoId} onChange={(e) => setProyectoId(Number(e.target.value))}>
                     {proyectos.map((p) => (
                       <option key={p.id} value={p.id}>
                         #{p.id} - {p.nombre_proyecto}
@@ -353,19 +349,17 @@ const TareasTab: React.FC<TareasTabProps> = ({ proyectoId: proyectoFijo, rolProy
                     value={proyectoId}
                     onChange={(e) => setProyectoId(Number(e.target.value) || 1)}
                     required
-                    disabled={soloLectura}
                   />
                 )}
               </div>
             </div>
 
             <div className="input-group">
-              <label>Asignar a <Obligatorio /></label>
+              <label>Asignar a</label>
               <select
                 value={usuarioId}
                 onChange={(e) => setUsuarioId(Number(e.target.value))}
                 required
-                disabled={soloLectura}
               >
                 <option value="" disabled>Selecciona un operario</option>
                 {usuarios.map((u) => (
@@ -374,11 +368,12 @@ const TareasTab: React.FC<TareasTabProps> = ({ proyectoId: proyectoFijo, rolProy
               </select>
             </div>
 
-            <button type="submit" className="btn-save" disabled={guardando || soloLectura} title={soloLectura ? 'Acción no disponible para tu rol' : undefined}>
-              {soloLectura ? <><i className="fas fa-lock"></i> Solo lectura</> : guardando ? 'Guardando en BD...' : 'Guardar Tarea'}
+            <button type="submit" className="btn-save" disabled={guardando}>
+              {guardando ? 'Guardando en BD...' : 'Guardar Tarea'}
             </button>
           </form>
         </div>
+        )}
 
         {/* Columna Derecha: Listado de Tareas y Panel de Comentarios Reubicado */}
         <div style={{ display: 'grid', gridTemplateColumns: tareaSeleccionada ? '1fr 1fr' : '1fr', gap: '20px', alignItems: 'start' }}>
@@ -482,30 +477,43 @@ const TareasTab: React.FC<TareasTabProps> = ({ proyectoId: proyectoFijo, rolProy
                           )}
                         </div>
 
-                        {/* Dropdown de Estado para cambiar en tiempo real */}
+                        {/* Dropdown de Estado (o Badge si es visualizador) */}
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
-                          <select
-                            value={t.estado}
-                            onChange={(e) => cambiarEstado(t.id, e.target.value)}
-                            disabled={soloLectura}
-                            title={soloLectura ? 'Tu rol no puede cambiar el estado' : 'Cambiar estado de la tarea'}
-                            style={{
+                          {esVisualizador ? (
+                            <span style={{
                               backgroundColor: colorEst.bg,
                               color: colorEst.text,
                               border: `1px solid ${colorEst.border}`,
-                              padding: '4px 8px',
+                              padding: '4px 10px',
                               borderRadius: '6px',
                               fontWeight: 700,
                               fontSize: '12px',
-                              cursor: 'pointer',
-                            }}
-                          >
-                            {ESTADOS_DISPONIBLES.map((est) => (
-                              <option key={est} value={est} style={{ backgroundColor: '#111827', color: '#fff' }}>
-                                {est}
-                              </option>
-                            ))}
-                          </select>
+                            }}>
+                              {t.estado}
+                            </span>
+                          ) : (
+                            <select
+                              value={t.estado}
+                              onChange={(e) => cambiarEstado(t.id, e.target.value)}
+                              style={{
+                                backgroundColor: colorEst.bg,
+                                color: colorEst.text,
+                                border: `1px solid ${colorEst.border}`,
+                                padding: '4px 8px',
+                                borderRadius: '6px',
+                                fontWeight: 700,
+                                fontSize: '12px',
+                                cursor: 'pointer',
+                              }}
+                              title="Cambiar estado de la tarea"
+                            >
+                              {ESTADOS_DISPONIBLES.map((est) => (
+                                <option key={est} value={est} style={{ backgroundColor: '#fff', color: '#000' }}>
+                                  {est}
+                                </option>
+                              ))}
+                            </select>
+                          )}
                         </div>
                       </div>
 
@@ -523,12 +531,9 @@ const TareasTab: React.FC<TareasTabProps> = ({ proyectoId: proyectoFijo, rolProy
                           color: '#94a3b8',
                         }}
                       >
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
-                          <span>🏗 Proyecto: {nombreProyecto(t.proyecto_id)}</span>
+                        <div style={{ display: 'flex', gap: '12px' }}>
+                          <span>🏗 Proyecto: #{t.proyecto_id}</span>
                           <span>👤 Operario: {nombreUsuario(t.usuario_id)}</span>
-                          <span>Asignación: {t.fecha_asignacion || 'Sin fecha'}</span>
-                          <span>Inicio: {t.fecha_inicio || 'Sin definir'}</span>
-                          <span>Fin estimado: {t.fecha_fin_estimada || 'Sin definir'}</span>
                         </div>
 
                         {/* Botones de acción */}
@@ -552,22 +557,22 @@ const TareasTab: React.FC<TareasTabProps> = ({ proyectoId: proyectoFijo, rolProy
                             💬 {estaSeleccionada ? 'Ocultar Comentarios' : 'Ver Comentarios'}
                           </button>
 
-                          {soloLectura && <BadgeBloqueado texto="Solo lectura" />}
-                          <button
-                            onClick={() => eliminarTarea(t.id, t.nombre_tarea)}
-                            className="btn-delete"
-                            disabled={soloLectura}
-                            style={{
-                              padding: '6px 10px',
-                              borderRadius: '6px',
-                              cursor: soloLectura ? 'not-allowed' : 'pointer',
-                              fontSize: '12px',
-                              fontWeight: 600,
-                            }}
-                            title={soloLectura ? 'Tu rol no puede eliminar tareas' : 'Eliminar tarea'}
-                          >
-                            {soloLectura ? <i className="fas fa-lock"></i> : '🗑'}
-                          </button>
+                          {!esVisualizador && (
+                            <button
+                              onClick={() => eliminarTarea(t.id, t.nombre_tarea)}
+                              className="btn-delete"
+                              style={{
+                                padding: '6px 10px',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                fontSize: '12px',
+                                fontWeight: 600,
+                              }}
+                              title="Eliminar tarea"
+                            >
+                              🗑
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -585,7 +590,6 @@ const TareasTab: React.FC<TareasTabProps> = ({ proyectoId: proyectoFijo, rolProy
                 tareaId={tareaSeleccionada.id}
                 tareaNombre={tareaSeleccionada.nombre_tarea}
                 onCerrar={() => setTareaSeleccionada(null)}
-                soloLectura={soloLectura}
               />
             </div>
           )}

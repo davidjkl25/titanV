@@ -1,6 +1,5 @@
 import videoHero from '../assets/video_landing.mp4';
 import logoImg from '../assets/logo.png';
-import { BadgeBloqueado } from './IndicadoresAcceso';
 
 interface ProyectoResumen {
   id: number;
@@ -19,7 +18,6 @@ interface InicioTabProps {
   onCrearProyecto: () => void;
   puedeCrearProyecto: boolean;
   puedeVerModulo: (tab: string) => boolean;
-  rolProyecto?: string;
   onCambiarEstadoProyecto: (estado: string) => Promise<void>;
   onEliminarProyecto: () => Promise<void>;
 }
@@ -33,7 +31,6 @@ const MODULOS = [
   { tab: 'tareas', icono: 'fa-tasks', titulo: 'Gestión de Tareas', texto: 'Crea tareas, supervisa su estado y gestiona comentarios técnicos.' },
   { tab: 'turnos', icono: 'fa-clock', titulo: 'Turnos y Asistencia', texto: 'Programa turnos y registra la asistencia del equipo.' },
   { tab: 'evidencias', icono: 'fa-camera', titulo: 'Evidencias de Obra', texto: 'Sube fotos y documentos del avance del proyecto.' },
-  { tab: 'bitacora', icono: 'fa-file-lines', titulo: 'Bitácora / Reportes', texto: 'Exporta cortes de obra en PDF ejecutivo o Excel por módulo y rango de fechas.' },
 ];
 
 export const InicioTab = ({
@@ -46,12 +43,9 @@ export const InicioTab = ({
   onCrearProyecto,
   puedeCrearProyecto,
   puedeVerModulo,
-  rolProyecto,
   onCambiarEstadoProyecto,
   onEliminarProyecto,
 }: InicioTabProps) => {
-  const esArquitecto = rolProyecto === 'Arquitecto';
-
   if (cargando) {
     return (
       <div className="tab-content active">
@@ -83,33 +77,30 @@ export const InicioTab = ({
           <p className="muted-text">
             Estado actual: <strong>{proyectoSeleccionado.estado || 'Planificación'}</strong>
           </p>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '14px', alignItems: 'end' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, marginBottom: '5px', color: '#ffd60a' }}>
-                  Cambiar estado
-                </label>
-                <select
-                  value={proyectoSeleccionado.estado || 'Planificación'}
-                  onChange={(e) => void onCambiarEstadoProyecto(e.target.value)}
-                  className="project-status-select"
-                  disabled={!esArquitecto}
-                  title={esArquitecto ? undefined : 'Solo el Arquitecto puede cambiar el estado'}
+          {puedeCrearProyecto && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '14px', alignItems: 'end' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, marginBottom: '5px', color: '#666' }}>
+                    Cambiar estado
+                  </label>
+                  <select
+                    value={proyectoSeleccionado.estado || 'Planificación'}
+                    onChange={(e) => void onCambiarEstadoProyecto(e.target.value)}
+                    className="project-status-select"
+                  >
+                    {ESTADOS_PROYECTO.map((estado) => <option key={estado} value={estado}>{estado}</option>)}
+                  </select>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => void onEliminarProyecto()}
+                  className="btn-delete"
+                  style={{ padding: '10px 14px' }}
                 >
-                  {ESTADOS_PROYECTO.map((estado) => <option key={estado} value={estado}>{estado}</option>)}
-                </select>
-              </div>
-              {!esArquitecto && <BadgeBloqueado texto="Solo Arquitecto" titulo="Solo el Arquitecto puede cambiar el estado o eliminar el proyecto" />}
-              <button
-                type="button"
-                onClick={() => void onEliminarProyecto()}
-                className="btn-delete"
-                style={{ padding: '10px 14px' }}
-                disabled={!esArquitecto}
-                title={esArquitecto ? undefined : 'Solo el Arquitecto puede eliminar el proyecto'}
-              >
-                <i className={esArquitecto ? 'fas fa-trash' : 'fas fa-lock'}></i> {esArquitecto ? 'Eliminar proyecto' : 'Sin permiso'}
-              </button>
-          </div>
+                  <i className="fas fa-trash"></i> Eliminar proyecto
+                </button>
+            </div>
+          )}
         </div>
         <div className="grid">
           {MODULOS.filter((m) => puedeVerModulo(m.tab)).map((m) => (
@@ -126,12 +117,12 @@ export const InicioTab = ({
           onClick={onSalirProyecto}
           style={{
             marginTop: '20px',
-            backgroundColor: 'transparent',
-            border: '1px solid rgba(255, 214, 10, .45)',
+            backgroundColor: '#f1f5f9',
+            border: '1px solid #cbd5e1',
             borderRadius: '8px',
             padding: '10px 16px',
             fontWeight: 700,
-            color: '#ffd60a',
+            color: '#475569',
             cursor: 'pointer',
           }}
         >

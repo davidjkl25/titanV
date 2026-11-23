@@ -1,14 +1,24 @@
 import React, { useState, useRef } from 'react';
 
-const API_URL = 'http://127.0.0.1:8000';
-
 interface RecuperarContrasenaProps {
   onClose: () => void;
 }
 
+const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://127.0.0.1:8000';
+
+const validarFormatoContrasena = (pwd: string): string | null => {
+  if (pwd.length < 8) return 'La contraseña debe tener al menos 8 caracteres.';
+  if (!/[A-Z]/.test(pwd)) return 'La contraseña debe tener al menos una letra mayúscula.';
+  if (!/[0-9]/.test(pwd)) return 'La contraseña debe tener al menos un número.';
+  return null;
+};
+
 const RecuperarContrasena: React.FC<RecuperarContrasenaProps> = ({ onClose }) => {
-  const [resetStep, setResetStep] = useState<1 | 2 | 3>(1);
-  const [resetEmail, setResetEmail] = useState('');
+  const [resetStep, setResetStep] = useState<1 | 2 | 3>(() => {
+    const saved = sessionStorage.getItem('titanv_reset_step');
+    return saved === '2' || saved === '3' ? (Number(saved) as 2 | 3) : 1;
+  });
+  const [resetEmail, setResetEmail] = useState(() => sessionStorage.getItem('titanv_reset_email') || '');
   const [pinArray, setPinArray] = useState<string[]>(['', '', '', '']);
   const pinInputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const [newPassword, setNewPassword] = useState('');
@@ -43,7 +53,16 @@ const RecuperarContrasena: React.FC<RecuperarContrasenaProps> = ({ onClose }) =>
     setNewPassword('');
     setResetMessage('');
     setIsSubmitting(false);
+    sessionStorage.removeItem('titanv_reset_step');
+    sessionStorage.removeItem('titanv_reset_email');
     onClose();
+  };
+
+  const handleCambiarCorreo = () => {
+    setResetStep(1);
+    setPinArray(['', '', '', '']);
+    setResetMessage('');
+    sessionStorage.removeItem('titanv_reset_step');
   };
 
   // PASO 1: Solicitar código PIN al correo
@@ -56,13 +75,15 @@ const RecuperarContrasena: React.FC<RecuperarContrasenaProps> = ({ onClose }) =>
       const response = await fetch(`${API_URL}/api/auth/forgot-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: resetEmail }),
+        body: JSON.stringify({ email: resetEmail.trim() }),
       });
 
       const data = await response.json();
       if (response.ok) {
         setResetStep(2);
-        setResetMessage('Código PIN enviado. Revisa tu correo.');
+        sessionStorage.setItem('titanv_reset_step', '2');
+        sessionStorage.setItem('titanv_reset_email', resetEmail.trim());
+        setResetMessage(data.message || 'Código PIN enviado. Revisa tu correo.');
       } else {
         setResetMessage(data.detail || data.message || 'Ocurrió un error al enviar el código.');
       }
@@ -90,13 +111,14 @@ const RecuperarContrasena: React.FC<RecuperarContrasenaProps> = ({ onClose }) =>
       const response = await fetch(`${API_URL}/api/auth/verify-pin`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: resetEmail, pin }),
+        body: JSON.stringify({ email: resetEmail.trim(), pin }),
       });
 
       const data = await response.json();
       if (response.ok) {
         setResetStep(3);
-        setResetMessage('PIN verificado correctamente. Ingresa tu nueva contraseña.');
+        sessionStorage.setItem('titanv_reset_step', '3');
+        setResetMessage(data.message || 'PIN verificado correctamente. Ingresa tu nueva contraseña.');
       } else {
         setResetMessage(data.detail || data.message || 'Código PIN incorrecto o expirado.');
       }
@@ -110,6 +132,13 @@ const RecuperarContrasena: React.FC<RecuperarContrasenaProps> = ({ onClose }) =>
   // PASO 3: Restablecer contraseña con el PIN
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const errorContrasena = validarFormatoContrasena(newPassword);
+    if (errorContrasena) {
+      setResetMessage(errorContrasena);
+      return;
+    }
+
     setIsSubmitting(true);
     setResetMessage('');
 
@@ -118,7 +147,7 @@ const RecuperarContrasena: React.FC<RecuperarContrasenaProps> = ({ onClose }) =>
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: resetEmail,
+          email: resetEmail.trim(),
           pin: pinArray.join(''),
           newPassword: newPassword,
         }),
@@ -126,7 +155,9 @@ const RecuperarContrasena: React.FC<RecuperarContrasenaProps> = ({ onClose }) =>
 
       const data = await response.json();
       if (response.ok) {
-        alert('¡Contraseña actualizada exitosamente! Ya puedes iniciar sesión.');
+        sessionStorage.removeItem('titanv_reset_step');
+        sessionStorage.removeItem('titanv_reset_email');
+        alert('✅ ¡Contraseña actualizada exitosamente! Ya puedes iniciar sesión con tu nueva contraseña.');
         handleClose();
       } else {
         setResetMessage(data.detail || data.message || 'Error al actualizar la contraseña.');
@@ -165,21 +196,17 @@ const RecuperarContrasena: React.FC<RecuperarContrasenaProps> = ({ onClose }) =>
         <h3 style={{ margin: '0 0 8px 0', fontSize: '18px', color: '#fff' }}>
           Restablecer Contraseña
         </h3>
-        <p className="form-note" style={{ marginBottom: '12px' }}>Los campos marcados con <span className="required-mark">*</span> son obligatorios.</p>
 
         {/* PASO 1: SOLICITAR PIN */}
         {resetStep === 1 && (
           <form onSubmit={handleRequestPin}>
-            <p style={{ fontSize: '12px', color: '#b0b0b0', marginBottom: '16px' }}>
+            <p style={{ fontSize: '12px', color: '#aaa', marginBottom: '16px' }}>
               Ingresa tu correo para recibir un código PIN de verificación.
             </p>
             <div style={{ marginBottom: '14px' }}>
-              <label htmlFor="rec-email" style={{ display: 'block', fontSize: '12px', color: '#e5e7eb', marginBottom: '6px' }}>Correo electrónico <span className="required-mark">*</span></label>
               <input
-                id="rec-email"
                 type="email"
                 required
-                aria-required="true"
                 placeholder="correo@ejemplo.com"
                 value={resetEmail}
                 onChange={(e) => setResetEmail(e.target.value)}
@@ -242,10 +269,9 @@ const RecuperarContrasena: React.FC<RecuperarContrasenaProps> = ({ onClose }) =>
         {/* PASO 2: VERIFICAR PIN */}
         {resetStep === 2 && (
           <form onSubmit={handleVerifyPin}>
-            <p style={{ fontSize: '12px', color: '#b0b0b0', marginBottom: '16px' }}>
+            <p style={{ fontSize: '12px', color: '#aaa', marginBottom: '16px' }}>
               Hemos enviado un PIN de 4 dígitos a <strong>{resetEmail}</strong>.
             </p>
-            <label style={{ display: 'block', fontSize: '12px', color: '#e5e7eb', marginBottom: '6px', textAlign: 'center' }}>Código PIN <span className="required-mark">*</span></label>
             <div style={{
               display: 'flex',
               justifyContent: 'center',
@@ -262,9 +288,6 @@ const RecuperarContrasena: React.FC<RecuperarContrasenaProps> = ({ onClose }) =>
                   value={digit}
                   onChange={(e) => handlePinBoxChange(e.target.value, index)}
                   onKeyDown={(e) => handlePinKeyDown(e, index)}
-                  aria-label={`Dígito ${index + 1} del PIN`}
-                  required
-                  aria-required="true"
                   style={{
                     width: '42px',
                     height: '42px',
@@ -298,7 +321,7 @@ const RecuperarContrasena: React.FC<RecuperarContrasenaProps> = ({ onClose }) =>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <button
                 type="button"
-                onClick={() => { setResetStep(1); setResetMessage(''); }}
+                onClick={handleCambiarCorreo}
                 style={{
                   background: 'none',
                   border: 'none',
@@ -352,16 +375,13 @@ const RecuperarContrasena: React.FC<RecuperarContrasenaProps> = ({ onClose }) =>
         {/* PASO 3: INGRESAR NUEVA CONTRASEÑA */}
         {resetStep === 3 && (
           <form onSubmit={handleResetPassword}>
-            <p style={{ fontSize: '12px', color: '#b0b0b0', marginBottom: '16px' }}>
+            <p style={{ fontSize: '12px', color: '#aaa', marginBottom: '16px' }}>
               Ingresa tu nueva contraseña para completar la recuperación.
             </p>
             <div style={{ marginBottom: '14px' }}>
-              <label htmlFor="rec-newpass" style={{ display: 'block', fontSize: '12px', color: '#e5e7eb', marginBottom: '6px' }}>Nueva contraseña <span className="required-mark">*</span></label>
               <input
-                id="rec-newpass"
                 type="password"
                 required
-                aria-required="true"
                 placeholder="Nueva contraseña"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}

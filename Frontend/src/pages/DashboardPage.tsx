@@ -10,7 +10,6 @@ import { InventarioTab } from '../components/InventarioTab';
 import TareasTab from '../components/TareasTab';
 import { TurnosTab } from '../components/TurnosTab';
 import { EvidenciasTab } from '../components/EvidenciasTab';
-import { BitacoraReportesTab } from '../components/BitacoraReportesTab';
 import videoFondo from '../assets/video_landing.mp4';
 
 export interface ProyectoResumen {
@@ -24,7 +23,7 @@ interface DashboardPageProps {
   onLogout: () => void;
 }
 
-const MODULOS_PROYECTO = ['colaboradores', 'materiales', 'inventario', 'tareas', 'turnos', 'evidencias', 'bitacora'];
+const MODULOS_PROYECTO = ['colaboradores', 'materiales', 'inventario', 'tareas', 'turnos', 'evidencias'];
 
 const DashboardPage = ({ onLogout }: DashboardPageProps) => {
   const navigate = useNavigate();
@@ -68,10 +67,15 @@ const DashboardPage = ({ onLogout }: DashboardPageProps) => {
     setTabActual('inicio');
   };
 
+  const rolSistema = Number(localStorage.getItem('rol') || 3);
+
   const puedeAccederTab = (tab: string) => {
-    // El backend también lo valida con el JWT; este filtro evita mostrar el
-    // módulo a quien no podrá exportar nada.
-    if (tab === 'bitacora' && rolProyecto === 'Trabajador') return false;
+    // Administrador general o Arquitecto del proyecto tienen acceso completo
+    if (rolSistema === 1 || rolProyecto === 'Arquitecto') return true;
+
+    // Colaboradores solo es accesible por Arquitectos / Administradores
+    if (tab === 'colaboradores') return false;
+
     return true;
   };
 
@@ -166,7 +170,6 @@ const DashboardPage = ({ onLogout }: DashboardPageProps) => {
         onLogout={handleLogout}
         proyecto={proyectoSeleccionado}
         onSalirProyecto={salirProyecto}
-        rolProyecto={rolProyecto}
       />
 
       <div className="main-content">
@@ -179,14 +182,13 @@ const DashboardPage = ({ onLogout }: DashboardPageProps) => {
             onSalirProyecto={salirProyecto}
             onIrA={irA}
             onCrearProyecto={crearProyecto}
-            puedeCrearProyecto={true}
+            puedeCrearProyecto={rolSistema === 1 || rolProyecto === 'Arquitecto'}
             puedeVerModulo={puedeAccederTab}
-            rolProyecto={rolProyecto}
             onCambiarEstadoProyecto={cambiarEstadoProyecto}
             onEliminarProyecto={eliminarProyectoSeleccionado}
           />
         )}
-        {/* Proyectos siempre queda accesible: es la única forma de crear proyectos */}
+        {/* Proyectos siempre queda accesible */}
         {tabActual === 'proyectos' && <ProyectosTab onProyectoCreado={verificarProyectos} />}
 
         {/* Módulos: solo visibles dentro de un proyecto */}
@@ -207,13 +209,6 @@ const DashboardPage = ({ onLogout }: DashboardPageProps) => {
         )}
         {proyectoSeleccionado && tabActual === 'evidencias' && (
           <EvidenciasTab proyectoId={proyectoSeleccionado.id} rolProyecto={rolProyecto} />
-        )}
-        {proyectoSeleccionado && tabActual === 'bitacora' && rolProyecto !== 'Trabajador' && (
-          <BitacoraReportesTab
-            proyectoId={proyectoSeleccionado.id}
-            proyectoNombre={proyectoSeleccionado.nombre_proyecto}
-            rolProyecto={rolProyecto}
-          />
         )}
       </div>
     </div>

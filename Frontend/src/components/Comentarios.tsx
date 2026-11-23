@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { BadgeBloqueado, Obligatorio } from './IndicadoresAcceso';
-import NotaCamposObligatorios from './ui/NotaCamposObligatorios';
 
 export interface Comentario {
   id: number;
@@ -15,23 +13,21 @@ interface ComentariosProps {
   tareaId: number;
   tareaNombre?: string;
   onCerrar?: () => void;
-  soloLectura?: boolean;
 }
 
-const API_URL = 'http://127.0.0.1:8000';
+const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://127.0.0.1:8000';
 
 const authHeaders = () => ({
   headers: { Authorization: `Bearer ${localStorage.getItem('token') || ''}` },
 });
 
-const Comentarios: React.FC<ComentariosProps> = ({ tareaId, tareaNombre, onCerrar, soloLectura = false }) => {
+const Comentarios: React.FC<ComentariosProps> = ({ tareaId, tareaNombre, onCerrar }) => {
   const [listaComentarios, setListaComentarios] = useState<Comentario[]>([]);
   const [cargando, setCargando] = useState<boolean>(false);
   const [contenido, setContenido] = useState<string>('');
   const [usuarioId, setUsuarioId] = useState<number>(1);
   const [enviando, setEnviando] = useState<boolean>(false);
   const [mensajeError, setMensajeError] = useState<string | null>(null);
-  const [errorContenido, setErrorContenido] = useState<string | null>(null);
 
   useEffect(() => {
     if (tareaId) {
@@ -55,10 +51,12 @@ const Comentarios: React.FC<ComentariosProps> = ({ tareaId, tareaNombre, onCerra
 
   const manejarEnvioComentario = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (soloLectura) return;
-    if (!contenido.trim()) { setErrorContenido('El comentario es obligatorio.'); return; }
-    if (contenido.length > 300) { setErrorContenido('El comentario no puede superar los 300 caracteres.'); return; }
-    setErrorContenido(null);
+    if (!contenido.trim()) return;
+
+    if (contenido.length > 300) {
+      alert('El comentario no puede superar los 300 caracteres (regla TV-CMT-06).');
+      return;
+    }
 
     try {
       setEnviando(true);
@@ -78,7 +76,7 @@ const Comentarios: React.FC<ComentariosProps> = ({ tareaId, tareaNombre, onCerra
     } catch (error: any) {
       console.error('Error al guardar el comentario:', error);
       if (error.code === 'ERR_NETWORK' || error.message === 'Network Error' || !error.response) {
-        setMensajeError('⚠️ Error de Red: No se pudo conectar con el backend (http://127.0.0.1:8000). Revisa que uvicorn esté corriendo.');
+        setMensajeError('⚠️ Error de Red: No se pudo conectar con el backend (http://localhost:8000). Revisa que uvicorn esté corriendo.');
       } else {
         const detalle = error.response?.data?.detail || error.message || 'Ocurrió un error al registrar el comentario en la base de datos.';
         setMensajeError(detalle);
@@ -141,7 +139,6 @@ const Comentarios: React.FC<ComentariosProps> = ({ tareaId, tareaNombre, onCerra
               {tareaNombre}
             </span>
           )}
-          {soloLectura && <BadgeBloqueado texto="Solo lectura" />}
         </div>
 
         {onCerrar && (
@@ -182,10 +179,8 @@ const Comentarios: React.FC<ComentariosProps> = ({ tareaId, tareaNombre, onCerra
         )}
 
         {/* Formulario de creación de comentario */}
-        <NotaCamposObligatorios />
         <form
           onSubmit={manejarEnvioComentario}
-          noValidate
           style={{
             display: 'flex',
             flexDirection: 'column',
@@ -204,14 +199,13 @@ const Comentarios: React.FC<ComentariosProps> = ({ tareaId, tareaNombre, onCerra
                 margin: 0,
               }}
             >
-              Publicar como usuario <Obligatorio />
+              Publicar como usuario
             </label>
             <input
               type="number"
               min="1"
               value={usuarioId}
               onChange={(e) => setUsuarioId(Number(e.target.value) || 1)}
-              disabled={soloLectura}
               style={{
                 width: '80px',
                 padding: '6px 8px',
@@ -224,16 +218,10 @@ const Comentarios: React.FC<ComentariosProps> = ({ tareaId, tareaNombre, onCerra
           </div>
 
           <div>
-            <label style={{ display: 'block', color: '#ffd60a', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', marginBottom: '6px' }}>
-              Comentario <Obligatorio />
-            </label>
             <textarea
               value={contenido}
-              onChange={(e) => { setContenido(e.target.value); if (errorContenido) setErrorContenido(null); }}
-              disabled={soloLectura}
+              onChange={(e) => setContenido(e.target.value)}
               required
-              aria-required="true"
-              aria-invalid={!!errorContenido}
               maxLength={300}
               placeholder="Escribe tu comentario o nota técnica aquí (máx. 300 caracteres)..."
               rows={3}
@@ -242,11 +230,8 @@ const Comentarios: React.FC<ComentariosProps> = ({ tareaId, tareaNombre, onCerra
                 resize: 'vertical',
                 fontSize: '13px',
                 fontFamily: 'inherit',
-                width: '100%',
-                borderColor: errorContenido ? '#ef4444' : undefined,
               }}
             />
-            {errorContenido && <span className="field-error" role="alert">{errorContenido}</span>}
             <div
               style={{
                 display: 'flex',
@@ -257,7 +242,7 @@ const Comentarios: React.FC<ComentariosProps> = ({ tareaId, tareaNombre, onCerra
                 color: contenido.length > 280 ? '#f87171' : '#94a3b8',
               }}
             >
-              <span>Máximo 300 caracteres</span>
+              <span>TV-CMT-06: Máximo 300 caracteres</span>
               <span>{contenido.length} / 300</span>
             </div>
           </div>
@@ -265,16 +250,15 @@ const Comentarios: React.FC<ComentariosProps> = ({ tareaId, tareaNombre, onCerra
           <button
             type="submit"
             className="btn-save"
-            disabled={enviando || !contenido.trim() || soloLectura}
+            disabled={enviando || !contenido.trim()}
             style={{
               padding: '12px',
               marginTop: 0,
-              cursor: enviando || !contenido.trim() || soloLectura ? 'not-allowed' : 'pointer',
-              opacity: enviando || !contenido.trim() || soloLectura ? 0.6 : 1,
+              cursor: enviando || !contenido.trim() ? 'not-allowed' : 'pointer',
+              opacity: enviando || !contenido.trim() ? 0.6 : 1,
             }}
-            title={soloLectura ? 'Tu rol no puede publicar comentarios' : undefined}
           >
-            {soloLectura ? '🔒 Solo lectura' : enviando ? 'Guardando...' : '➕ Publicar Comentario'}
+            {enviando ? 'Guardando...' : '➕ Publicar Comentario'}
           </button>
         </form>
 

@@ -1,7 +1,5 @@
 import { useEffect, useState } from 'react';
 import { fetchConToken } from '../api';
-import { Obligatorio, Opcional } from './IndicadoresAcceso';
-import NotaCamposObligatorios from './ui/NotaCamposObligatorios';
 
 interface Proyecto {
   id: number;
@@ -29,7 +27,6 @@ export const ProyectosTab = ({ onProyectoCreado }: ProyectosTabProps = {}) => {
   const [fechaInicio, setFechaInicio] = useState('');
   const [fechaFin, setFechaFin] = useState('');
   const [guardando, setGuardando] = useState(false);
-  const [errores, setErrores] = useState<Record<string, string>>({});
 
   const [proyectoEnlaceId, setProyectoEnlaceId] = useState<number | null>(null);
   const [rolEnlace, setRolEnlace] = useState<'Trabajador' | 'Visualizador'>('Trabajador');
@@ -37,6 +34,8 @@ export const ProyectosTab = ({ onProyectoCreado }: ProyectosTabProps = {}) => {
   const [generandoEnlace, setGenerandoEnlace] = useState(false);
 
   const usuarioId = localStorage.getItem('usuario_id') || '1';
+  const rolSistema = Number(localStorage.getItem('rol') || 3);
+  const esAdministrador = rolSistema === 1;
 
   const cargarProyectos = async () => {
     setCargando(true);
@@ -59,14 +58,7 @@ export const ProyectosTab = ({ onProyectoCreado }: ProyectosTabProps = {}) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const next: Record<string, string> = {};
-    if (!nombreProyecto.trim()) next.nombre = 'El nombre de la obra es obligatorio.';
-    if (!ubicacion.trim()) next.ubicacion = 'La ubicación es obligatoria.';
-    if (!fechaInicio) next.fechaInicio = 'La fecha de inicio es obligatoria.';
-    if (!fechaFin) next.fechaFin = 'La fecha de fin estimada es obligatoria.';
-    if (fechaInicio && fechaFin && fechaFin < fechaInicio) next.fechaFin = 'La fecha de fin no puede ser anterior a la fecha de inicio.';
-    setErrores(next);
-    if (Object.keys(next).length) return;
+    if (!nombreProyecto || !ubicacion || !fechaInicio || !fechaFin) return;
 
     setGuardando(true);
     try {
@@ -151,49 +143,65 @@ export const ProyectosTab = ({ onProyectoCreado }: ProyectosTabProps = {}) => {
       <div className="section-header">
         <h2><i className="fas fa-project-diagram"></i> Panel de Proyectos Activos</h2>
       </div>
-      <div className="grid">
-        <div className="card">
-          <div className="card-header"><h3><i className="fas fa-plus-circle"></i> Crear Nuevo Proyecto</h3></div>
-          <form onSubmit={handleSubmit} noValidate>
-            <NotaCamposObligatorios />
-            <div className="input-group">
-              <label htmlFor="proy-nombre">Nombre de la Obra <Obligatorio /></label>
-              <input id="proy-nombre" type="text" value={nombreProyecto} onChange={(e) => { setNombreProyecto(e.target.value); setErrores((p) => ({...p, nombre: ''})); }} placeholder="Ej: Edificio Calle 100" required aria-required="true" aria-invalid={!!errores.nombre} />
-              {errores.nombre && <span className="field-error" role="alert">{errores.nombre}</span>}
-            </div>
-            <div className="input-group">
-              <label htmlFor="proy-ubicacion">Ubicación <Obligatorio /></label>
-              <input id="proy-ubicacion" type="text" value={ubicacion} onChange={(e) => { setUbicacion(e.target.value); setErrores((p) => ({...p, ubicacion: ''})); }} placeholder="Ej: Calle 100 #15-30, Bogotá" required aria-required="true" aria-invalid={!!errores.ubicacion} />
-              {errores.ubicacion && <span className="field-error" role="alert">{errores.ubicacion}</span>}
-            </div>
-            <div className="input-group">
-              <label>Estado <Opcional /></label>
-              <select value={estado} onChange={(e) => setEstado(e.target.value as Proyecto['estado'])}>
-                {ESTADOS.map((e) => <option key={e} value={e}>{e}</option>)}
-              </select>
-            </div>
-            <div className="date-row">
-              <div className="input-group">
-                <label htmlFor="proy-inicio">Fecha Inicio <Obligatorio /></label>
-                <input id="proy-inicio" type="date" value={fechaInicio} onChange={(e) => { setFechaInicio(e.target.value); setErrores((p) => ({...p, fechaInicio: ''})); }} required aria-required="true" aria-invalid={!!errores.fechaInicio} />
-                {errores.fechaInicio && <span className="field-error" role="alert">{errores.fechaInicio}</span>}
-              </div>
-              <div className="input-group">
-                <label htmlFor="proy-fin">Fin Estimado <Obligatorio /></label>
-                <input id="proy-fin" type="date" value={fechaFin} onChange={(e) => { setFechaFin(e.target.value); setErrores((p) => ({...p, fechaFin: ''})); }} required aria-required="true" aria-invalid={!!errores.fechaFin} />
-                {errores.fechaFin && <span className="field-error" role="alert">{errores.fechaFin}</span>}
-              </div>
-            </div>
-            <button type="submit" className="btn-save" disabled={guardando}>
-              {guardando ? 'Guardando...' : 'Registrar e Iniciar Obra'}
-            </button>
-          </form>
+
+      {!esAdministrador && (
+        <div style={{
+          backgroundColor: 'rgba(56, 189, 248, 0.12)',
+          border: '1px solid rgba(56, 189, 248, 0.35)',
+          color: '#38bdf8',
+          padding: '12px 18px',
+          borderRadius: '10px',
+          marginBottom: '20px',
+          fontSize: '13px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+        }}>
+          <i className="fas fa-shield-halved" style={{ fontSize: '16px' }}></i>
+          <span><strong>Modo Consulta de Obras:</strong> La creación, eliminación y emisión de enlaces de invitación a proyectos es exclusiva de Administradores y Arquitectos líderes.</span>
         </div>
+      )}
+
+      <div className="grid" style={{ gridTemplateColumns: esAdministrador ? undefined : '1fr' }}>
+        {esAdministrador && (
+          <div className="card">
+            <div className="card-header"><h3><i className="fas fa-plus-circle"></i> Crear Nuevo Proyecto</h3></div>
+            <form onSubmit={handleSubmit}>
+              <div className="input-group">
+                <label>Nombre de la Obra</label>
+                <input type="text" value={nombreProyecto} onChange={(e) => setNombreProyecto(e.target.value)} placeholder="Ej: Edificio Calle 100" required />
+              </div>
+              <div className="input-group">
+                <label>Ubicación</label>
+                <input type="text" value={ubicacion} onChange={(e) => setUbicacion(e.target.value)} placeholder="Ej: Calle 100 #15-30, Bogotá" required />
+              </div>
+              <div className="input-group">
+                <label>Estado</label>
+                <select value={estado} onChange={(e) => setEstado(e.target.value as Proyecto['estado'])}>
+                  {ESTADOS.map((e) => <option key={e} value={e}>{e}</option>)}
+                </select>
+              </div>
+              <div className="date-row">
+                <div className="input-group">
+                  <label>Fecha Inicio</label>
+                  <input type="date" value={fechaInicio} onChange={(e) => setFechaInicio(e.target.value)} required />
+                </div>
+                <div className="input-group">
+                  <label>Fin Estimado</label>
+                  <input type="date" value={fechaFin} onChange={(e) => setFechaFin(e.target.value)} required />
+                </div>
+              </div>
+              <button type="submit" className="btn-save" disabled={guardando}>
+                {guardando ? 'Guardando...' : 'Registrar e Iniciar Obra'}
+              </button>
+            </form>
+          </div>
+        )}
 
         <div className="card">
           <div className="card-header"><h3><i className="fas fa-list"></i> Obras Registradas</h3></div>
           <div className="project-container">
-            {error && <div className="empty-msg" style={{ color: '#fca5a5' }}>{error}</div>}
+            {error && <div className="empty-msg" style={{ color: '#dc2626' }}>{error}</div>}
             {cargando && <div className="empty-msg">Cargando proyectos...</div>}
             {!cargando && !error && proyectos.length === 0 && (
               <div className="empty-msg">No hay proyectos registrados actualmente.</div>
@@ -203,34 +211,33 @@ export const ProyectosTab = ({ onProyectoCreado }: ProyectosTabProps = {}) => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
                     <h4>{p.nombre_proyecto}</h4>
-                    <span style={{ fontSize: '12px', color: '#cbd5e1' }}>{p.ubicacion_direccion} — {p.estado}</span>
-                    <span style={{ display: 'block', fontSize: '12px', color: '#94a3b8', marginTop: '4px' }}>
-                      {p.fecha_inicio} — {p.fecha_fin_estimada}
-                    </span>
+                    <span style={{ fontSize: '12px', color: '#666' }}>{p.ubicacion_direccion} — {p.estado}</span>
                   </div>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <button
-                      onClick={() => abrirGeneradorEnlace(p.id)}
-                      style={{ background: '#ffd60a', border: 'none', borderRadius: '6px', padding: '6px 12px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
-                    >
-                      <i className="fas fa-share-nodes"></i> Compartir
-                    </button>
-                    <button onClick={() => eliminarProyecto(p.id, p.nombre_proyecto)} className="btn-delete">
-                      <i className="fas fa-trash"></i>
-                    </button>
-                  </div>
+                  {esAdministrador && (
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button
+                        onClick={() => abrirGeneradorEnlace(p.id)}
+                        style={{ background: '#ffd60a', border: 'none', borderRadius: '6px', padding: '6px 12px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
+                      >
+                        <i className="fas fa-share-nodes"></i> Compartir
+                      </button>
+                      <button onClick={() => eliminarProyecto(p.id, p.nombre_proyecto)} className="btn-delete">
+                        <i className="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {proyectoEnlaceId === p.id && (
-                  <div style={{ marginTop: '10px', padding: '12px', background: 'rgba(8, 11, 17, .75)', border: '1px solid rgba(255, 214, 10, .25)', borderRadius: '8px' }}>
-                    <label style={{ fontSize: '12px', fontWeight: 700, color: '#ffd60a', display: 'block', marginBottom: '6px' }}>
+                  <div style={{ marginTop: '10px', padding: '12px', background: '#f8f9fa', borderRadius: '8px' }}>
+                    <label style={{ fontSize: '12px', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '6px' }}>
                       Rol para quien entre con este enlace
                     </label>
                     <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
                       <select
                         value={rolEnlace}
                         onChange={(e) => setRolEnlace(e.target.value as 'Trabajador' | 'Visualizador')}
-                        style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid rgba(255, 214, 10, .35)', background: 'rgba(8, 11, 17, .85)', color: '#fff' }}
+                        style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
                       >
                         <option value="Trabajador">Trabajador (puede subir avances)</option>
                         <option value="Visualizador">Visualizador (solo puede ver)</option>
@@ -245,13 +252,13 @@ export const ProyectosTab = ({ onProyectoCreado }: ProyectosTabProps = {}) => {
                     </div>
                     {enlaceGenerado && (
                       <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                        <input readOnly value={enlaceGenerado} style={{ flex: 1, padding: '8px', fontSize: '12px', borderRadius: '6px', border: '1px solid rgba(255, 214, 10, .35)', background: 'rgba(8, 11, 17, .85)', color: '#fff' }} />
+                        <input readOnly value={enlaceGenerado} style={{ flex: 1, padding: '8px', fontSize: '12px', borderRadius: '6px', border: '1px solid #cbd5e1' }} />
                         <button onClick={copiarEnlace} style={{ background: '#ffd60a', border: 'none', borderRadius: '6px', padding: '8px 12px', fontWeight: 700, cursor: 'pointer' }}>
                           Copiar
                         </button>
                       </div>
                     )}
-                    <p style={{ fontSize: '11px', color: '#cbd5e1', marginTop: '8px', marginBottom: 0 }}>
+                    <p style={{ fontSize: '11px', color: '#888', marginTop: '8px', marginBottom: 0 }}>
                       El enlace expira en 7 días. Cualquiera que entre a Titan V con este link queda vinculado
                       con el rol que elegiste arriba — no necesitas saber su correo de antemano.
                     </p>

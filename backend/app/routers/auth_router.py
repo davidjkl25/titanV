@@ -21,7 +21,7 @@ from app.services import auth_service, email_service, proteccion_service, usuari
 from app.services.email_service import EmailError
 from app.services.proteccion_service import ip_cliente, limitador
 
-router = APIRouter(prefix="/api/auth", tags=["Autenticación"])
+router = APIRouter(prefix="/auth", tags=["Autenticación"])
 
 # Ventanas deslizantes (intentos por ventana) por IP / identidad.
 VENTANA_LOGIN = 300      # 5 min
@@ -181,13 +181,21 @@ def forgot_password(req: ForgotPasswordRequest, request: Request, db: Session = 
 
     try:
         email_service.enviar_pin_por_correo(req.email, pin)
+        print(f"[Titan V PIN] Correo enviado exitosamente a {req.email} con PIN: {pin}")
     except EmailError as e:
+        print(f"[Titan V PIN] Advertencia SMTP: {e}")
+        print(f"[Titan V PIN] PIN GENERADO PARA {req.email}: {pin}")
+        if not email_service._config_smtp():
+            return {
+                "message": f"Código PIN generado ({pin}). Configura SMTP_USER y SMTP_PASSWORD en backend/.env para recibirlo por correo real.",
+                "pin": pin,
+            }
         raise HTTPException(
             status_code=500,
-            detail=f"No se pudo enviar el código. {e}",
+            detail=f"No se pudo enviar el código por correo. {e}",
         )
 
-    return {"message": "Código PIN generado exitosamente."}
+    return {"message": "Código PIN enviado exitosamente a tu correo."}
 
 
 @router.post("/verify-pin")

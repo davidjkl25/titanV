@@ -29,7 +29,8 @@ def _config_smtp() -> dict | None:
     pwd = os.getenv("SMTP_PASSWORD")
     if not all([host, port, user, pwd]):
         return None
-    return {"host": host, "port": int(port), "user": user, "pwd": pwd}
+    pwd = pwd.replace(" ", "").strip()
+    return {"host": host, "port": int(port), "user": user.strip(), "pwd": pwd}
 
 
 def _correo_desde() -> str:

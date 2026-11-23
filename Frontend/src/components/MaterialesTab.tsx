@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import { fetchConToken } from '../api';
-import { AvisoSoloLectura, BadgeBloqueado, Obligatorio } from './IndicadoresAcceso';
-import NotaCamposObligatorios from './ui/NotaCamposObligatorios';
 
 interface Material {
   id: number;
@@ -20,11 +18,9 @@ interface Solicitud {
   cantidad: number;
   estado: 'Pendiente' | 'Aprobada' | 'Rechazada' | 'Entregada';
   fecha_solicitud: string;
-  fecha_actualizacion?: string;
   material_nombre?: string;
   unidad_medida?: string;
   usuario_nombre?: string;
-  proyecto_nombre?: string;
 }
 
 interface MaterialesTabProps {
@@ -32,6 +28,8 @@ interface MaterialesTabProps {
   proyectoNombre?: string;
   rolProyecto?: string;
 }
+
+const estadoClass = (estado: Solicitud['estado']) => `estado estado-${estado.toLowerCase()}`;
 
 const UNIDADES_MEDIDA = [
   'Unidad', 'Bulto', 'Saco', 'Caja', 'Rollo', 'Varilla',
@@ -41,8 +39,10 @@ const UNIDADES_MEDIDA = [
 ];
 
 export const MaterialesTab = ({ proyectoId, proyectoNombre, rolProyecto }: MaterialesTabProps) => {
-  const esAdministrador = rolProyecto === 'Arquitecto';
-  const puedeCrearSolicitud = esAdministrador || rolProyecto === 'Trabajador';
+  const rolSistema = Number(localStorage.getItem('rol') || 3);
+  const esAdministrador = rolSistema === 1 || rolProyecto === 'Arquitecto';
+  const puedeCrearSolicitud = esAdministrador || rolSistema === 2 || rolProyecto === 'Trabajador';
+  const esVisualizador = rolProyecto === 'Visualizador' || (!esAdministrador && !puedeCrearSolicitud);
   const [materiales, setMateriales] = useState<Material[]>([]);
   const [solicitudes, setSolicitudes] = useState<Solicitud[]>([]);
   const [cargando, setCargando] = useState(true);
@@ -56,8 +56,6 @@ export const MaterialesTab = ({ proyectoId, proyectoNombre, rolProyecto }: Mater
   const [cantidadSolicitud, setCantidadSolicitud] = useState('');
   const [guardando, setGuardando] = useState(false);
   const [guardandoSolicitud, setGuardandoSolicitud] = useState(false);
-  const [erroresMat, setErroresMat] = useState<Record<string,string>>({});
-  const [erroresSol, setErroresSol] = useState<Record<string,string>>({});
 
   const cargarDatos = async () => {
     setCargando(true);
@@ -99,13 +97,9 @@ export const MaterialesTab = ({ proyectoId, proyectoNombre, rolProyecto }: Mater
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!esAdministrador) return;
-    const next: Record<string,string> = {};
-    if (!nombre.trim()) next.nombre = 'El nombre del material es obligatorio.';
-    if (!unidad.trim()) next.unidad = 'La unidad de medida es obligatoria.';
+    if (!nombre.trim() || !unidad.trim()) return;
     const cantidad = Number(cantidadInicial);
-    if (!editando && (cantidadInicial === '' || !Number.isFinite(cantidad) || cantidad < 0)) next.cantidadInicial = 'Ingresa una cantidad inicial válida (0 o mayor).';
-    setErroresMat(next);
-    if (Object.keys(next).length) return;
+    if (!editando && (!Number.isFinite(cantidad) || cantidad < 0)) return;
     setGuardando(true);
     try {
       const respuesta = editando
@@ -161,12 +155,8 @@ export const MaterialesTab = ({ proyectoId, proyectoNombre, rolProyecto }: Mater
   const crearSolicitud = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!puedeCrearSolicitud) return;
-    const next: Record<string,string> = {};
     const cantidad = Number(cantidadSolicitud);
-    if (!materialSolicitud) next.materialSolicitud = 'Selecciona un material.';
-    if (!cantidadSolicitud || !Number.isFinite(cantidad) || cantidad <= 0) next.cantidadSolicitud = 'Ingresa una cantidad mayor a 0.';
-    setErroresSol(next);
-    if (Object.keys(next).length) return;
+    if (!materialSolicitud || !Number.isFinite(cantidad) || cantidad <= 0) return;
     setGuardandoSolicitud(true);
     try {
       const respuesta = await fetchConToken('/solicitudes/', {
@@ -207,34 +197,49 @@ export const MaterialesTab = ({ proyectoId, proyectoNombre, rolProyecto }: Mater
     <div className="tab-content active materiales-page">
       <div className="section-header">
         <h2><i className="fas fa-boxes-stacked"></i> Materiales</h2>
-        {proyectoNombre && <p style={{ color: '#cbd5e1' }}>Proyecto activo: <strong style={{ color: '#ffd60a' }}>{proyectoNombre}</strong></p>}
+        {proyectoNombre && <p style={{ color: '#666' }}>Proyecto activo: <strong>{proyectoNombre}</strong></p>}
       </div>
 
-      {error && <div className="empty-msg" style={{ color: '#fca5a5', background: 'rgba(239, 68, 68, .12)', border: '1px solid rgba(252, 165, 165, .4)', borderRadius: 10, marginBottom: 20 }}>{error}</div>}
-      {rolProyecto === 'Visualizador' && <AvisoSoloLectura texto="Tu rol Visualizador solo permite consultar materiales y solicitudes. No puedes crear, editar ni solicitar insumos." />}
+      {error && <div className="empty-msg" style={{ color: '#dc2626', background: '#fff', borderRadius: 10, marginBottom: 20 }}>{error}</div>}
 
-      <div className="grid">
+      {esVisualizador && (
+        <div style={{
+          backgroundColor: 'rgba(74, 222, 128, 0.12)',
+          border: '1px solid rgba(74, 222, 128, 0.35)',
+          color: '#4ade80',
+          padding: '12px 18px',
+          borderRadius: '10px',
+          marginBottom: '20px',
+          fontSize: '13px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+        }}>
+          <i className="fas fa-eye" style={{ fontSize: '16px' }}></i>
+          <span><strong>Modo Visualizador (Solo Lectura):</strong> Consulta el catálogo de materiales y el seguimiento de solicitudes sin modificar inventarios ni aprobar pedidos.</span>
+        </div>
+      )}
+
+      <div className="grid" style={{ gridTemplateColumns: esAdministrador ? undefined : '1fr' }}>
         {esAdministrador && <div className="card">
           <div className="card-header"><h3><i className={editando ? 'fas fa-pen' : 'fas fa-plus-circle'}></i> {editando ? 'Editar material' : 'Crear material'}</h3></div>
-          <form onSubmit={handleSubmit} noValidate>
-            <NotaCamposObligatorios />
+          <form onSubmit={handleSubmit}>
             <div className="input-group">
-              <label htmlFor="mat-nombre">Nombre del material <Obligatorio /></label>
-              <input id="mat-nombre" value={nombre} onChange={(e) => { setNombre(e.target.value); setErroresMat(p=>({...p,nombre:''})); }} placeholder="Ej: Cemento Gris ARGOS" required aria-required="true" aria-invalid={!!erroresMat.nombre} />
-              {erroresMat.nombre && <span className="field-error" role="alert">{erroresMat.nombre}</span>}
+              <label>Nombre del material</label>
+              <input value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Ej: Cemento Gris ARGOS" required />
             </div>
             <div className="input-group">
-              <label htmlFor="mat-unidad">Unidad de medida <Obligatorio /></label>
-              <select id="mat-unidad" value={unidad} onChange={(e) => { setUnidad(e.target.value); setErroresMat(p=>({...p,unidad:''})); }} required aria-required="true" aria-invalid={!!erroresMat.unidad}>
+              <label>Unidad de medida</label>
+              <select value={unidad} onChange={(e) => setUnidad(e.target.value)} required>
                 <option value="">Selecciona una unidad</option>
                 {editando && unidad && !UNIDADES_MEDIDA.includes(unidad) && <option value={unidad}>{unidad}</option>}
                 {UNIDADES_MEDIDA.map((opcion) => <option key={opcion} value={opcion}>{opcion}</option>)}
               </select>
             </div>
             {!editando && <div className="input-group">
-              <label>Cantidad inicial <Obligatorio /></label>
+              <label>Cantidad inicial</label>
               <input type="number" min="0" step="0.01" value={cantidadInicial} onChange={(e) => setCantidadInicial(e.target.value)} placeholder="Ej: 50" required />
-              <small style={{ color: '#94a3b8' }}>La cantidad se registra en el inventario usando la unidad indicada.</small>
+              <small style={{ color: '#666' }}>La cantidad se registra en el inventario usando la unidad indicada.</small>
             </div>}
             <button type="submit" className="btn-save" disabled={guardando}>
               {guardando ? 'Guardando...' : editando ? 'Guardar cambios' : 'Crear material'}
@@ -244,19 +249,18 @@ export const MaterialesTab = ({ proyectoId, proyectoNombre, rolProyecto }: Mater
         </div>}
 
         <div className="card">
-          <div className="card-header"><h3><i className="fas fa-search"></i> Buscar en catálogo</h3>{rolProyecto === 'Visualizador' && <BadgeBloqueado texto="Solo lectura" />}</div>
+          <div className="card-header"><h3><i className="fas fa-search"></i> Buscar en catálogo</h3></div>
           <div style={{ padding: 20 }}>
             <input className="search-input" value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Buscar por material o unidad..." />
           </div>
           {cargando ? <div className="empty-msg">Cargando catálogo...</div> : materialesFiltrados.length === 0 ? <div className="empty-msg">No hay materiales que coincidan.</div> : (
             <div className="table-card" style={{ marginTop: 0 }}>
               <table>
-                <thead><tr><th>Material</th><th>Cantidad inicial</th><th>Disponible</th><th>Unidad</th>{esAdministrador && <th>Acciones</th>}</tr></thead>
+                <thead><tr><th>Material</th><th>Cantidad inicial</th><th>Unidad</th>{esAdministrador && <th>Acciones</th>}</tr></thead>
                 <tbody>{materialesFiltrados.map((m) => (
                   <tr key={m.id}>
                     <td><strong>{m.nombre_material}</strong></td>
                     <td>{m.cantidad_inicial}</td>
-                    <td><strong style={{ color: '#86efac' }}>{m.cantidad_disponible}</strong></td>
                     <td>{m.unidad_medida}</td>
                     {esAdministrador && <td className="actions-cell">
                       <button className="btn-edit" onClick={() => iniciarEdicion(m)}><i className="fas fa-pen"></i></button>
@@ -272,28 +276,23 @@ export const MaterialesTab = ({ proyectoId, proyectoNombre, rolProyecto }: Mater
 
       <div className="card" style={{ marginTop: 30 }}>
         <div className="card-header"><h3><i className="fas fa-file-circle-plus"></i> Solicitudes de materiales</h3></div>
-        {puedeCrearSolicitud && <form onSubmit={crearSolicitud} className="form-horizontal request-form" noValidate>
-          <div style={{ gridColumn: '1 / -1' }}><NotaCamposObligatorios /></div>
-          <div className="input-group"><label htmlFor="sol-material">Material <Obligatorio /></label><select id="sol-material" value={materialSolicitud} onChange={(e) => { setMaterialSolicitud(e.target.value); setErroresSol(p=>({...p,materialSolicitud:''})); }} required aria-required="true" aria-invalid={!!erroresSol.materialSolicitud}><option value="">Selecciona un material</option>{materiales.map((m) => <option key={m.id} value={m.id}>{m.nombre_material} ({m.unidad_medida})</option>)}</select>{erroresSol.materialSolicitud && <span className="field-error" role="alert">{erroresSol.materialSolicitud}</span>}</div>
-          <div className="input-group"><label htmlFor="sol-cantidad">Cantidad <Obligatorio /></label><input id="sol-cantidad" type="number" min="0.01" step="0.01" value={cantidadSolicitud} onChange={(e) => { setCantidadSolicitud(e.target.value); setErroresSol(p=>({...p,cantidadSolicitud:''})); }} required aria-required="true" aria-invalid={!!erroresSol.cantidadSolicitud} />{erroresSol.cantidadSolicitud && <span className="field-error" role="alert">{erroresSol.cantidadSolicitud}</span>}</div>
+        {puedeCrearSolicitud && <form onSubmit={crearSolicitud} className="form-horizontal request-form">
+          <div className="input-group"><label>Material</label><select value={materialSolicitud} onChange={(e) => setMaterialSolicitud(e.target.value)} required><option value="">Selecciona un material</option>{materiales.map((m) => <option key={m.id} value={m.id}>{m.nombre_material} ({m.unidad_medida})</option>)}</select></div>
+          <div className="input-group"><label>Cantidad</label><input type="number" min="0.01" step="0.01" value={cantidadSolicitud} onChange={(e) => setCantidadSolicitud(e.target.value)} required /></div>
           <button type="submit" className="btn-save" disabled={guardandoSolicitud}>{guardandoSolicitud ? 'Enviando...' : 'Crear solicitud'}</button>
         </form>}
 
         <div className="table-card" style={{ marginTop: 0 }}>
           {solicitudes.length === 0 ? <div className="empty-msg">Todavía no hay solicitudes registradas.</div> : (
             <table>
-              <thead><tr><th>Proyecto</th><th>Material</th><th>Cantidad</th><th>Estado</th><th>Solicitante</th><th>Historial / fecha</th>{esAdministrador && <th>Acciones</th>}</tr></thead>
+              <thead><tr><th>Proyecto</th><th>Material</th><th>Cantidad</th><th>Estado</th><th>Historial / fecha</th>{esAdministrador && <th>Acciones</th>}</tr></thead>
               <tbody>{solicitudes.map((s) => (
                 <tr key={s.id}>
-                  <td>{s.proyecto_nombre || proyectoNombre || `#${s.proyecto_id}`}</td>
+                  <td>{proyectoNombre || `#${s.proyecto_id}`}</td>
                   <td>{s.material_nombre || `#${s.material_id}`}</td>
                   <td>{s.cantidad} {s.unidad_medida || ''}</td>
-                  <td><span className={`estado-badge ${s.estado === 'Aprobada' ? 'badge-completado' : s.estado === 'Entregada' ? 'badge-activo' : s.estado === 'Rechazada' ? 'badge-cancelado' : 'badge-pausado'}`}>{s.estado}</span></td>
-                  <td>{s.usuario_nombre || `#${s.usuario_id}`}</td>
-                  <td>
-                    Solicitud: {new Date(s.fecha_solicitud).toLocaleString()}
-                    {s.fecha_actualizacion && <><br />Actualización: {new Date(s.fecha_actualizacion).toLocaleString()}</>}
-                  </td>
+                  <td><span className={estadoClass(s.estado)}>{s.estado}</span></td>
+                  <td>{new Date(s.fecha_solicitud).toLocaleString()}</td>
                   {esAdministrador && <td className="actions-cell">
                     {s.estado === 'Pendiente' && <><button className="btn-small" onClick={() => cambiarEstado(s, 'Aprobada')}>Aprobar</button><button className="btn-small danger" onClick={() => cambiarEstado(s, 'Rechazada')}>Rechazar</button></>}
                     {s.estado === 'Aprobada' && <button className="btn-small" onClick={() => cambiarEstado(s, 'Entregada')}>Entregar</button>}

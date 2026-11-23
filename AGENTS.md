@@ -67,38 +67,6 @@ titanV/
   `Start-Process ...\backend\venv\Scripts\python.exe -m uvicorn app.main:app --reload --port 8000`
   (logs en `C:\Users\User\AppData\Local\Temp\opencode\*.log`). Swagger: http://localhost:8000/docs
 - Frontend: `npm run dev` → http://localhost:5173 (`Frontend/.env` ya tiene el Google Client ID).
-- El backend escucha **solo en IPv4 (127.0.0.1)**: por eso todo el frontend
-  apunta a `http://127.0.0.1:8000` y no a `localhost:8000` (en Windows
-  `localhost` resuelve primero a IPv6). `vite.config.ts` usa `host: true`
-  para que el dev server responda en IPv4 e IPv6.
-
-### Migración de base de datos (instalaciones existentes)
-`backend/sql/migration_rama_test.sql` alinea `titanv_db` con los modelos actuales
-(`materiales.proyecto_id`, `evidencias_multimedia.tarea_id` y backfill de datos).
-Es idempotente y no borra filas. Para ver qué falta:
-
-```bash
-cd backend
-venv\Scripts\python tools\comparar_esquema.py
-```
-
-### Datos de demostración
-`backend/tools/sembrar_datos_demo.py` llena la base con un juego de datos
-coherente: equipo de obra con rol global, proyectos con colaboradores
-(Arquitecto/Trabajador/Visualizador), inventario por obra con kardex, tareas
-con comentarios y evidencias, turnos, actas, solicitudes y enlaces de invitación.
-
-```bash
-cd backend
-venv\Scripts\python tools\sembrar_datos_demo.py           # siembra o completa
-venv\Scripts\python tools\sembrar_datos_demo.py --reset   # regenera los proyectos demo
-venv\Scripts\python tools\verificar_datos.py               # revisa la integridad
-```
-
-Usuarios de demostración: `*@demo.titanv.co` con contraseña `TitanV2026`.
-El script respeta el trigger `validar_stock_antes_de_movimiento`: el inventario
-se fija antes de insertar los movimientos y el saldo final siempre coincide con
-`cantidad_inicial + entradas - salidas`.
 
 ## Verificación obligatoria antes de terminar
 
@@ -114,9 +82,6 @@ inventario, JWT + Google OAuth, invitaciones por correo/enlace, permisos por rol
 materiales por proyecto, aislamiento de datos por usuario, flujo de proyecto
 activo, panel con estado editable (solo Arquitecto), fechas y rol por proyecto,
 y asignación de tareas/turnos limitada a los colaboradores del proyecto.
-También quedó implementada la bitácora/reportes de obra: exportación PDF
-(ReportLab) y Excel (openpyxl) por módulos y rango de fechas, con acceso
-Arquitecto/Visualizador y bloqueo para Trabajador.
 
 Al retomar, revisa `git log --oneline -15` y `git status` para saber dónde quedó
 el trabajo. Todo se trabaja sobre `test`; no tocar `main` sin pedir confirmación.

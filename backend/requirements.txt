@@ -4,7 +4,7 @@ uvicorn[standard]==0.52.4
 
 # --- Base de datos ---
 SQLAlchemy==2.0.52
-pg8000==1.31.6
+psycopg2-binary==2.9.12
 
 # --- Validación de datos (Pydantic, usado por FastAPI) ---
 pydantic==2.13.4
@@ -21,8 +21,3 @@ httpx==0.28.1
 
 # --- Configuración ---
 python-dotenv==1.2.3
-
-# --- Generación de bitácoras / reportes de obra ---
-# ReportLab es pure-Python (no requiere GTK/Pango en Windows); openpyxl para .xlsx
-reportlab==4.5.1
-openpyxl==3.1.5
