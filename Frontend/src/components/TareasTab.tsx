@@ -3,6 +3,7 @@ import axios from 'axios';
 import { fetchConToken } from '../api';
 import Comentarios from './Comentarios';
 import { AvisoSoloLectura, BadgeBloqueado, Obligatorio } from './IndicadoresAcceso';
+import NotaCamposObligatorios from './ui/NotaCamposObligatorios';
 
 export interface Tarea {
   id: number;
@@ -46,6 +47,7 @@ const TareasTab: React.FC<TareasTabProps> = ({ proyectoId: proyectoFijo, rolProy
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [cargando, setCargando] = useState<boolean>(false);
   const [guardando, setGuardando] = useState<boolean>(false);
+  const [erroresForm, setErroresForm] = useState<Record<string,string>>({});
 
   // Campos del formulario
   const [nombreTarea, setNombreTarea] = useState<string>('');
@@ -137,10 +139,13 @@ const TareasTab: React.FC<TareasTabProps> = ({ proyectoId: proyectoFijo, rolProy
 
   const crearTarea = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!nombreTarea.trim()) {
-      mostrarNotificacion('error', 'El nombre de la tarea es obligatorio.');
-      return;
-    }
+    if (soloLectura) return;
+    const next: Record<string,string> = {};
+    if (!nombreTarea.trim()) next.nombre = 'El nombre de la tarea es obligatorio.';
+    if (!proyectoId) next.proyecto = 'Selecciona un proyecto.';
+    if (!usuarioId) next.usuario = 'Selecciona un operario.';
+    setErroresForm(next);
+    if (Object.keys(next).length) { mostrarNotificacion('error', 'Revisa los campos obligatorios.'); return; }
 
     try {
       setGuardando(true);
@@ -218,7 +223,15 @@ const TareasTab: React.FC<TareasTabProps> = ({ proyectoId: proyectoFijo, rolProy
       case 'En Proceso':
         return { bg: 'rgba(56, 189, 248, .12)', text: '#7dd3fc', border: 'rgba(125, 211, 252, .4)' };
       case 'Completada':
+      case 'Finalizada':
         return { bg: 'rgba(34, 197, 94, .12)', text: '#86efac', border: 'rgba(134, 239, 172, .4)' };
+      case 'Cancelada':
+      case 'Revocada':
+        return { bg: 'rgba(239, 68, 68, .14)', text: '#fca5a5', border: 'rgba(252, 165, 165, .4)' };
+      case 'Pausada':
+      case 'Vencida':
+      case 'Expirada':
+        return { bg: 'rgba(245, 158, 11, .16)', text: '#fcd34d', border: 'rgba(245, 158, 11, .4)' };
       default:
         return { bg: 'rgba(148, 163, 184, .12)', text: '#cbd5e1', border: 'rgba(148, 163, 184, .4)' };
     }
@@ -277,18 +290,23 @@ const TareasTab: React.FC<TareasTabProps> = ({ proyectoId: proyectoFijo, rolProy
             <h3><i className="fas fa-plus-circle"></i> Nueva Tarea</h3>
           </div>
 
-          <form onSubmit={crearTarea}>
+          <form onSubmit={crearTarea} noValidate>
+            <NotaCamposObligatorios />
             <div className="input-group">
-              <label>Nombre de la tarea <Obligatorio /></label>
+              <label htmlFor="tarea-nombre">Nombre de la tarea <Obligatorio /></label>
               <input
+                id="tarea-nombre"
                 type="text"
                 placeholder="Ej: Fundición de losa piso 2"
                 value={nombreTarea}
-                onChange={(e) => setNombreTarea(e.target.value)}
+                onChange={(e) => { setNombreTarea(e.target.value); setErroresForm(p=>({...p,nombre:''})); }}
                 required
+                aria-required="true"
+                aria-invalid={!!erroresForm.nombre}
                 maxLength={150}
                 disabled={soloLectura}
               />
+              {erroresForm.nombre && <span className="field-error" role="alert">{erroresForm.nombre}</span>}
             </div>
 
             <div className="input-group">

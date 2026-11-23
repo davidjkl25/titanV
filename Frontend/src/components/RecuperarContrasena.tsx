@@ -165,17 +165,21 @@ const RecuperarContrasena: React.FC<RecuperarContrasenaProps> = ({ onClose }) =>
         <h3 style={{ margin: '0 0 8px 0', fontSize: '18px', color: '#fff' }}>
           Restablecer Contraseña
         </h3>
+        <p className="form-note" style={{ marginBottom: '12px' }}>Los campos marcados con <span className="required-mark">*</span> son obligatorios.</p>
 
         {/* PASO 1: SOLICITAR PIN */}
         {resetStep === 1 && (
           <form onSubmit={handleRequestPin}>
-            <p style={{ fontSize: '12px', color: '#aaa', marginBottom: '16px' }}>
+            <p style={{ fontSize: '12px', color: '#b0b0b0', marginBottom: '16px' }}>
               Ingresa tu correo para recibir un código PIN de verificación.
             </p>
             <div style={{ marginBottom: '14px' }}>
+              <label htmlFor="rec-email" style={{ display: 'block', fontSize: '12px', color: '#e5e7eb', marginBottom: '6px' }}>Correo electrónico <span className="required-mark">*</span></label>
               <input
+                id="rec-email"
                 type="email"
                 required
+                aria-required="true"
                 placeholder="correo@ejemplo.com"
                 value={resetEmail}
                 onChange={(e) => setResetEmail(e.target.value)}
@@ -238,9 +242,10 @@ const RecuperarContrasena: React.FC<RecuperarContrasenaProps> = ({ onClose }) =>
         {/* PASO 2: VERIFICAR PIN */}
         {resetStep === 2 && (
           <form onSubmit={handleVerifyPin}>
-            <p style={{ fontSize: '12px', color: '#aaa', marginBottom: '16px' }}>
+            <p style={{ fontSize: '12px', color: '#b0b0b0', marginBottom: '16px' }}>
               Hemos enviado un PIN de 4 dígitos a <strong>{resetEmail}</strong>.
             </p>
+            <label style={{ display: 'block', fontSize: '12px', color: '#e5e7eb', marginBottom: '6px', textAlign: 'center' }}>Código PIN <span className="required-mark">*</span></label>
             <div style={{
               display: 'flex',
               justifyContent: 'center',
@@ -257,6 +262,9 @@ const RecuperarContrasena: React.FC<RecuperarContrasenaProps> = ({ onClose }) =>
                   value={digit}
                   onChange={(e) => handlePinBoxChange(e.target.value, index)}
                   onKeyDown={(e) => handlePinKeyDown(e, index)}
+                  aria-label={`Dígito ${index + 1} del PIN`}
+                  required
+                  aria-required="true"
                   style={{
                     width: '42px',
                     height: '42px',
@@ -344,13 +352,16 @@ const RecuperarContrasena: React.FC<RecuperarContrasenaProps> = ({ onClose }) =>
         {/* PASO 3: INGRESAR NUEVA CONTRASEÑA */}
         {resetStep === 3 && (
           <form onSubmit={handleResetPassword}>
-            <p style={{ fontSize: '12px', color: '#aaa', marginBottom: '16px' }}>
+            <p style={{ fontSize: '12px', color: '#b0b0b0', marginBottom: '16px' }}>
               Ingresa tu nueva contraseña para completar la recuperación.
             </p>
             <div style={{ marginBottom: '14px' }}>
+              <label htmlFor="rec-newpass" style={{ display: 'block', fontSize: '12px', color: '#e5e7eb', marginBottom: '6px' }}>Nueva contraseña <span className="required-mark">*</span></label>
               <input
+                id="rec-newpass"
                 type="password"
                 required
+                aria-required="true"
                 placeholder="Nueva contraseña"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}

@@ -13,6 +13,8 @@ export interface LoginProps {
   onEnviar: (e: React.FormEvent) => void;
   onGoogleLogin?: () => void;
   onVolverPrincipal: () => void;
+  cargando?: boolean;
+  errorGeneral?: string;
 }
 
 export const Login: React.FC<LoginProps> = ({
@@ -23,10 +25,29 @@ export const Login: React.FC<LoginProps> = ({
   onEnviar,
   onGoogleLogin,
   onVolverPrincipal,
+  cargando = false,
+  errorGeneral = '',
 }) => {
 
   const [mostrarRegistro, setMostrarRegistro] = useState(false);
   const [showForgotModal, setShowForgotModal] = useState(false);
+  const [errores, setErrores] = useState<{ correo?: string; contrasena?: string }>({});
+  const [enviado, setEnviado] = useState(false);
+
+  const validar = () => {
+    const next: { correo?: string; contrasena?: string } = {};
+    if (!correo.trim()) next.correo = 'El correo electrónico es obligatorio.';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo.trim())) next.correo = 'Ingresa un correo electrónico válido.';
+    if (!contrasena) next.contrasena = 'La contraseña es obligatoria.';
+    setErrores(next);
+    return Object.keys(next).length === 0;
+  };
+
+  const manejarSubmit = (e: React.FormEvent) => {
+    setEnviado(true);
+    if (!validar()) { e.preventDefault(); return; }
+    onEnviar(e);
+  };
 
   const manejarRegistro = (datos: {
     nombre: string;
@@ -140,21 +161,27 @@ export const Login: React.FC<LoginProps> = ({
         </h2>
 
         <p style={{
-          color: '#aaa',
+          color: '#b0b0b0',
           fontSize: '14px',
-          marginBottom: '22px'
+          marginBottom: '12px'
         }}>
           Bienvenido al Sistema de Gestión de Obra
         </p>
+        <p className="form-note" style={{ textAlign: 'left', marginBottom: '16px' }}>Los campos marcados con <span className="required-mark">*</span> son obligatorios.</p>
 
-        <form onSubmit={onEnviar}>
+        {errorGeneral && <div className="field-error" role="alert" style={{ marginBottom: '12px' }}>{errorGeneral}</div>}
+
+        <form onSubmit={manejarSubmit} noValidate>
 
           <CardAccion
             label="Correo Electrónico"
             tipo="email"
             placeholder="correo@ejemplo.com"
             valor={correo}
-            onChange={onCorreoChange}
+            onChange={(e) => { onCorreoChange(e); if (enviado) setErrores((p) => ({ ...p, correo: undefined })); }}
+            required
+            error={errores.correo}
+            autoComplete="email"
           />
 
           <CardAccion
@@ -162,26 +189,32 @@ export const Login: React.FC<LoginProps> = ({
             tipo="password"
             placeholder="********"
             valor={contrasena}
-            onChange={onContrasenaChange}
+            onChange={(e) => { onContrasenaChange(e); if (enviado) setErrores((p) => ({ ...p, contrasena: undefined })); }}
+            required
+            error={errores.contrasena}
+            autoComplete="current-password"
           />
 
           <button
             type="submit"
+            disabled={cargando}
+            aria-disabled={cargando}
             style={{
               width: '100%',
               padding: '12px',
-              backgroundColor: '#ffcc00',
+              backgroundColor: cargando ? '#b3a100' : '#ffcc00',
               border: 'none',
               borderRadius: '6px',
               fontWeight: 'bold',
-              cursor: 'pointer',
+              cursor: cargando ? 'not-allowed' : 'pointer',
               marginTop: '10px',
               fontSize: '15px',
               color: '#000',
               transition: 'background 0.2s',
+              opacity: cargando ? 0.75 : 1,
             }}
           >
-            Iniciar Sesión
+            {cargando ? 'Ingresando...' : 'Iniciar Sesión'}
           </button>
 
           {/* Separador */}
