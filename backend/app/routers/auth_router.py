@@ -73,9 +73,9 @@ def login_google(datos: GoogleAuthRequest, request: Request, db: Session = Depen
                 detail="Se alcanzó el límite máximo de usuarios permitidos en el sistema. Contacta al administrador.",
             )
 
-        partes = nombre_verificado.strip().split(" ", 1)
-        nombres = partes[0]
-        apellidos = partes[1] if len(partes) > 1 else ""
+        partes = (nombre_verificado or "").strip().split(" ", 1)
+        nombres = partes[0].strip() if partes and partes[0].strip() else (correo_verificado.split("@")[0] or "Usuario")
+        apellidos = partes[1].strip() if len(partes) > 1 and partes[1].strip() else "Google"
 
         nuevo_usuario = Usuario(
             nombres=nombres,

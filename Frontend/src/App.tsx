@@ -5,6 +5,7 @@ import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import AceptarInvitacionPage from './pages/AceptarInvitacionPage';
+import GoogleAuthPopupPage from './pages/GoogleAuthPopupPage';
 import './App.css';
 
 interface ErrorBoundaryProps {
@@ -91,6 +92,7 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
+      <Route path="/google-auth" element={<GoogleAuthPopupPage />} />
       <Route
         path="/login"
         element={

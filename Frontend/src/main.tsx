@@ -4,8 +4,6 @@ import { GoogleOAuthProvider } from '@react-oauth/google'
 import './index.css'
 import App from './App.tsx'
 
-// Client ID de Google Cloud / Firebase
-// Cámbialo en Frontend/.env → VITE_GOOGLE_CLIENT_ID=tu-client-id.apps.googleusercontent.com
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID?.trim() || ''
 
 createRoot(document.getElementById('root')!).render(
@@ -19,4 +17,3 @@ createRoot(document.getElementById('root')!).render(
     )}
   </StrictMode>,
 )
-

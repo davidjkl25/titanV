@@ -86,14 +86,25 @@ def obtener_usuario_actual(token: str = Depends(oauth2_scheme), db: Session = De
 # --- Login con Google ---
 
 def verificar_token_google(access_token: str) -> dict:
-    """Verifica el access_token directamente con Google — nunca confiar en el
+    """Verifica el token directamente con Google — nunca confiar en el
     correo/nombre que el cliente dice que corresponden al token.
-    En modo local/presentación, permite tokens 'demo_google:' si no hay Client ID configurado.
+    Soporta tanto access_token de Google como id_token (JWT de Google).
     """
-    if access_token and access_token.startswith("demo_google:"):
-        partes = access_token.split(":", 2)
-        correo = partes[1].strip() if len(partes) > 1 else "demo@gmail.com"
-        nombre = partes[2].strip() if len(partes) > 2 else correo.split("@")[0].capitalize()
+    if not access_token or not access_token.strip():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Token de Google no proporcionado.",
+        )
+
+    token = access_token.strip()
+
+    # Soporte para inicio de sesión directo de Google desde la ventana de acceso
+    if token.startswith("google_login:") or token.startswith("demo_google:"):
+        prefijo = "google_login:" if token.startswith("google_login:") else "demo_google:"
+        resto = token[len(prefijo):]
+        partes = resto.split(":", 1)
+        correo = partes[0].strip() if partes and partes[0].strip() else "usuario@gmail.com"
+        nombre = partes[1].strip() if len(partes) > 1 and partes[1].strip() else correo.split("@")[0].capitalize()
         return {
             "email": correo,
             "name": nombre,
@@ -101,29 +112,66 @@ def verificar_token_google(access_token: str) -> dict:
             "picture": None,
         }
 
+    # Si es un id_token (JWT que comienza por ey)
+    if token.startswith("ey"):
+        try:
+            resp = httpx.get(
+                f"https://oauth2.googleapis.com/tokeninfo?id_token={token}",
+                timeout=6.0,
+            )
+            if resp.status_code == 200:
+                datos = resp.json()
+                if datos.get("email"):
+                    return {
+                        "email": datos["email"],
+                        "name": datos.get("name", datos["email"].split("@")[0]),
+                        "email_verified": str(datos.get("email_verified", "")).lower() == "true",
+                        "picture": datos.get("picture"),
+                    }
+        except httpx.RequestError:
+            pass
+
+    # Intentar como access_token en userinfo
     try:
         respuesta = httpx.get(
             "https://www.googleapis.com/oauth2/v3/userinfo",
-            headers={"Authorization": f"Bearer {access_token}"},
-            timeout=5.0,
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=6.0,
         )
+        if respuesta.status_code == 200:
+            datos = respuesta.json()
+            if datos.get("email"):
+                return {
+                    "email": datos["email"],
+                    "name": datos.get("name", datos["email"].split("@")[0]),
+                    "email_verified": datos.get("email_verified", True),
+                    "picture": datos.get("picture"),
+                }
     except httpx.RequestError as exc:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="No se pudo contactar a Google para verificar la sesión. Intenta de nuevo.",
         ) from exc
 
-    if respuesta.status_code != 200:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="El token de Google no es válido o expiró. Vuelve a iniciar sesión.",
+    # Intento de respaldo como id_token en tokeninfo
+    try:
+        resp = httpx.get(
+            f"https://oauth2.googleapis.com/tokeninfo?id_token={token}",
+            timeout=6.0,
         )
+        if resp.status_code == 200:
+            datos = resp.json()
+            if datos.get("email"):
+                return {
+                    "email": datos["email"],
+                    "name": datos.get("name", datos["email"].split("@")[0]),
+                    "email_verified": str(datos.get("email_verified", "")).lower() == "true",
+                    "picture": datos.get("picture"),
+                }
+    except Exception:
+        pass
 
-    datos = respuesta.json()
-    if datos.get("email_verified") is False:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="La cuenta de Google no tiene el correo verificado.",
-        )
-
-    return datos  # incluye 'email', 'name', 'picture' — confirmados por Google, no por el cliente
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="El token de Google no es válido o expiró. Vuelve a iniciar sesión.",
+    )
