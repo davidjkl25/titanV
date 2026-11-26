@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { fetchConToken } from '../api';
 
 interface Usuario {
   id: number;
@@ -8,8 +8,6 @@ interface Usuario {
   rol: number;
   activo: boolean;
 }
-
-const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://127.0.0.1:8000';
 
 const Usuarios: React.FC = () => {
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
@@ -22,10 +20,9 @@ const Usuarios: React.FC = () => {
   const cargarUsuarios = async () => {
     try {
       setCargando(true);
-      const respuesta = await axios.get<Usuario[]>(`${API_URL}/usuarios/`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token') || ''}` },
-      });
-      setUsuarios(respuesta.data);
+      const respuesta = await fetchConToken('/usuarios/');
+      if (!respuesta.ok) throw new Error('No se pudieron cargar los usuarios.');
+      setUsuarios(await respuesta.json());
     } catch (error) {
       console.error('Error al cargar usuarios:', error);
     } finally {

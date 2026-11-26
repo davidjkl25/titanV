@@ -31,8 +31,8 @@ class TareaBase(BaseModel):
 
 
 class TareaCreate(TareaBase):
-    proyecto_id: int = 1
-    usuario_id: Optional[int] = 1  # ID del operario asignado (opcional si aún no hay usuarios)
+    proyecto_id: int
+    usuario_id: Optional[int] = None
 
 
 class TareaUpdate(BaseModel):

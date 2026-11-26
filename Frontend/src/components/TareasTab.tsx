@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { fetchConToken } from '../api';
+import { API_URL, fetchConToken } from '../api';
+import { headersConToken, obtenerSesion } from '../auth';
 import Comentarios from './Comentarios';
 
 export interface Tarea {
@@ -12,12 +13,6 @@ export interface Tarea {
   proyecto_id: number;
   usuario_id: number;
 }
-
-const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://127.0.0.1:8000';
-
-const authHeaders = () => ({
-  headers: { Authorization: `Bearer ${localStorage.getItem('token') || ''}` },
-});
 
 interface Proyecto {
   id: number;
@@ -37,8 +32,7 @@ interface TareasTabProps {
 }
 
 const TareasTab: React.FC<TareasTabProps> = ({ proyectoId: proyectoFijo, rolProyecto }) => {
-  const rolSistema = Number(localStorage.getItem('rol') || 3);
-  const esVisualizador = rolProyecto === 'Visualizador' || (rolSistema === 3 && rolProyecto !== 'Arquitecto' && rolProyecto !== 'Trabajador');
+  const esVisualizador = !['Arquitecto', 'Trabajador'].includes(rolProyecto || '');
 
   const [tareas, setTareas] = useState<Tarea[]>([]);
   const [proyectos, setProyectos] = useState<Proyecto[]>([]);
@@ -50,8 +44,8 @@ const TareasTab: React.FC<TareasTabProps> = ({ proyectoId: proyectoFijo, rolProy
   const [nombreTarea, setNombreTarea] = useState<string>('');
   const [descripcion, setDescripcion] = useState<string>('');
   const [estado, setEstado] = useState<string>('Pendiente');
-  const [proyectoId, setProyectoId] = useState<number>(proyectoFijo ?? 1);
-  const [usuarioId, setUsuarioId] = useState<number>(1);
+  const [proyectoId, setProyectoId] = useState<number>(proyectoFijo ?? 0);
+  const [usuarioId, setUsuarioId] = useState<number>(obtenerSesion()?.usuarioId || 0);
 
   // Tarea seleccionada para comentarios
   const [tareaSeleccionada, setTareaSeleccionada] = useState<Tarea | null>(null);
@@ -62,12 +56,13 @@ const TareasTab: React.FC<TareasTabProps> = ({ proyectoId: proyectoFijo, rolProy
 
   useEffect(() => {
     obtenerProyectos();
-    obtenerUsuarios();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    if (proyectoId) obtenerTareas(Number(proyectoId));
+    if (!proyectoId) return;
+    obtenerTareas(Number(proyectoId));
+    obtenerUsuarios(Number(proyectoId));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [proyectoId]);
 
@@ -97,13 +92,19 @@ const TareasTab: React.FC<TareasTabProps> = ({ proyectoId: proyectoFijo, rolProy
     }
   };
 
-  const obtenerUsuarios = async () => {
+  const obtenerUsuarios = async (idProyecto: number) => {
     try {
-      const respuesta = await axios.get<Usuario[]>(`${API_URL}/usuarios/`, authHeaders());
-      setUsuarios(respuesta.data);
-      if (respuesta.data.length > 0) {
-        setUsuarioId(respuesta.data[0].id);
-      }
+      const respuesta = await fetchConToken(`/proyectos/${idProyecto}/colaboradores/`);
+      if (!respuesta.ok) throw new Error('No se pudieron cargar los colaboradores.');
+      const colaboradores = await respuesta.json();
+      const lista: Usuario[] = colaboradores.map((c: any) => ({
+        id: c.usuario_id,
+        nombre_completo: c.usuario_nombre || `Usuario #${c.usuario_id}`,
+      }));
+      setUsuarios(lista);
+      const sesion = obtenerSesion();
+      const yo = lista.find((u) => u.id === sesion?.usuarioId);
+      setUsuarioId(yo?.id || lista[0]?.id || 0);
     } catch (error) {
       console.warn('No se pudieron cargar usuarios:', error);
     }
@@ -113,7 +114,7 @@ const TareasTab: React.FC<TareasTabProps> = ({ proyectoId: proyectoFijo, rolProy
 
   const formatearError = (error: any, fallback: string) => {
     if (error.code === 'ERR_NETWORK' || error.message === 'Network Error' || !error.response) {
-      return '⚠️ Error de Red: No se pudo conectar con el servidor backend (http://localhost:8000). Asegúrate de tener uvicorn corriendo en la terminal: "cd backend" y luego "uvicorn app.main:app --reload --port 8000".';
+      return 'No se pudo conectar con el servidor. Revisa que la API esté corriendo y que VITE_API_URL apunte a /api.';
     }
     return error.response?.data?.detail || error.message || fallback;
   };
@@ -146,11 +147,11 @@ const TareasTab: React.FC<TareasTabProps> = ({ proyectoId: proyectoFijo, rolProy
         nombre_tarea: nombreTarea.trim(),
         descripcion: descripcion.trim(),
         estado: estado,
-        proyecto_id: Number(proyectoId) || 1,
-        usuario_id: Number(usuarioId) || 1,
+        proyecto_id: Number(proyectoId),
+        usuario_id: Number(usuarioId),
       };
 
-      const respuesta = await axios.post<Tarea>(`${API_URL}/tareas/`, payload, authHeaders());
+      const respuesta = await axios.post<Tarea>(`${API_URL}/tareas/`, payload, { headers: headersConToken() });
       setTareas((prev) => [respuesta.data, ...prev]);
 
       // Limpiar formulario
@@ -171,7 +172,7 @@ const TareasTab: React.FC<TareasTabProps> = ({ proyectoId: proyectoFijo, rolProy
       const respuesta = await axios.put<Tarea>(
         `${API_URL}/tareas/${idTarea}`,
         { estado: nuevoEstado },
-        authHeaders()
+        { headers: headersConToken() }
       );
 
       setTareas((prev) =>
@@ -195,7 +196,7 @@ const TareasTab: React.FC<TareasTabProps> = ({ proyectoId: proyectoFijo, rolProy
     }
 
     try {
-      await axios.delete(`${API_URL}/tareas/${idTarea}`, authHeaders());
+      await axios.delete(`${API_URL}/tareas/${idTarea}`, { headers: headersConToken() });
       setTareas((prev) => prev.filter((t) => t.id !== idTarea));
 
       if (tareaSeleccionada?.id === idTarea) {
@@ -589,6 +590,7 @@ const TareasTab: React.FC<TareasTabProps> = ({ proyectoId: proyectoFijo, rolProy
               <Comentarios
                 tareaId={tareaSeleccionada.id}
                 tareaNombre={tareaSeleccionada.nombre_tarea}
+                rolProyecto={rolProyecto}
                 onCerrar={() => setTareaSeleccionada(null)}
               />
             </div>

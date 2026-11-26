@@ -26,14 +26,14 @@ class Usuario(Base):
     fecha_vencimiento_licencia = Column(Date, nullable=True)
     tiene_certificacion_maquinaria = Column(Boolean, default=False)
 
-    # Campos para la recuperación de contraseña por PIN de 4 dígitos
-    reset_pin = Column(String(4), nullable=True)
-    reset_pin_expira = Column(DateTime, nullable=True)
+    reset_token_hash = Column(String(64), nullable=True)
+    reset_token_expira = Column(DateTime, nullable=True)
+    reset_token_usado_en = Column(DateTime, nullable=True)
+    reset_sesion_hash = Column(String(64), nullable=True)
+    reset_sesion_expira = Column(DateTime, nullable=True)
 
-    # Protección contra fuerza bruta: bloqueo temporal tras intentos fallidos
     bloqueado_hasta = Column(DateTime, nullable=True)
 
-    # Relaciones inversas
     comentarios = relationship("Comentario", back_populates="usuario", cascade="all, delete-orphan")
     turnos_relevos = relationship("TurnoRelevo", back_populates="usuario", cascade="all, delete-orphan")
     historial_movimientos = relationship(

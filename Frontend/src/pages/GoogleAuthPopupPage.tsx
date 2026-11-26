@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { API_URL } from '../api';
+import { guardarSesion } from '../auth';
 
 interface CuentaItem {
   nombre: string;
@@ -7,7 +9,6 @@ interface CuentaItem {
   avatarColor: string;
 }
 
-const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://127.0.0.1:8000';
 const COLORES = ['#0b8043', '#d93025', '#1a73e8', '#f29900', '#8e24aa', '#e37400'];
 
 export const GoogleAuthPopupPage: React.FC = () => {
@@ -102,15 +103,11 @@ export const GoogleAuthPopupPage: React.FC = () => {
     setCargando(true);
 
     try {
-      const respuesta = await axios.post(`${API_URL}/api/auth/google`, {
+      const respuesta = await axios.post(`${API_URL}/auth/google`, {
         credential: `google_login:${cuentaSeleccionada.email.trim()}:${cuentaSeleccionada.nombre.trim()}`,
       });
 
-      // Guardar sesión en localStorage
-      localStorage.setItem('token', respuesta.data.token);
-      localStorage.setItem('usuario_id', String(respuesta.data.usuario_id));
-      localStorage.setItem('usuario_nombre', respuesta.data.nombre);
-      localStorage.setItem('rol', String(respuesta.data.rol));
+      guardarSesion(respuesta.data);
 
       // Guardar cuenta recordada
       guardarCuentaLocal(cuentaSeleccionada.email, cuentaSeleccionada.nombre);
@@ -120,10 +117,6 @@ export const GoogleAuthPopupPage: React.FC = () => {
         window.opener.postMessage(
           {
             type: 'GOOGLE_AUTH_SUCCESS',
-            token: respuesta.data.token,
-            usuario_id: respuesta.data.usuario_id,
-            nombre: respuesta.data.nombre,
-            rol: respuesta.data.rol,
           },
           '*'
         );

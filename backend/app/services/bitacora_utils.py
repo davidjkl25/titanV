@@ -12,11 +12,11 @@ from pathlib import Path
 from typing import Any, Optional
 from xml.sax.saxutils import escape
 
+from app.core.config import ruta_uploads
 from app.models import Usuario
 
-# backend/app/services/bitacora_utils.py -> backend/
 CARPETA_BACKEND = Path(__file__).resolve().parents[2]
-CARPETA_UPLOADS = CARPETA_BACKEND / "uploads"
+CARPETA_UPLOADS = ruta_uploads()
 RUTA_LOGO = CARPETA_BACKEND / "app" / "assets" / "logo.png"
 
 EXTENSIONES_IMAGEN = {".jpg", ".jpeg", ".png", ".webp"}

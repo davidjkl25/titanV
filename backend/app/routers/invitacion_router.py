@@ -4,9 +4,10 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.core.deps import get_current_user
 from app.models import RolProyecto, Usuario
 from app.schemas import AceptarInvitacionResponse, EnlaceInvitacionCreate, EnlaceInvitacionResponse
-from app.services import auth_service, colaborador_service, invitacion_service, proyecto_service
+from app.services import colaborador_service, invitacion_service, proyecto_service
 
 router = APIRouter(tags=["Invitaciones"])
 
@@ -29,7 +30,7 @@ def crear_enlace(
     proyecto_id: int,
     datos: EnlaceInvitacionCreate,
     db: Session = Depends(get_db),
-    usuario_actual: Usuario = Depends(auth_service.obtener_usuario_actual),
+    usuario_actual: Usuario = Depends(get_current_user),
 ):
     if not proyecto_service.obtener_proyecto(db, proyecto_id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Proyecto no encontrado")
@@ -46,7 +47,7 @@ def crear_enlace(
 def listar_enlaces(
     proyecto_id: int,
     db: Session = Depends(get_db),
-    usuario_actual: Usuario = Depends(auth_service.obtener_usuario_actual),
+    usuario_actual: Usuario = Depends(get_current_user),
 ):
     _exigir_arquitecto(db, proyecto_id, usuario_actual)
     return invitacion_service.listar_enlaces(db, proyecto_id)
@@ -57,7 +58,7 @@ def revocar_enlace(
     proyecto_id: int,
     enlace_id: int,
     db: Session = Depends(get_db),
-    usuario_actual: Usuario = Depends(auth_service.obtener_usuario_actual),
+    usuario_actual: Usuario = Depends(get_current_user),
 ):
     _exigir_arquitecto(db, proyecto_id, usuario_actual)
     if not invitacion_service.revocar_enlace(db, proyecto_id, enlace_id):
@@ -69,7 +70,7 @@ def revocar_enlace(
 def aceptar_invitacion(
     token: str,
     db: Session = Depends(get_db),
-    usuario_actual: Usuario = Depends(auth_service.obtener_usuario_actual),
+    usuario_actual: Usuario = Depends(get_current_user),
 ):
     """El frontend llama esto cuando un usuario logueado abre un link de invitación."""
     try:

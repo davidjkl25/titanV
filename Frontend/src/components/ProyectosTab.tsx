@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { fetchConToken } from '../api';
+import { obtenerSesion } from '../auth';
 
 interface Proyecto {
   id: number;
@@ -32,18 +33,38 @@ export const ProyectosTab = ({ onProyectoCreado }: ProyectosTabProps = {}) => {
   const [rolEnlace, setRolEnlace] = useState<'Trabajador' | 'Visualizador'>('Trabajador');
   const [enlaceGenerado, setEnlaceGenerado] = useState('');
   const [generandoEnlace, setGenerandoEnlace] = useState(false);
+  const [rolesPorProyecto, setRolesPorProyecto] = useState<Record<number, string>>({});
 
-  const usuarioId = localStorage.getItem('usuario_id') || '1';
-  const rolSistema = Number(localStorage.getItem('rol') || 3);
-  const esAdministrador = rolSistema === 1;
+  const sesion = obtenerSesion();
+  const esArquitecto = (proyectoId: number) => rolesPorProyecto[proyectoId] === 'Arquitecto';
+
+  const cargarRoles = async (proyectos: Proyecto[]) => {
+    if (!sesion) return;
+    const resultados = await Promise.all(
+      proyectos.map(async (proyecto) => {
+        try {
+          const respuesta = await fetchConToken(`/proyectos/${proyecto.id}/colaboradores/`);
+          if (!respuesta.ok) return [proyecto.id, ''] as const;
+          const colaboradores = await respuesta.json();
+          const actual = colaboradores.find((c: { usuario_id: number }) => c.usuario_id === sesion.usuarioId);
+          return [proyecto.id, actual?.rol || ''] as const;
+        } catch {
+          return [proyecto.id, ''] as const;
+        }
+      })
+    );
+    setRolesPorProyecto(Object.fromEntries(resultados));
+  };
 
   const cargarProyectos = async () => {
     setCargando(true);
     setError('');
     try {
-      const respuesta = await fetchConToken(`/proyectos/?usuario_id=${usuarioId}`);
+      const respuesta = await fetchConToken('/proyectos/');
       if (!respuesta.ok) throw new Error('No se pudieron cargar los proyectos.');
-      setProyectos(await respuesta.json());
+      const datos = await respuesta.json();
+      setProyectos(datos);
+      await cargarRoles(datos);
     } catch (err: any) {
       setError(err.message || 'No se pudieron cargar los proyectos.');
     } finally {
@@ -62,7 +83,7 @@ export const ProyectosTab = ({ onProyectoCreado }: ProyectosTabProps = {}) => {
 
     setGuardando(true);
     try {
-      const respuesta = await fetchConToken(`/proyectos/?usuario_id=${usuarioId}`, {
+      const respuesta = await fetchConToken('/proyectos/', {
         method: 'POST',
         body: JSON.stringify({
           nombre_proyecto: nombreProyecto,
@@ -144,27 +165,8 @@ export const ProyectosTab = ({ onProyectoCreado }: ProyectosTabProps = {}) => {
         <h2><i className="fas fa-project-diagram"></i> Panel de Proyectos Activos</h2>
       </div>
 
-      {!esAdministrador && (
-        <div style={{
-          backgroundColor: 'rgba(56, 189, 248, 0.12)',
-          border: '1px solid rgba(56, 189, 248, 0.35)',
-          color: '#38bdf8',
-          padding: '12px 18px',
-          borderRadius: '10px',
-          marginBottom: '20px',
-          fontSize: '13px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px',
-        }}>
-          <i className="fas fa-shield-halved" style={{ fontSize: '16px' }}></i>
-          <span><strong>Modo Consulta de Obras:</strong> La creación, eliminación y emisión de enlaces de invitación a proyectos es exclusiva de Administradores y Arquitectos líderes.</span>
-        </div>
-      )}
-
-      <div className="grid" style={{ gridTemplateColumns: esAdministrador ? undefined : '1fr' }}>
-        {esAdministrador && (
-          <div className="card">
+      <div className="grid">
+        <div className="card">
             <div className="card-header"><h3><i className="fas fa-plus-circle"></i> Crear Nuevo Proyecto</h3></div>
             <form onSubmit={handleSubmit}>
               <div className="input-group">
@@ -196,7 +198,6 @@ export const ProyectosTab = ({ onProyectoCreado }: ProyectosTabProps = {}) => {
               </button>
             </form>
           </div>
-        )}
 
         <div className="card">
           <div className="card-header"><h3><i className="fas fa-list"></i> Obras Registradas</h3></div>
@@ -213,7 +214,7 @@ export const ProyectosTab = ({ onProyectoCreado }: ProyectosTabProps = {}) => {
                     <h4>{p.nombre_proyecto}</h4>
                     <span style={{ fontSize: '12px', color: '#666' }}>{p.ubicacion_direccion} — {p.estado}</span>
                   </div>
-                  {esAdministrador && (
+                  {esArquitecto(p.id) && (
                     <div style={{ display: 'flex', gap: '8px' }}>
                       <button
                         onClick={() => abrirGeneradorEnlace(p.id)}

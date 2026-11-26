@@ -8,7 +8,7 @@ from app.core.deps import get_current_user
 from app.core.permissions import verificar_rol_proyecto
 from app.models import RolProyecto, Usuario
 from app.schemas import ProyectoCreate, ProyectoResponse, ProyectoUpdate
-from app.services import auth_service, colaborador_service, proyecto_service
+from app.services import colaborador_service, proyecto_service
 
 router = APIRouter(prefix="/proyectos", tags=["Proyectos"])
 
@@ -80,7 +80,7 @@ def update_proyecto(
 def delete_proyecto(
     proyecto_id: int,
     db: Session = Depends(get_db),
-    usuario_actual: Usuario = Depends(auth_service.obtener_usuario_actual),
+    usuario_actual: Usuario = Depends(get_current_user),
 ):
     _exigir_arquitecto(db, proyecto_id, usuario_actual)
     if not proyecto_service.eliminar_proyecto(db, proyecto_id):
@@ -92,7 +92,7 @@ def delete_proyecto(
 def restaurar_proyecto(
     proyecto_id: int,
     db: Session = Depends(get_db),
-    usuario_actual: Usuario = Depends(auth_service.obtener_usuario_actual),
+    usuario_actual: Usuario = Depends(get_current_user),
 ):
     """Deshace un DELETE — el proyecto vuelve a aparecer en los listados normales."""
     _exigir_arquitecto(db, proyecto_id, usuario_actual)

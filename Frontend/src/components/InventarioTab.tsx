@@ -6,8 +6,7 @@ interface Inventario { proyecto_id: number; material_id: number; cantidad_dispon
 interface Movimiento { id: number; proyecto_id: number; material_id: number; usuario_id: number; tipo_movimiento: string; cantidad: number; fecha_movimiento: string; material_nombre?: string; unidad_medida?: string; usuario_nombre?: string; }
 
 export const InventarioTab = ({ proyectoId, proyectoNombre, rolProyecto }: { proyectoId: number; proyectoNombre?: string; rolProyecto?: string }) => {
-  const rolSistema = Number(localStorage.getItem('rol') || 3);
-  const esAdministrador = rolSistema === 1 || rolProyecto === 'Arquitecto';
+  const esAdministrador = rolProyecto === 'Arquitecto';
   const esVisualizador = rolProyecto === 'Visualizador' || (!esAdministrador && rolProyecto !== 'Trabajador');
   const [materiales, setMateriales] = useState<Material[]>([]);
   const [inventario, setInventario] = useState<Inventario[]>([]);

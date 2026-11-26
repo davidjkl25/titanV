@@ -13,7 +13,7 @@ from app.models import RolProyecto, Usuario
 from app.services import bitacora_datos_service, bitacora_excel_service, bitacora_pdf_service, proyecto_service
 from app.services.bitacora_utils import nombre_archivo_seguro
 
-router = APIRouter(prefix="/api/proyectos/{proyecto_id}/reportes", tags=["Reportes"])
+router = APIRouter(prefix="/proyectos/{proyecto_id}/reportes", tags=["Reportes"])
 
 
 @router.get(

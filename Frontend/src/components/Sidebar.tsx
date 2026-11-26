@@ -1,3 +1,7 @@
+import { useState } from 'react';
+import { obtenerSesion } from '../auth';
+import CambiarContrasena from './CambiarContrasena';
+
 interface SidebarProps {
   activeTab: string;
   onSelectTab: (tab: string) => void;
@@ -10,8 +14,9 @@ interface SidebarProps {
 const ITEMS_MODULO = ['colaboradores', 'materiales', 'inventario', 'tareas', 'turnos', 'evidencias'];
 
 export const Sidebar = ({ activeTab, onSelectTab, onLogout, proyecto, onSalirProyecto, puedeVerModulo }: SidebarProps) => {
+  const [modalContrasena, setModalContrasena] = useState(false);
   const sinProyecto = !proyecto;
-  const puedeVer = (tab: string) => (puedeVerModulo ? puedeVerModulo(tab) : true);
+  const puedeVer = (tab: string) => (puedeVerModulo ? puedeVerModulo(tab) : !ITEMS_MODULO.includes(tab));
 
   const manejarClick = (tab: string) => {
     if (sinProyecto && ITEMS_MODULO.includes(tab)) {
@@ -33,14 +38,15 @@ export const Sidebar = ({ activeTab, onSelectTab, onLogout, proyecto, onSalirPro
       <i className="fas fa-lock" style={{ fontSize: '11px', marginLeft: '6px' }}></i>
     ) : null;
 
-  const nombreUsuario = localStorage.getItem('usuario_nombre') || 'Usuario';
-  const correoUsuario = localStorage.getItem('usuario_correo') || '';
-  const rolRaw = localStorage.getItem('rol');
+  const sesion = obtenerSesion();
+  const nombreUsuario = sesion?.nombre || 'Usuario';
+  const correoUsuario = sesion?.correo || '';
+  const rolRaw = sesion?.rolSistema;
   const rolInfo = (() => {
     switch (rolRaw) {
-      case '1':
+      case 1:
         return { label: 'Administrador', icon: 'fa-crown', color: '#ffd60a', bg: 'rgba(255, 214, 10, 0.15)' };
-      case '2':
+      case 2:
         return { label: 'Supervisor', icon: 'fa-helmet-safety', color: '#38bdf8', bg: 'rgba(56, 189, 248, 0.15)' };
       default:
         return { label: 'Operario / Vis.', icon: 'fa-eye', color: '#4ade80', bg: 'rgba(74, 222, 128, 0.15)' };
@@ -134,10 +140,14 @@ export const Sidebar = ({ activeTab, onSelectTab, onLogout, proyecto, onSalirPro
             </span>
           </div>
         </div>
+        <button type="button" onClick={() => setModalContrasena(true)} className="sidebar-logout-btn">
+          <i className="fas fa-key"></i> Cambiar contraseña
+        </button>
         <button type="button" onClick={onLogout} className="sidebar-logout-btn">
           <i className="fas fa-arrow-right-from-bracket"></i> Cerrar sesión
         </button>
       </div>
+      {modalContrasena && <CambiarContrasena onClose={() => setModalContrasena(false)} />}
     </div>
   );
 };

@@ -1,38 +1,68 @@
+import hashlib
+import hmac
 import os
-import random
+import secrets
 from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
-from app.core.config import MAX_USUARIOS
+from app.core.config import ACCESS_TOKEN_EXPIRE, MAX_USUARIOS
 from app.core.database import get_db
+from app.core.deps import get_current_user
 from app.models import Usuario
 from app.schemas import (
     ForgotPasswordRequest,
     GoogleAuthRequest,
     ResetPasswordRequest,
+    TokenResponse,
     UsuarioCreate,
     UsuarioLogin,
     UsuarioResponse,
     VerifyPinRequest,
 )
 from app.services import auth_service, email_service, proteccion_service, usuario_service
-from app.services.email_service import EmailError
-from app.services.proteccion_service import ip_cliente, limitador
+from app.services.proteccion_service import ip_cliente
 
 router = APIRouter(prefix="/auth", tags=["Autenticación"])
 
-# Ventanas deslizantes (intentos por ventana) por IP / identidad.
-VENTANA_LOGIN = 300      # 5 min
-VENTANA_REGISTRO = 600   # 10 min
-VENTANA_PIN = 300        # 5 min
+VENTANA_LOGIN = 300
+VENTANA_REGISTRO = 600
+VENTANA_RECUPERACION = 900
+MINUTOS_TOKEN_RECUPERACION = 15
+MINUTOS_SESION_RECUPERACION = 5
+MENSAJE_GENERICO_RECUPERACION = "Si el correo está registrado, recibirás las instrucciones para restablecer la contraseña."
+MENSAJE_TOKEN_INVALIDO = "Los datos de recuperación no son válidos o han expirado."
+
+
+def _hash_token(token: str) -> str:
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
+def _tokens_iguales(valor: str | None, candidato: str) -> bool:
+    if not valor:
+        return False
+    return hmac.compare_digest(valor, _hash_token(candidato))
+
+
+def _respuesta_token(usuario: Usuario, mensaje: str, correo: str | None = None) -> dict:
+    return {
+        "mensaje": mensaje,
+        "usuario_id": usuario.id_usuario,
+        "nombre": f"{usuario.nombres} {usuario.apellidos}".strip(),
+        "correo": correo or usuario.correo_electronico,
+        "rol": usuario.rol,
+        "token": auth_service.crear_token_acceso(usuario),
+        "token_type": "bearer",
+        "expires_in": int(ACCESS_TOKEN_EXPIRE.total_seconds()),
+    }
 
 
 @router.post("/registro", response_model=UsuarioResponse, status_code=status.HTTP_201_CREATED)
 def registro(usuario: UsuarioCreate, request: Request, db: Session = Depends(get_db)):
-    """Registro público de nuevo usuario en la base de datos."""
-    limitador.verificar(f"registro:{ip_cliente(request)}", maximo=5, ventana_segundos=VENTANA_REGISTRO)
+    proteccion_service.verificar_limite(
+        db, f"registro:{ip_cliente(request)}", maximo=5, ventana_segundos=VENTANA_REGISTRO
+    )
 
     if MAX_USUARIOS > 0:
         total_usuarios = db.query(Usuario).count()
@@ -50,15 +80,11 @@ def registro(usuario: UsuarioCreate, request: Request, db: Session = Depends(get
     return usuario_service.crear_usuario(db, usuario)
 
 
-@router.post("/google")
+@router.post("/google", response_model=TokenResponse)
 def login_google(datos: GoogleAuthRequest, request: Request, db: Session = Depends(get_db)):
-    """Inicia sesión con Google o crea al usuario en PostgreSQL si es nuevo.
-
-    El correo y nombre se toman de la respuesta VERIFICADA de Google
-    (obtenida server-side con el access_token), nunca de lo que el cliente
-    haya mandado en el body — eso es lo que cierra el hueco de seguridad.
-    """
-    limitador.verificar(f"google:{ip_cliente(request)}", maximo=15, ventana_segundos=VENTANA_LOGIN)
+    proteccion_service.verificar_limite(
+        db, f"google:{ip_cliente(request)}", maximo=15, ventana_segundos=VENTANA_LOGIN
+    )
 
     datos_google = auth_service.verificar_token_google(datos.credential)
     correo_verificado = datos_google["email"]
@@ -77,7 +103,7 @@ def login_google(datos: GoogleAuthRequest, request: Request, db: Session = Depen
         nombres = partes[0].strip() if partes and partes[0].strip() else (correo_verificado.split("@")[0] or "Usuario")
         apellidos = partes[1].strip() if len(partes) > 1 and partes[1].strip() else "Google"
 
-        nuevo_usuario = Usuario(
+        usuario = Usuario(
             nombres=nombres,
             apellidos=apellidos,
             correo_electronico=correo_verificado,
@@ -85,10 +111,9 @@ def login_google(datos: GoogleAuthRequest, request: Request, db: Session = Depen
             rol=3,
             activo=True,
         )
-        db.add(nuevo_usuario)
+        db.add(usuario)
         db.commit()
-        db.refresh(nuevo_usuario)
-        usuario = nuevo_usuario
+        db.refresh(usuario)
 
     if not usuario.activo:
         raise HTTPException(
@@ -97,30 +122,19 @@ def login_google(datos: GoogleAuthRequest, request: Request, db: Session = Depen
         )
 
     proteccion_service.reiniciar_intentos(db, usuario)
-    token = auth_service.crear_token_acceso(usuario)
-
-    return {
-        "mensaje": "Inicio de sesión con Google exitoso",
-        "usuario_id": usuario.id_usuario,
-        "nombre": f"{usuario.nombres} {usuario.apellidos}".strip(),
-        "correo": usuario.correo_electronico,
-        "rol": usuario.rol,
-        "token": token,
-        "token_type": "bearer",
-    }
+    return _respuesta_token(usuario, "Inicio de sesión con Google exitoso", correo_verificado)
 
 
-@router.post("/login")
+@router.post("/login", response_model=TokenResponse)
 def login(credenciales: UsuarioLogin, request: Request, db: Session = Depends(get_db)):
-    # Capa 1: corta ráfagas por IP antes de tocar la base de datos.
-    limitador.verificar(f"login:{ip_cliente(request)}", maximo=10, ventana_segundos=VENTANA_LOGIN)
+    proteccion_service.verificar_limite(
+        db, f"login:{ip_cliente(request)}", maximo=10, ventana_segundos=VENTANA_LOGIN
+    )
 
     usuario = db.query(Usuario).filter(Usuario.correo_electronico == credenciales.correo_electronico).first()
     if not usuario:
-        # Mismo mensaje que una contraseña mala: no se revela si el correo existe.
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Credenciales incorrectas")
 
-    # Capa 2: bloqueo persistente de la cuenta tras fallos consecutivos.
     proteccion_service.verificar_bloqueo_cuenta(usuario)
 
     if not auth_service.verificar_contrasena(credenciales.contrasena, usuario.contrasena_encriptada):
@@ -142,99 +156,91 @@ def login(credenciales: UsuarioLogin, request: Request, db: Session = Depends(ge
         )
 
     proteccion_service.reiniciar_intentos(db, usuario)
-    token = auth_service.crear_token_acceso(usuario)
-
-    return {
-        "mensaje": "Login exitoso",
-        "usuario_id": usuario.id_usuario,
-        "nombre": f"{usuario.nombres} {usuario.apellidos}".strip(),
-        "rol": usuario.rol,
-        "token": token,
-        "token_type": "bearer",
-    }
+    return _respuesta_token(usuario, "Login exitoso")
 
 
 @router.get("/verificar")
-def verificar_sesion(usuario_actual: Usuario = Depends(auth_service.obtener_usuario_actual)):
-    """Útil para que el frontend confirme si el token guardado todavía es válido."""
+def verificar_sesion(usuario_actual: Usuario = Depends(get_current_user)):
     return {
         "usuario_id": usuario_actual.id_usuario,
         "nombre": f"{usuario_actual.nombres} {usuario_actual.apellidos}".strip(),
+        "correo": usuario_actual.correo_electronico,
         "rol": usuario_actual.rol,
     }
 
 
 @router.post("/forgot-password")
 def forgot_password(req: ForgotPasswordRequest, request: Request, db: Session = Depends(get_db)):
-    ip = ip_cliente(request)
-    limitador.verificar(f"forgot-ip:{ip}", maximo=5, ventana_segundos=900)
-    limitador.verificar(f"forgot-mail:{req.email.lower()}", maximo=5, ventana_segundos=900)
+    correo = req.email.lower()
+    proteccion_service.verificar_limite(
+        db, f"forgot-ip:{ip_cliente(request)}", maximo=5, ventana_segundos=VENTANA_RECUPERACION
+    )
+    proteccion_service.verificar_limite(db, f"forgot-mail:{correo}", maximo=5, ventana_segundos=VENTANA_RECUPERACION)
 
-    usuario = db.query(Usuario).filter(Usuario.correo_electronico == req.email).first()
-    if not usuario:
-        return {"message": "Si el correo está registrado, se ha enviado un código PIN."}
+    usuario = db.query(Usuario).filter(Usuario.correo_electronico == correo).first()
+    if usuario:
+        token = secrets.token_urlsafe(32)
+        usuario.reset_token_hash = _hash_token(token)
+        usuario.reset_token_expira = datetime.utcnow() + timedelta(minutes=MINUTOS_TOKEN_RECUPERACION)
+        usuario.reset_token_usado_en = None
+        usuario.reset_sesion_hash = None
+        usuario.reset_sesion_expira = None
+        db.commit()
+        email_service.enviar_token_recuperacion(correo, token)
 
-    pin = f"{random.randint(0, 9999):04d}"
-    usuario.reset_pin = pin
-    usuario.reset_pin_expira = datetime.utcnow() + timedelta(minutes=15)
-    db.commit()
-
-    try:
-        email_service.enviar_pin_por_correo(req.email, pin)
-        print(f"[Titan V PIN] Correo enviado exitosamente a {req.email} con PIN: {pin}")
-    except EmailError as e:
-        print(f"[Titan V PIN] Advertencia SMTP: {e}")
-        print(f"[Titan V PIN] PIN GENERADO PARA {req.email}: {pin}")
-        if not email_service._config_smtp():
-            return {
-                "message": f"Código PIN generado ({pin}). Configura SMTP_USER y SMTP_PASSWORD en backend/.env para recibirlo por correo real.",
-                "pin": pin,
-            }
-        raise HTTPException(
-            status_code=500,
-            detail=f"No se pudo enviar el código por correo. {e}",
-        )
-
-    return {"message": "Código PIN enviado exitosamente a tu correo."}
+    return {"message": MENSAJE_GENERICO_RECUPERACION}
 
 
 @router.post("/verify-pin")
 def verify_pin(req: VerifyPinRequest, request: Request, db: Session = Depends(get_db)):
-    ip = ip_cliente(request)
-    # El PIN son 4 dígitos: sin límite por correo, un ataque de fuerza bruta
-    # tendría miles de intentos disponibles.
-    limitador.verificar(f"pin-ip:{ip}", maximo=15, ventana_segundos=VENTANA_PIN)
-    limitador.verificar(f"pin-mail:{req.email.lower()}", maximo=10, ventana_segundos=900)
+    correo = req.email.lower()
+    proteccion_service.verificar_limite(
+        db, f"pin-ip:{ip_cliente(request)}", maximo=15, ventana_segundos=VENTANA_RECUPERACION
+    )
+    proteccion_service.verificar_limite(db, f"pin-mail:{correo}", maximo=10, ventana_segundos=VENTANA_RECUPERACION)
 
-    usuario = db.query(Usuario).filter(Usuario.correo_electronico == req.email).first()
+    usuario = db.query(Usuario).filter(Usuario.correo_electronico == correo).first()
+    if (
+        not usuario
+        or not _tokens_iguales(usuario.reset_token_hash, req.token)
+        or not usuario.reset_token_expira
+        or datetime.utcnow() > usuario.reset_token_expira
+    ):
+        raise HTTPException(status_code=400, detail=MENSAJE_TOKEN_INVALIDO)
 
-    if not usuario or usuario.reset_pin != req.pin:
-        raise HTTPException(status_code=400, detail="El código PIN es incorrecto.")
+    sesion_token = secrets.token_urlsafe(32)
+    usuario.reset_sesion_hash = _hash_token(sesion_token)
+    usuario.reset_sesion_expira = datetime.utcnow() + timedelta(minutes=MINUTOS_SESION_RECUPERACION)
+    usuario.reset_token_hash = None
+    usuario.reset_token_expira = None
+    usuario.reset_token_usado_en = datetime.utcnow()
+    db.commit()
 
-    if usuario.reset_pin_expira and datetime.utcnow() > usuario.reset_pin_expira:
-        raise HTTPException(status_code=400, detail="El código PIN ha expirado.")
-
-    return {"message": "PIN verificado correctamente."}
+    return {"message": "Código verificado. Ingresa tu nueva contraseña.", "token": sesion_token}
 
 
 @router.post("/reset-password")
 def reset_password(req: ResetPasswordRequest, request: Request, db: Session = Depends(get_db)):
-    ip = ip_cliente(request)
-    limitador.verificar(f"reset-ip:{ip}", maximo=10, ventana_segundos=VENTANA_PIN)
-    limitador.verificar(f"reset-mail:{req.email.lower()}", maximo=5, ventana_segundos=900)
+    correo = req.email.lower()
+    proteccion_service.verificar_limite(
+        db, f"reset-ip:{ip_cliente(request)}", maximo=10, ventana_segundos=VENTANA_RECUPERACION
+    )
+    proteccion_service.verificar_limite(db, f"reset-mail:{correo}", maximo=5, ventana_segundos=VENTANA_RECUPERACION)
 
-    usuario = db.query(Usuario).filter(Usuario.correo_electronico == req.email).first()
-
-    if not usuario or usuario.reset_pin != req.pin:
-        raise HTTPException(status_code=400, detail="El código PIN es incorrecto.")
-
-    if usuario.reset_pin_expira and datetime.utcnow() > usuario.reset_pin_expira:
-        raise HTTPException(status_code=400, detail="El código PIN ha expirado.")
+    usuario = db.query(Usuario).filter(Usuario.correo_electronico == correo).first()
+    if (
+        not usuario
+        or not _tokens_iguales(usuario.reset_sesion_hash, req.token)
+        or not usuario.reset_sesion_expira
+        or datetime.utcnow() > usuario.reset_sesion_expira
+    ):
+        raise HTTPException(status_code=400, detail=MENSAJE_TOKEN_INVALIDO)
 
     usuario.contrasena_encriptada = auth_service.hashear_contrasena(req.newPassword)
-    usuario.reset_pin = None
-    usuario.reset_pin_expira = None
-    # Al cambiar la contraseña se limpia el bloqueo por intentos fallidos.
+    usuario.reset_token_hash = None
+    usuario.reset_token_expira = None
+    usuario.reset_sesion_hash = None
+    usuario.reset_sesion_expira = None
     usuario.intentos_fallidos = 0
     usuario.bloqueado_hasta = None
     db.commit()

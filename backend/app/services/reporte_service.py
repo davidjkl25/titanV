@@ -1,38 +1,48 @@
+import hashlib
 import os
 import uuid
+from pathlib import Path
 from typing import List, Optional
 
 from fastapi import UploadFile
 from sqlalchemy.orm import Session
 
+from app.core.config import ruta_uploads
 from app.core.soft_delete import marcar_eliminado, sin_eliminados
 from app.models import EvidenciaMultimedia
 
-# Carpeta donde se guardan los archivos subidos. En este proyecto se usa disco
-# local (sin infraestructura extra) — si más adelante se quiere mover a un
-# servicio como S3 o Cloudinary, solo hay que cambiar estas dos funciones,
-# el resto de la app no se entera.
-CARPETA_EVIDENCIAS = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "uploads", "evidencias")
-os.makedirs(CARPETA_EVIDENCIAS, exist_ok=True)
-
 EXTENSIONES_PERMITIDAS = {".jpg", ".jpeg", ".png", ".webp", ".pdf", ".mp4"}
-TAMANO_MAXIMO_BYTES = 15 * 1024 * 1024  # 15 MB
+TAMANO_MAXIMO_BYTES = 15 * 1024 * 1024
+CHUNK_BYTES = 1024 * 1024
+
+
+def carpeta_evidencias() -> Path:
+    carpeta = ruta_uploads() / "evidencias"
+    carpeta.mkdir(parents=True, exist_ok=True)
+    return carpeta
 
 
 def _extension_valida(nombre_archivo: str) -> bool:
-    _, ext = os.path.splitext(nombre_archivo.lower())
-    return ext in EXTENSIONES_PERMITIDAS
+    _, extension = os.path.splitext(nombre_archivo.lower())
+    return extension in EXTENSIONES_PERMITIDAS
 
 
 async def guardar_archivo_en_disco(archivo: UploadFile) -> str:
-    """Guarda el archivo con un nombre único y devuelve la ruta relativa para guardar en BD."""
-    _, ext = os.path.splitext(archivo.filename or "")
-    nombre_unico = f"{uuid.uuid4().hex}{ext.lower()}"
-    ruta_absoluta = os.path.join(CARPETA_EVIDENCIAS, nombre_unico)
+    _, extension = os.path.splitext(archivo.filename or "")
+    nombre_unico = f"{uuid.uuid4().hex}{extension.lower()}"
+    ruta_absoluta = carpeta_evidencias() / nombre_unico
+    total = 0
 
-    contenido = await archivo.read()
-    with open(ruta_absoluta, "wb") as f:
-        f.write(contenido)
+    try:
+        with ruta_absoluta.open("wb") as destino:
+            while contenido := await archivo.read(CHUNK_BYTES):
+                total += len(contenido)
+                if total > TAMANO_MAXIMO_BYTES:
+                    raise ValueError("El archivo supera el límite de 15 MB.")
+                destino.write(contenido)
+    except Exception:
+        ruta_absoluta.unlink(missing_ok=True)
+        raise
 
     return f"/uploads/evidencias/{nombre_unico}"
 
@@ -76,8 +86,6 @@ def obtener_evidencia(db: Session, evidencia_id: int) -> Optional[EvidenciaMulti
 
 
 def eliminar_evidencia(db: Session, evidencia_id: int) -> bool:
-    """Soft delete: el archivo NO se borra del disco, solo se oculta del listado.
-    Así, si hace falta revisar evidencia antigua de un reclamo, sigue disponible."""
     evidencia = (
         db.query(EvidenciaMultimedia)
         .filter(EvidenciaMultimedia.id == evidencia_id, EvidenciaMultimedia.fecha_eliminacion.is_(None))

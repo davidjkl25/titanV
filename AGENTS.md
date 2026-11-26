@@ -1,96 +1,70 @@
 # AGENTS.md — Titan V
 
-Contexto de proyecto para sesiones futuras de opencode. Léelo completo antes de
-trabajar; el README.md sigue siendo la fuente de verdad funcional de la app.
+Contexto de proyecto para sesiones de opencode. `README.md` es la fuente de
+verdad funcional; este archivo resume reglas de trabajo y verificación.
 
-## Qué es el proyecto
+## Proyecto
 
-**Titan V** es un sistema web de gestión de proyectos de infraestructura/obra
-para PyMEs de construcción: proyectos, equipos (colaboradores con roles),
-inventario por obra, tareas, turnos, evidencias multimedia y kardex de material.
-El cliente (contratante) consulta el avance de su obra; la constructora lo opera.
+Titan V gestiona obras: proyectos, colaboradores con roles por proyecto,
+materiales e inventario, tareas, turnos, evidencias, subcontratistas, kardex y
+reportes. La constructora opera el sistema y el contratante consulta el avance.
 
 ## Stack
 
-- **Frontend**: React 19 + TypeScript + Vite (SPA) en `Frontend/`
-- **Backend**: Python 3 + FastAPI + SQLAlchemy en `backend/`
-- **Base de datos**: PostgreSQL local (`titanv_db`)
-- **Autenticación**: JWT (PyJWT) + Google OAuth 2.0 (verificación server-side con httpx)
-- **Correo**: SMTP (Gmail) para invitaciones (`email_service.py`)
-- Sin tests automatizados; validación = `npm run build` (front) + import de la app (back)
+- Frontend: React 19 + TypeScript + Vite en `Frontend/`.
+- Backend: Python 3 + FastAPI + SQLAlchemy en `backend/`.
+- Base de datos: PostgreSQL; pruebas con SQLite.
+- Autenticación: JWT (PyJWT) + Google OAuth 2.0 verificado server-side.
+- Correo: SMTP para invitaciones y recuperación.
+- Pruebas: pytest en backend. CI en `.github/workflows/ci.yml`.
 
-## Estructura
+## Reglas que no se deben romper
 
-```text
-titanV/
-├── Frontend/src/
-│   ├── main.tsx            # GoogleOAuthProvider (VITE_GOOGLE_CLIENT_ID)
-│   ├── App.tsx             # Rutas + estado de sesión (localStorage: token)
-│   ├── api.ts              # fetchConToken (adjunta JWT, en 401 limpia token)
-│   ├── pages/              # Landing, Login, Dashboard, AceptarInvitacion
-│   └── components/         # Sidebar, Inicio, Proyectos, Colaboradores,
-│                           # Materiales, Tareas, Turnos, Evidencias, Comentarios…
-└── backend/app/
-    ├── main.py             # Entry point + CORS + routers + create_all
-    ├── core/               # config, database, security (bcrypt), deps, permissions
-    ├── models/             # Usuario, ProyectoObra, ProyectoColaborador, Material,
-    │                       # Tarea, TurnoRelevo, EnlaceInvitacion, Evidencia…
-    ├── schemas/            # Pydantic (in/out) — backend/app/schemas/__init__.py
-    ├── routers/            # Capa HTTP (valida + status codes)
-    └── services/           # Lógica de negocio (sin depender de FastAPI)
+1. La identidad SIEMPRE sale del JWT (`get_current_user` en backend y
+   `obtenerSesion()` en frontend). Nunca de `localStorage`, query params ni
+   campos enviados por el cliente.
+2. Todas las rutas de negocio están bajo `/api`. `VITE_API_URL` debe terminar
+   en `/api` y las peticiones del frontend deben usar `fetchConToken()`.
+3. El rol que manda es el de proyecto (`RolProyecto`): `Arquitecto`,
+   `Trabajador`, `Visualizador`. `rolSistema` no habilita permisos de obra.
+4. Materiales, movimientos e inventario pertenecen a un proyecto.
+5. Borrado lógico con `fecha_eliminacion`; no borrado físico desde la app.
+6. Evidencias: archivos bajo `TITANV_UPLOAD_DIR` o `backend/uploads`, subida y
+   descarga autenticadas, máximo 15 MB.
+7. Recuperación con token aleatorio hasheado y de un solo uso. Ninguna respuesta
+   debe revelar si un correo está registrado.
+8. Rate limit persistente en `intentos_acceso`; la IP se toma de
+   `request.client.host`.
+9. Un proyecto nunca debe quedar sin `Arquitecto`.
+
+## Estado actual
+
+Fecha: 2026-11-26. Rama activa: `main`. Funciones terminadas: CRUD de
+proyectos, colaboradores, materiales, tareas, turnos, evidencias y
+subcontratistas; kardex; reportes PDF/XLSX; invitaciones; JWT y Google OAuth;
+cambio y recuperación de contraseña; permisos por rol de proyecto; aislamiento
+por usuario; flujo de proyecto activo; migraciones Alembic; pruebas y CI.
+
+## Verificación obligatoria
+
+```bash
+cd backend
+python -m compileall -q app
+python -m pytest -q
+python -c "from app.main import app; app.openapi()"
+
+cd ../Frontend
+npm run lint
+npm run build
 ```
-
-## Arquitectura y reglas de seguridad (NO romper)
-
-1. **Aislamiento por usuario**: la identidad SIEMPRE sale del JWT
-   (`get_current_user`), nunca de `localStorage` ni de query params. Los
-   proyectos se listan solo donde el usuario es colaborador
-   (`proyecto_service.listar_proyectos` filtra por id del token).
-2. **Rol por proyecto** (`RolProyecto`): `Arquitecto`/`Trabajador`/`Visualizador`.
-   - Arquitecto: control total + invitar + cambiar/quitar colaboradores + borrar evidencias/comentarios ajenos.
-   - Trabajador: escribe (tareas, turnos, evidencias, movimientos) pero no administra.
-   - Visualizador: solo lectura. Rutas de escritura usan `_verificar_escritura_*`
-     o `verificar_rol_proyecto(..., ARQUITECTO, TRABAJADOR)`.
-   - Un proyecto nunca se queda sin Arquitecto (`_validar_no_es_ultimo_arquitecto`).
-3. **Materiales por proyecto**: `materiales.proyecto_id` es obligatorio; no hay catálogo global.
-4. **Soft delete**: se marcan con `fecha_eliminacion` (nunca borrado físico) via `core/soft_delete.py`.
-5. **Invitaciones**: crean enlace expirable (7 días) + correo SMTP. Los enlaces NO
-   conceden rol Arquitecto. Si no hay SMTP, el enlace se devuelve al Arquitecto.
-6. **Flujo de "proyecto activo"** en el front: los módulos operativos solo se
-   desbloquean al entrar a un proyecto; la Sidebar lo muestra y permite cambiarlo.
-
-## Cómo correr (entorno local actual)
-
-- Postgres corre en `localhost:5432` (ver `backend/.env`, que ya está configurado
-  con DB, JWT y SMTP — no subir claves reales a git).
-- Backend en segundo plano:
-  `Start-Process ...\backend\venv\Scripts\python.exe -m uvicorn app.main:app --reload --port 8000`
-  (logs en `C:\Users\User\AppData\Local\Temp\opencode\*.log`). Swagger: http://localhost:8000/docs
-- Frontend: `npm run dev` → http://localhost:5173 (`Frontend/.env` ya tiene el Google Client ID).
-
-## Verificación obligatoria antes de terminar
-
-- Frontend: `npm run build` en `Frontend/` (tsc + vite).
-- Backend: `backend\venv\Scripts\python.exe -m compileall app` y
-  `python -c "from app.main import app"` (conecta a la BD real).
-
-## Estado actual (fecha: 2026-09-12)
-
-Rama activa: **test** (se sube a `origin/test`). Funcionalidades terminadas:
-CRUD de proyectos/colaboradores/materiales/tareas/turnos/evidencias, kardex de
-inventario, JWT + Google OAuth, invitaciones por correo/enlace, permisos por rol,
-materiales por proyecto, aislamiento de datos por usuario, flujo de proyecto
-activo, panel con estado editable (solo Arquitecto), fechas y rol por proyecto,
-y asignación de tareas/turnos limitada a los colaboradores del proyecto.
-
-Al retomar, revisa `git log --oneline -15` y `git status` para saber dónde quedó
-el trabajo. Todo se trabaja sobre `test`; no tocar `main` sin pedir confirmación.
 
 ## Convenciones
 
-- Código, comentarios y mensajes de commit en **español**.
-- Commits con prefijo convencional: `feat(...)`, `fix(...)`, `docs(...)`, `refactor(...)`.
-- `pasos_para_opencode.txt` fue eliminado y no se debe recrear.
-- `Usuarios.tsx` quedó fuera del menú (no corresponde al modelo actual); no volver a engancharlo.
-- El archivo `Frontend/src/api.ts` marca `API_URL` en `http://127.0.0.1:8000`;
-  otros componentes usan `http://localhost:8000` directo — mantener consistente al tocar URLs.
+- Código, comentarios y mensajes de commit en español.
+- Commits con prefijo convencional: `feat(...)`, `fix(...)`, `docs(...)`,
+  `refactor(...)`.
+- `pasos_para_opencode.txt` no debe recrearse.
+- `Usuarios.tsx` quedó fuera del menú; no volver a engancharlo.
+- No agregar comentarios nuevos al código salvo petición explícita.
+- Los archivos `.env` no se suben al repositorio; `.env.example` debe estar
+  sanitizado.

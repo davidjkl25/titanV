@@ -39,9 +39,8 @@ const UNIDADES_MEDIDA = [
 ];
 
 export const MaterialesTab = ({ proyectoId, proyectoNombre, rolProyecto }: MaterialesTabProps) => {
-  const rolSistema = Number(localStorage.getItem('rol') || 3);
-  const esAdministrador = rolSistema === 1 || rolProyecto === 'Arquitecto';
-  const puedeCrearSolicitud = esAdministrador || rolSistema === 2 || rolProyecto === 'Trabajador';
+  const esAdministrador = rolProyecto === 'Arquitecto';
+  const puedeCrearSolicitud = esAdministrador || rolProyecto === 'Trabajador';
   const esVisualizador = rolProyecto === 'Visualizador' || (!esAdministrador && !puedeCrearSolicitud);
   const [materiales, setMateriales] = useState<Material[]>([]);
   const [solicitudes, setSolicitudes] = useState<Solicitud[]>([]);

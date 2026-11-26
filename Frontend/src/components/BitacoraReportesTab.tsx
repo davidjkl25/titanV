@@ -189,7 +189,7 @@ export const BitacoraReportesTab = ({
     setGenerando(true);
     try {
       const respuesta = await fetchConToken(
-        `/api/proyectos/${proyectoId}/reportes/exportar?${parametros.toString()}`,
+        `/proyectos/${proyectoId}/reportes/exportar?${parametros.toString()}`,
       );
       if (!respuesta.ok) {
         const datos = await respuesta.json().catch(() => null);

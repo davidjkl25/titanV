@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { API_URL } from '../api';
 
 interface RegistroProps {
   onRegistrar?: (datos: {
@@ -11,8 +12,6 @@ interface RegistroProps {
   }) => void;
   onVolver?: () => void;
 }
-
-const API_URL = 'http://127.0.0.1:8000/api';
 
 const validarContrasena = (valor: string): string | null => {
   if (valor.length < 8) {

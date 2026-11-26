@@ -109,10 +109,22 @@ class TokenResponse(BaseModel):
 
     mensaje: str
     usuario_id: int
+    nombre: str
     rol: int
-    access_token: str
+    token: str
     token_type: str = "bearer"
     expires_in: int
+    correo: Optional[EmailStr] = None
+
+
+class CambiarContrasenaRequest(BaseModel):
+    contrasena_actual: str = Field(..., max_length=256)
+    nueva_contrasena: str = Field(..., min_length=8, max_length=72)
+
+    @field_validator("nueva_contrasena")
+    @classmethod
+    def _nueva_contrasena_valida(cls, valor):
+        return validar_contrasena(valor)
 
 
 class GoogleAuthRequest(BaseModel):
@@ -136,12 +148,12 @@ class ForgotPasswordRequest(BaseModel):
 
 class VerifyPinRequest(BaseModel):
     email: EmailStr
-    pin: str = Field(..., min_length=4, max_length=4, pattern=r"^\d{4}$")
+    token: str = Field(..., min_length=20, max_length=128)
 
 
 class ResetPasswordRequest(BaseModel):
     email: EmailStr
-    pin: str = Field(..., min_length=4, max_length=4, pattern=r"^\d{4}$")
+    token: str = Field(..., min_length=20, max_length=128)
     newPassword: str = Field(..., min_length=8, max_length=72)
 
     @field_validator("newPassword")

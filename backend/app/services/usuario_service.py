@@ -71,6 +71,16 @@ def actualizar_usuario(db: Session, usuario_id: int, datos: UsuarioUpdate) -> Op
     if datos.tiene_certificacion_maquinaria is not None:
         usuario.tiene_certificacion_maquinaria = datos.tiene_certificacion_maquinaria
 
+    if datos.contrasena is not None:
+        usuario.contrasena_encriptada = auth_service.hashear_contrasena(datos.contrasena)
+        usuario.reset_token_hash = None
+        usuario.reset_token_expira = None
+        usuario.reset_token_usado_en = None
+        usuario.reset_sesion_hash = None
+        usuario.reset_sesion_expira = None
+        usuario.intentos_fallidos = 0
+        usuario.bloqueado_hasta = None
+
     db.commit()
     db.refresh(usuario)
     return adaptar_usuario_a_schema(usuario)

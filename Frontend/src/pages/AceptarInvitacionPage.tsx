@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Login } from '../components/Login';
-
-const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://127.0.0.1:8000';
+import { API_URL, fetchConToken } from '../api';
+import { guardarSesion } from '../auth';
 
 interface AceptarInvitacionPageProps {
   isLoggedIn: boolean;
@@ -50,11 +50,7 @@ const AceptarInvitacionPage = ({ isLoggedIn, onLoginSuccess }: AceptarInvitacion
   const aceptarInvitacion = async () => {
     setEstado('cargando');
     try {
-      const tokenSesion = localStorage.getItem('token');
-      const respuesta = await fetch(`${API_URL}/invitaciones/${token}/aceptar`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${tokenSesion}` },
-      });
+      const respuesta = await fetchConToken(`/invitaciones/${token}/aceptar`, { method: 'POST' });
       const data = await respuesta.json();
 
       if (!respuesta.ok) throw new Error(data?.detail || 'El enlace no es válido.');
@@ -80,9 +76,7 @@ const AceptarInvitacionPage = ({ isLoggedIn, onLoginSuccess }: AceptarInvitacion
       const data = await respuesta.json();
       if (!respuesta.ok) throw new Error(data?.detail || 'Credenciales incorrectas.');
 
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('usuario_id', String(data.usuario_id));
-      localStorage.setItem('usuario_nombre', data.nombre || correo);
+      guardarSesion(data);
       onLoginSuccess();
       // El useEffect de arriba corre de nuevo (isLoggedIn ahora true) y acepta la invitación.
     } catch (err: any) {

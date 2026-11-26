@@ -4,12 +4,12 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Login } from '../components/Login';
 import { VentanaGoogleLogin } from '../components/VentanaGoogleLogin';
+import { API_URL } from '../api';
+import { guardarSesion, haySesion } from '../auth';
 
 interface LoginPageProps {
   onLoginSuccess: () => void;
 }
-
-const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://127.0.0.1:8000';
 
 const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
   const navigate = useNavigate();
@@ -22,7 +22,6 @@ const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
     navigate('/dashboard');
   }, [onLoginSuccess, navigate]);
 
-  // Escuchar cuando la ventana emergente de Google finaliza el inicio de sesión
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       if (event.data?.type === 'GOOGLE_AUTH_SUCCESS') {
@@ -31,7 +30,7 @@ const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
     };
 
     const handleStorage = (event: StorageEvent) => {
-      if (event.key === 'titanv_auth_sync' && localStorage.getItem('token')) {
+      if (event.key === 'titanv_auth_sync' && haySesion()) {
         finalizarLoginExitoso();
       }
     };
@@ -44,7 +43,6 @@ const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
     };
   }, [finalizarLoginExitoso]);
 
-  // Al hacer clic en "Continuar con Google": Despliega la otra ventana emergente de Google
   const handleAbrirVentanaGoogle = () => {
     const width = 480;
     const height = 620;
@@ -57,35 +55,27 @@ const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
       `width=${width},height=${height},left=${left},top=${top},status=no,menubar=no,toolbar=no,scrollbars=yes,resizable=yes`
     );
 
-    // Si el navegador bloqueó la ventana emergente, abrir modal de respaldo
     if (!popup || popup.closed || typeof popup.closed === 'undefined') {
       setModalGoogleAbierto(true);
       return;
     }
 
-    // Monitorear si la ventana emergente se cerró
     const timer = setInterval(() => {
       if (popup.closed) {
         clearInterval(timer);
-        if (localStorage.getItem('token')) {
+        if (haySesion()) {
           finalizarLoginExitoso();
         }
       }
     }, 500);
   };
 
-  // Manejador del modal de respaldo
   const handleLoginGoogleModal = async (email: string, name: string) => {
     try {
-      const respuesta = await axios.post(`${API_URL}/api/auth/google`, {
+      const respuesta = await axios.post(`${API_URL}/auth/google`, {
         credential: `google_login:${email.trim()}:${name.trim()}`,
       });
-
-      localStorage.setItem('token', respuesta.data.token);
-      localStorage.setItem('usuario_id', String(respuesta.data.usuario_id));
-      localStorage.setItem('usuario_nombre', respuesta.data.nombre || name);
-      localStorage.setItem('rol', String(respuesta.data.rol));
-
+      guardarSesion(respuesta.data);
       setModalGoogleAbierto(false);
       finalizarLoginExitoso();
     } catch (error: any) {
@@ -110,18 +100,15 @@ const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
       return;
     }
     try {
-      const respuesta = await axios.post(`${API_URL}/api/auth/login`, {
+      const respuesta = await axios.post(`${API_URL}/auth/login`, {
         correo_electronico: correo.trim(),
-        contrasena: contrasena,
+        contrasena,
       });
-      localStorage.setItem('token', respuesta.data.token);
-      localStorage.setItem('usuario_id', String(respuesta.data.usuario_id));
-      localStorage.setItem('usuario_nombre', respuesta.data.nombre || 'Usuario');
-      localStorage.setItem('rol', String(respuesta.data.rol));
+      guardarSesion(respuesta.data);
       finalizarLoginExitoso();
     } catch (error: any) {
       const detalle = error.response?.data?.detail || 'Credenciales inválidas o el servidor no responde.';
-      alert(`⚠️ ${detalle}`);
+      alert(detalle);
     }
   };
 

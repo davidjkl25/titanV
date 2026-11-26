@@ -6,8 +6,8 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.models import RolUsuario, Usuario
-from app.schemas import UsuarioCreate, UsuarioResponse, UsuarioUpdate
-from app.services import usuario_service
+from app.schemas import CambiarContrasenaRequest, UsuarioCreate, UsuarioResponse, UsuarioUpdate
+from app.services import auth_service, usuario_service
 
 router = APIRouter(prefix="/usuarios", tags=["Usuarios"])
 
@@ -30,6 +30,25 @@ def get_usuarios(
     db: Session = Depends(get_db),
 ):
     return usuario_service.listar_usuarios(db, skip, limit)
+
+
+@router.post("/me/contrasena")
+def cambiar_contrasena(
+    datos: CambiarContrasenaRequest,
+    current_user: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    if not auth_service.verificar_contrasena(datos.contrasena_actual, current_user.contrasena_encriptada):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="La contraseña actual no es correcta")
+
+    current_user.contrasena_encriptada = auth_service.hashear_contrasena(datos.nueva_contrasena)
+    current_user.reset_token_hash = None
+    current_user.reset_token_expira = None
+    current_user.reset_token_usado_en = None
+    current_user.reset_sesion_hash = None
+    current_user.reset_sesion_expira = None
+    db.commit()
+    return {"mensaje": "Contraseña actualizada correctamente."}
 
 
 @router.get("/{usuario_id}", response_model=UsuarioResponse)

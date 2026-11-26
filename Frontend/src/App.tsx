@@ -6,6 +6,8 @@ import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import AceptarInvitacionPage from './pages/AceptarInvitacionPage';
 import GoogleAuthPopupPage from './pages/GoogleAuthPopupPage';
+import RecuperarContrasenaPage from './pages/RecuperarContrasenaPage';
+import { cerrarSesion, haySesion } from './auth';
 import './App.css';
 
 interface ErrorBoundaryProps {
@@ -44,7 +46,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
           </pre>
           <button
             onClick={() => {
-              localStorage.clear();
+              cerrarSesion();
               sessionStorage.clear();
               window.location.href = '/';
             }}
@@ -68,7 +70,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
 }
 
 function AppRoutes() {
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => !!localStorage.getItem('token'));
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => haySesion());
   const navigate = useNavigate();
 
   const handleLoginSuccess = () => {
@@ -77,11 +79,14 @@ function AppRoutes() {
 
   const handleLogout = () => {
     setIsLoggedIn(false);
-    localStorage.removeItem('token');
-    localStorage.removeItem('usuario_id');
-    localStorage.removeItem('usuario_nombre');
-    
+    cerrarSesion();
   };
+
+  useEffect(() => {
+    const sincronizar = () => setIsLoggedIn(haySesion());
+    window.addEventListener('storage', sincronizar);
+    return () => window.removeEventListener('storage', sincronizar);
+  }, []);
 
   useEffect(() => {
     if (isLoggedIn && !sessionStorage.getItem('invitacion_pendiente')) {
@@ -93,6 +98,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/google-auth" element={<GoogleAuthPopupPage />} />
+      <Route path="/recuperar" element={<RecuperarContrasenaPage />} />
       <Route
         path="/login"
         element={

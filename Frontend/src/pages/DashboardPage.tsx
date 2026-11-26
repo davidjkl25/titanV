@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchConToken } from '../api';
+import { obtenerSesion } from '../auth';
 import { Sidebar } from '../components/Sidebar';
 import { InicioTab } from '../components/InicioTab';
 import { ProyectosTab } from '../components/ProyectosTab';
@@ -24,6 +25,12 @@ interface DashboardPageProps {
 }
 
 const MODULOS_PROYECTO = ['colaboradores', 'materiales', 'inventario', 'tareas', 'turnos', 'evidencias'];
+
+const MODULOS_POR_ROL: Record<string, string[]> = {
+  Arquitecto: MODULOS_PROYECTO,
+  Trabajador: ['materiales', 'inventario', 'tareas', 'turnos', 'evidencias'],
+  Visualizador: ['materiales', 'inventario', 'tareas', 'turnos', 'evidencias'],
+};
 
 const DashboardPage = ({ onLogout }: DashboardPageProps) => {
   const navigate = useNavigate();
@@ -67,26 +74,21 @@ const DashboardPage = ({ onLogout }: DashboardPageProps) => {
     setTabActual('inicio');
   };
 
-  const rolSistema = Number(localStorage.getItem('rol') || 3);
-
   const puedeAccederTab = (tab: string) => {
-    // Administrador general o Arquitecto del proyecto tienen acceso completo
-    if (rolSistema === 1 || rolProyecto === 'Arquitecto') return true;
-
-    // Colaboradores solo es accesible por Arquitectos / Administradores
-    if (tab === 'colaboradores') return false;
-
-    return true;
+    if (!MODULOS_PROYECTO.includes(tab)) return true;
+    if (!proyectoSeleccionado) return false;
+    return (MODULOS_POR_ROL[rolProyecto] || []).includes(tab);
   };
 
   useEffect(() => {
     if (!proyectoSeleccionado) return;
-    const usuarioId = Number(localStorage.getItem('usuario_id') || 0);
+    const sesion = obtenerSesion();
+    if (!sesion) return;
     const cargarRolProyecto = async () => {
       try {
         const respuesta = await fetchConToken(`/proyectos/${proyectoSeleccionado.id}/colaboradores/`);
         const colaboradores = respuesta.ok ? await respuesta.json() : [];
-        const colaboradorActual = colaboradores.find((c: { usuario_id: number }) => c.usuario_id === usuarioId);
+        const colaboradorActual = colaboradores.find((c: { usuario_id: number }) => c.usuario_id === sesion.usuarioId);
         setRolProyecto(colaboradorActual?.rol || '');
       } catch {
         setRolProyecto('');
@@ -182,7 +184,7 @@ const DashboardPage = ({ onLogout }: DashboardPageProps) => {
             onSalirProyecto={salirProyecto}
             onIrA={irA}
             onCrearProyecto={crearProyecto}
-            puedeCrearProyecto={rolSistema === 1 || rolProyecto === 'Arquitecto'}
+            puedeCrearProyecto={true}
             puedeVerModulo={puedeAccederTab}
             onCambiarEstadoProyecto={cambiarEstadoProyecto}
             onEliminarProyecto={eliminarProyectoSeleccionado}

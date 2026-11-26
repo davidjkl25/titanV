@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { fetchConToken } from '../api';
+import { obtenerSesion } from '../auth';
 
 interface Proyecto {
   id: number;
@@ -67,7 +68,7 @@ export const ColaboradoresTab = ({ proyectoId: proyectoFijo }: ColaboradoresTabP
   const [cambiandoRol, setCambiandoRol] = useState<number | null>(null);
   const [eliminando, setEliminando] = useState<number | null>(null);
 
-  const usuarioId = Number(localStorage.getItem('usuario_id') || 0);
+  const usuarioId = obtenerSesion()?.usuarioId || 0;
 
   const cargarProyectos = async () => {
     setError('');

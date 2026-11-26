@@ -21,3 +21,7 @@ httpx==0.28.1
 
 # --- Configuración ---
 python-dotenv==1.2.3
+
+# --- Reportes ---
+openpyxl==3.1.5
+reportlab==5.1.2

@@ -29,9 +29,8 @@ interface TurnosTabProps {
 }
 
 export const TurnosTab = ({ proyectoId: proyectoFijo, rolProyecto }: TurnosTabProps) => {
-  const rolSistema = Number(localStorage.getItem('rol') || 3);
-  const esAdministrador = rolSistema === 1 || rolProyecto === 'Arquitecto';
-  const esTrabajador = rolSistema === 2 || rolProyecto === 'Trabajador';
+  const esAdministrador = rolProyecto === 'Arquitecto';
+  const esTrabajador = rolProyecto === 'Trabajador';
   const esVisualizador = rolProyecto === 'Visualizador' || (!esAdministrador && !esTrabajador);
 
   const [turnos, setTurnos] = useState<Turno[]>([]);
@@ -53,16 +52,14 @@ export const TurnosTab = ({ proyectoId: proyectoFijo, rolProyecto }: TurnosTabPr
     setError('');
     try {
       const queryTurnos = proyectoFijo ? `?proyecto_id=${proyectoFijo}` : '';
-      const [rTurnos, rProyectos, rUsuarios] = await Promise.all([
+      const [rTurnos, rProyectos] = await Promise.all([
         fetchConToken(`/turnos/${queryTurnos}`),
         fetchConToken('/proyectos/'),
-        fetchConToken('/usuarios/'),
       ]);
       if (!rTurnos.ok) throw new Error('No se pudieron cargar los turnos.');
       setTurnos(await rTurnos.json());
       const dataProyectos = rProyectos.ok ? await rProyectos.json() : [];
       setProyectos(proyectoFijo ? dataProyectos.filter((p: Proyecto) => p.id === proyectoFijo) : dataProyectos);
-      setUsuarios(rUsuarios.ok ? await rUsuarios.json() : []);
       if (proyectoFijo) setProyectoId(proyectoFijo);
     } catch (err: any) {
       setError(err.message || 'No se pudieron cargar los turnos.');
@@ -73,7 +70,26 @@ export const TurnosTab = ({ proyectoId: proyectoFijo, rolProyecto }: TurnosTabPr
 
   useEffect(() => {
     cargarTodo();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!proyectoId) return;
+    const cargarUsuarios = async () => {
+      const respuesta = await fetchConToken(`/proyectos/${proyectoId}/colaboradores/`);
+      if (!respuesta.ok) return;
+      const colaboradores = await respuesta.json();
+      setUsuarios(
+        colaboradores.map((c: any) => ({
+          id: c.usuario_id,
+          nombre_completo: c.usuario_nombre || `Usuario #${c.usuario_id}`,
+        })),
+      );
+      setUsuarioId((actual) => (colaboradores.some((c: any) => c.usuario_id === actual) ? actual : ''));
+    };
+    cargarUsuarios();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [proyectoId]);
 
   const nombreProyecto = (id: number) => proyectos.find((p) => p.id === id)?.nombre_proyecto || `Proyecto #${id}`;
   const nombreUsuario = (id: number) => usuarios.find((u) => u.id === id)?.nombre_completo || `Usuario #${id}`;

@@ -13,6 +13,8 @@ from app.models.asistencia_model import TurnoRelevo
 from app.models.reporte_model import ActaCampo, EvidenciaMultimedia
 from app.models.invitacion_model import EnlaceInvitacion
 from app.models.solicitud_model import EstadoSolicitud, SolicitudMaterial
+from app.models.proteccion_model import IntentoAcceso
+from app.models.subcontratista_model import Subcontratista
 
 __all__ = [
     "Usuario",
@@ -36,4 +38,6 @@ __all__ = [
     "EvidenciaMultimedia",
     "ActaCampo",
     "EnlaceInvitacion",
+    "IntentoAcceso",
+    "Subcontratista",
 ]

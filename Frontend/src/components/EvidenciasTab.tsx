@@ -17,18 +17,15 @@ interface Tarea {
   proyecto_id: number;
 }
 
-const API_URL = (import.meta as any).env?.VITE_API_URL || 'http://127.0.0.1:8000';
-
 interface EvidenciasTabProps {
   proyectoId?: number;
   rolProyecto?: string;
 }
 
 export const EvidenciasTab = ({ proyectoId: proyectoFijo, rolProyecto }: EvidenciasTabProps) => {
-  const rolSistema = Number(localStorage.getItem('rol') || 3);
-  const esAdministrador = rolSistema === 1 || rolProyecto === 'Arquitecto';
-  const esTrabajador = rolSistema === 2 || rolProyecto === 'Trabajador';
-  const esVisualizador = rolProyecto === 'Visualizador' || (!esAdministrador && !esTrabajador);
+  const esArquitecto = rolProyecto === 'Arquitecto';
+  const puedeEscribir = ['Arquitecto', 'Trabajador'].includes(rolProyecto || '');
+  const esVisualizador = !puedeEscribir;
 
   const [tareas, setTareas] = useState<Tarea[]>([]);
   const [tareaId, setTareaId] = useState<number | ''>('');
@@ -36,11 +33,8 @@ export const EvidenciasTab = ({ proyectoId: proyectoFijo, rolProyecto }: Evidenc
   const [cargando, setCargando] = useState(false);
   const [subiendo, setSubiendo] = useState(false);
   const [error, setError] = useState('');
-
   const [archivo, setArchivo] = useState<File | null>(null);
   const [descripcion, setDescripcion] = useState('');
-
-  const usuarioId = localStorage.getItem('usuario_id') || '1';
 
   const cargarTareas = async () => {
     const query = proyectoFijo ? `/?proyecto_id=${proyectoFijo}` : '';
@@ -68,10 +62,12 @@ export const EvidenciasTab = ({ proyectoId: proyectoFijo, rolProyecto }: Evidenc
 
   useEffect(() => {
     cargarTareas();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     if (tareaId) cargarEvidencias(Number(tareaId));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tareaId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -85,16 +81,10 @@ export const EvidenciasTab = ({ proyectoId: proyectoFijo, rolProyecto }: Evidenc
       formData.append('archivo', archivo);
       if (descripcion) formData.append('descripcion', descripcion);
 
-      const token = localStorage.getItem('token');
-      const respuesta = await fetch(
-        `${API_URL}/tareas/${tareaId}/evidencias/?usuario_id=${usuarioId}`,
-        {
-          method: 'POST',
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-          body: formData,
-        }
-      );
-
+      const respuesta = await fetchConToken(`/tareas/${tareaId}/evidencias/`, {
+        method: 'POST',
+        body: formData,
+      });
       if (!respuesta.ok) {
         const data = await respuesta.json().catch(() => null);
         throw new Error(data?.detail || 'No se pudo subir el archivo.');
@@ -102,12 +92,26 @@ export const EvidenciasTab = ({ proyectoId: proyectoFijo, rolProyecto }: Evidenc
 
       setArchivo(null);
       setDescripcion('');
-      (document.getElementById('input-archivo-evidencia') as HTMLInputElement).value = '';
+      const input = document.getElementById('input-archivo-evidencia') as HTMLInputElement | null;
+      if (input) input.value = '';
       await cargarEvidencias(Number(tareaId));
     } catch (err: any) {
       alert(err.message || 'No se pudo subir el archivo.');
     } finally {
       setSubiendo(false);
+    }
+  };
+
+  const abrirEvidencia = async (evidencia: Evidencia) => {
+    if (!tareaId) return;
+    try {
+      const respuesta = await fetchConToken(`/tareas/${tareaId}/evidencias/${evidencia.id}/descargar`);
+      if (!respuesta.ok) throw new Error('No se pudo abrir la evidencia.');
+      const url = URL.createObjectURL(await respuesta.blob());
+      window.open(url, '_blank', 'noopener');
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+    } catch (err: any) {
+      alert(err.message || 'No se pudo abrir la evidencia.');
     }
   };
 
@@ -122,8 +126,6 @@ export const EvidenciasTab = ({ proyectoId: proyectoFijo, rolProyecto }: Evidenc
     }
   };
 
-  const esImagen = (nombre: string) => /\.(jpg|jpeg|png|webp)$/i.test(nombre);
-
   return (
     <div className="tab-content active">
       <div className="section-header">
@@ -131,20 +133,8 @@ export const EvidenciasTab = ({ proyectoId: proyectoFijo, rolProyecto }: Evidenc
       </div>
 
       {esVisualizador && (
-        <div style={{
-          backgroundColor: 'rgba(74, 222, 128, 0.12)',
-          border: '1px solid rgba(74, 222, 128, 0.35)',
-          color: '#4ade80',
-          padding: '12px 18px',
-          borderRadius: '10px',
-          marginBottom: '20px',
-          fontSize: '13px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px',
-        }}>
-          <i className="fas fa-eye" style={{ fontSize: '16px' }}></i>
-          <span><strong>Modo Visualizador (Solo Lectura):</strong> Consulta fotos y archivos técnicos adjuntos sin modificar ni eliminar evidencias.</span>
+        <div style={{ backgroundColor: 'rgba(74,222,128,.12)', border: '1px solid rgba(74,222,128,.35)', color: '#4ade80', padding: '12px 18px', borderRadius: '10px', marginBottom: '20px', fontSize: '13px' }}>
+          Modo Visualizador: puedes consultar las evidencias, pero no subirlas ni eliminarlas.
         </div>
       )}
 
@@ -157,23 +147,17 @@ export const EvidenciasTab = ({ proyectoId: proyectoFijo, rolProyecto }: Evidenc
       </div>
 
       <div className="grid" style={{ gridTemplateColumns: esVisualizador ? '1fr' : undefined }}>
-        {!esVisualizador && (
+        {puedeEscribir && (
           <div className="card">
             <div className="card-header"><h3><i className="fas fa-upload"></i> Subir evidencia</h3></div>
             <form onSubmit={handleSubmit}>
               <div className="input-group">
-                <label>Archivo (foto, PDF o video)</label>
-                <input
-                  id="input-archivo-evidencia"
-                  type="file"
-                  accept=".jpg,.jpeg,.png,.webp,.pdf,.mp4"
-                  onChange={(e) => setArchivo(e.target.files?.[0] || null)}
-                  required
-                />
+                <label>Archivo (foto, PDF o video, máx. 15 MB)</label>
+                <input id="input-archivo-evidencia" type="file" accept=".jpg,.jpeg,.png,.webp,.pdf,.mp4" onChange={(e) => setArchivo(e.target.files?.[0] || null)} required />
               </div>
               <div className="input-group">
                 <label>Descripción (opcional)</label>
-                <input type="text" value={descripcion} onChange={(e) => setDescripcion(e.target.value)} placeholder="Ej: Vaciado de placa nivel 2" maxLength={300} />
+                <input type="text" value={descripcion} onChange={(e) => setDescripcion(e.target.value)} maxLength={300} />
               </div>
               <button type="submit" className="btn-save" disabled={subiendo || !tareaId}>
                 {subiendo ? 'Subiendo...' : 'Subir evidencia'}
@@ -187,33 +171,23 @@ export const EvidenciasTab = ({ proyectoId: proyectoFijo, rolProyecto }: Evidenc
           <div className="project-container">
             {error && <div className="empty-msg" style={{ color: '#dc2626' }}>{error}</div>}
             {cargando && <div className="empty-msg">Cargando evidencias...</div>}
-            {!cargando && !error && evidencias.length === 0 && (
-              <div className="empty-msg">Todavía no hay evidencias para esta tarea.</div>
-            )}
+            {!cargando && !error && evidencias.length === 0 && <div className="empty-msg">Todavía no hay evidencias para esta tarea.</div>}
             {!cargando && evidencias.map((ev) => (
               <div key={ev.id} className="project-item" style={{ alignItems: 'flex-start' }}>
                 <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                  {esImagen(ev.nombre_archivo) ? (
-                    <img
-                      src={`${API_URL}${ev.ruta_archivo}`}
-                      alt={ev.nombre_archivo}
-                      style={{ width: '56px', height: '56px', objectFit: 'cover', borderRadius: '6px' }}
-                    />
-                  ) : (
-                    <div style={{ width: '56px', height: '56px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f1f1f1', borderRadius: '6px' }}>
-                      <i className="fas fa-file" style={{ fontSize: '20px', color: '#888' }}></i>
-                    </div>
-                  )}
+                  <div style={{ width: '56px', height: '56px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f1f1f1', borderRadius: '6px' }}>
+                    <i className="fas fa-file" style={{ fontSize: '20px', color: '#888' }}></i>
+                  </div>
                   <div>
-                    <a href={`${API_URL}${ev.ruta_archivo}`} target="_blank" rel="noreferrer">
-                      <h4 style={{ margin: 0 }}>{ev.nombre_archivo}</h4>
-                    </a>
-                    {ev.descripcion && <span style={{ fontSize: '12px', color: '#666' }}>{ev.descripcion}</span>}
+                    <button type="button" onClick={() => abrirEvidencia(ev)} style={{ background: 'none', border: 'none', color: '#ffd60a', cursor: 'pointer', padding: 0, fontWeight: 700 }}>
+                      {ev.nombre_archivo}
+                    </button>
+                    {ev.descripcion && <div style={{ fontSize: '12px', color: '#666' }}>{ev.descripcion}</div>}
                     <div style={{ fontSize: '11px', color: '#999' }}>{new Date(ev.fecha_subida).toLocaleString()}</div>
                   </div>
                 </div>
-                {esAdministrador && (
-                  <button onClick={() => eliminarEvidencia(ev.id)} className="btn-delete">
+                {puedeEscribir && (
+                  <button onClick={() => eliminarEvidencia(ev.id)} className="btn-delete" title={esArquitecto ? 'Eliminar evidencia' : 'Eliminar evidencia propia'}>
                     <i className="fas fa-trash"></i>
                   </button>
                 )}

@@ -1,32 +1,45 @@
-# React + TypeScript + Vite
+# Frontend Titan V
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Cliente web de Titan V con React 19, TypeScript y Vite.
 
-Currently, two official plugins are available:
+## Arranque
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm ci
+cp .env.example .env            # Windows: copy .env.example .env
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Variables:
+
+- `VITE_API_URL`: base de la API, debe terminar en `/api`. Por defecto
+  `http://127.0.0.1:8000/api`.
+- `VITE_GOOGLE_CLIENT_ID`: client ID de Google OAuth 2.0.
+
+## Estructura
+
+```text
+src/
+├── api.ts      # API_URL y fetchConToken
+├── auth.ts     # sesión leída del JWT
+├── pages/      # Landing, Login, Dashboard, AceptarInvitacion, Recuperar
+└── components/ # Sidebar y módulos operativos
+```
+
+## Reglas
+
+- La identidad del usuario se obtiene de `obtenerSesion()`, que decodifica el
+  JWT. `localStorage` solo almacena el token y preferencias no sensibles.
+- Las peticiones a la API pasan por `fetchConToken()`, que adjunta el JWT y
+  cierra la sesión en un 401.
+- Los permisos de módulos y acciones dependen del rol dentro del proyecto
+  activo: `Arquitecto`, `Trabajador` o `Visualizador`.
+- No se deben hardcodear URLs de API en componentes; usar `API_URL` o
+  `fetchConToken()`.
+
+## Verificación
+
+```bash
+npm run lint
+npm run build
+```
